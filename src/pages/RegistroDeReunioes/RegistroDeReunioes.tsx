@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid, GridColDef, GridEventListener } from '@mui/x-data-grid';
-import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, useTheme, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getUsername } from '../../utils/storage';
 
@@ -101,7 +101,6 @@ const RegistroDeReunioes = () => {
     }
   };
 
-  const theme = useTheme();
   return (
     <Container>
       <Typography variant="h4" gutterBottom>

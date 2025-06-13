@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import './Login.css';
-import { useNavigate } from 'react-router-dom';
 import { setAccessToken, setDepartment, setNivel, setUsername } from '../../utils/storage';
 import axios from 'axios';
 
@@ -8,7 +7,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate();
+
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
