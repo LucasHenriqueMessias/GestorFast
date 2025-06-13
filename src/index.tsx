@@ -7,7 +7,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import { LicenseInfo } from '@mui/x-license-pro';
 import Sidebar from './components/Sidebar/Sidebar';
 import Topbar from './components/TopBar/Topbar';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login/Login';
 import RegistroDeReunioes from './pages/RegistroDeReunioes/RegistroDeReunioes';
 import Cliente from './pages/Cliente/Cliente';

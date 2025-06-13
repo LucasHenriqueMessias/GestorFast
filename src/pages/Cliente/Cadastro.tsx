@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'; // Import axios
-import WarningIcon from '@mui/icons-material/Warning'; // Import the WarningIcon
 import SearchIcon from '@mui/icons-material/Search'; // Import the SearchIcon
 import './Cadastro.css'; // Import the CSS file for styling
 import { getAccessToken } from '../../utils/storage'; // Import the function to get the access token
@@ -14,16 +13,11 @@ type ClienteData = {
 
 };
 
-type Contrato = {
-  id: number;
-  linkArquivo: string;
-  nomeArquivo: string;
-};
 const Cadastro = () => {
-  const [showWarningForm, setShowWarningForm] = useState(false);
+  // const [showWarningForm, setShowWarningForm] = useState(false);
   const [allData, setAllData] = useState<ClienteData[]>([]); // Use the defined type for allData
   const [searchTerm, setSearchTerm] = useState(''); // State for search input
-  const [contratos, setContratos] = useState<Contrato[]>([]);
+
 
 
 
@@ -136,29 +130,21 @@ const Cadastro = () => {
 
       // Fetch contratos for the found client
       try {
-        const token = getAccessToken();
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/tab-upload/file/contrato/${foundItem.cnpj}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setContratos(response.data); // Store contratos
+        
       } catch (error) {
         console.error('Erro ao buscar contratos:', error);
         alert('Erro ao buscar contratos do cliente.');
       }
     } else {
       setFormData({ ...formData }); // Reset formData if no match
-      setContratos([]); // Limpa os contratos se nenhum cliente for encontrado
+      // setContratos([]); // Limpa os contratos se nenhum cliente for encontrado
     }
   };
 
   const handleCnpjBlur = async () => {
     if (formData.cnpj) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const response = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${formData.cnpj}`);
         const data = response.data;
 
@@ -220,7 +206,6 @@ const Cadastro = () => {
         ...formData,
         data_criacao: new Date().toISOString(),
         data_alteracao: new Date().toISOString(),
-        id_loja: 1,
       };
 
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/loja`, payload, {
@@ -231,9 +216,13 @@ const Cadastro = () => {
 
       alert('Cadastro realizado com sucesso!');
       console.log('Response:', response.data);
-    } catch (error) {
-      console.error('Erro ao cadastrar:', error);
-      alert('Erro ao realizar o cadastro. Verifique os dados e tente novamente.');
+    } catch (error: any) {
+      if (error.response && error.response.status === 409) {
+        alert('Cliente já cadastrado');
+      } else {
+        console.error('Erro ao cadastrar:', error);
+        alert('Erro ao realizar o cadastro. Verifique os dados e tente novamente.');
+      }
     }
   };
 
@@ -312,32 +301,32 @@ const Cadastro = () => {
     })
   };
 
-  const handleEmitirAlerta = async () => {
-    if (!formData.cnpj) {
-      alert('Nenhum cliente selecionado para emitir alerta.');
-      return;
-    }
+  // const handleEmitirAlerta = async () => {
+  //   if (!formData.cnpj) {
+  //     alert('Nenhum cliente selecionado para emitir alerta.');
+  //     return;
+  //   }
 
-    const token = getAccessToken();
+  //   const token = getAccessToken();
 
-    try {
-      const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}/loja/update/${formData.cnpj}`,
-        formData, // Envia os dados atualizados do cliente
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  //   try {
+  //     const response = await axios.patch(
+  //       `${process.env.REACT_APP_API_URL}/loja/update/${formData.cnpj}`,
+  //       formData, // Envia os dados atualizados do cliente
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
 
-      alert('Alerta emitido com sucesso!');
-      console.log('Response:', response.data);
-    } catch (error) {
-      console.error('Erro ao emitir alerta:', error);
-      alert('Erro ao emitir alerta. Verifique os dados e tente novamente.');
-    }
-  };
+  //     alert('Alerta emitido com sucesso!');
+  //     console.log('Response:', response.data);
+  //   } catch (error) {
+  //     console.error('Erro ao emitir alerta:', error);
+  //     alert('Erro ao emitir alerta. Verifique os dados e tente novamente.');
+  //   }
+  // };
 
 
   return (
@@ -351,14 +340,14 @@ const Cadastro = () => {
         <SearchIcon className="search-icon" />
         <input
           type="text"
-          placeholder="Pesquisar por Razão Social..."
+          placeholder=  "Pesquisar por Razão Social..."
           className="search-input"
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)} // Trigger search on every input change
         />
       </div>
 
-      <div className="form-group warning-icon-container">
+      {/* <div className="form-group warning-icon-container">
         <WarningIcon
           className="warning-icon"
           onClick={() => setShowWarningForm(!showWarningForm)} // Toggle the warning form
@@ -426,7 +415,7 @@ const Cadastro = () => {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
 
 
@@ -777,7 +766,7 @@ const Cadastro = () => {
 
       
 
-      <div className="form-row">
+      {/* <div className="form-row">
         <h1 className="form-title">Contratos</h1>
 
 
@@ -798,7 +787,7 @@ const Cadastro = () => {
             <button type="submit" className="submit-button">Cadastrar</button>
           </>
         )}
-      </div>
+      </div> */}
 
       <div className="form-row">
         <button type="submit" className="submit-button">

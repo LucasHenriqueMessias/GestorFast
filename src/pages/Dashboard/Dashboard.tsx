@@ -437,7 +437,18 @@ import React from 'react'
 
 const Dashboard = () => {
   return (
-    <div></div>
+    <div style={{
+      minHeight: 'calc(100vh - 64px)', // considerando Topbar padrão MUI
+      width: '100%',
+      backgroundImage: `url('https://th.bing.com/th/id/R.d2d162ae96de10ef897868d6209da8a2?rik=NVWccrsNL0D55g&riu=http%3a%2f%2fwww.pixelstalk.net%2fwp-content%2fuploads%2f2016%2f06%2fDesktop-Blue-HD-Wallpapers.jpg&ehk=KX0TvGnzzidhtFeOVaT%2f3I%2bLOqhwy%2fbVTZJ4xmIvRBM%3d&risl=&pid=ImgRaw&r=0')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      margin: 0,
+      padding: 0, 
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+    }}>
+    </div>
   )
 }
 
