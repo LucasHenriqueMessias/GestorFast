@@ -40,7 +40,7 @@ const Login = () => {
                 // Aguarda o storage ser atualizado antes de navegar
                 setTimeout(() => {
                     alert('Login bem-sucedido!');
-                    window.location.replace('/');
+                    window.location.replace('/home');
                 }, 100);
                 
             } catch (error) {

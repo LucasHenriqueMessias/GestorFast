@@ -18,7 +18,7 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
     return (
         <div className={onlyIcons ? "sidebar sidebar--collapsed" : "sidebar"}>
             <div className="logo-container">
-                <a href="/">
+                <a href="/home">
                     <img src="https://www.fastassessoria.com.br/img/logo.png" style={{ width: '100%', marginTop: '5%' }} alt='logotipo fast assessoria' />
                 </a>
             </div>
