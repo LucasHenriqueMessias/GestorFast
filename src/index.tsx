@@ -82,12 +82,12 @@ function AppLayout() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="*" element={<Navigate to="/login" />} />
-            <Route path="/Clientes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor"]}><Cliente /></PrivateRoute>} />
-            <Route path="/RegistroDeReunioes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor"]}><RegistroDeReunioes /></PrivateRoute>} />
-            <Route path="/" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor"]}><Dashboard /></PrivateRoute>} />
-            <Route path="/Cadastro" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor"]}><Cadastro /></PrivateRoute>} />
-            <Route path="/JornadaCrescimentoCore" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor"]}><JornadaCrescimentoCore /></PrivateRoute>} />
-            <Route path="/JornadaCrescimentoOverdelivery" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor"]}><JornadaCrescimentoOverDelivery /></PrivateRoute>} />
+            <Route path="/Clientes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Cliente /></PrivateRoute>} />
+            <Route path="/RegistroDeReunioes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RegistroDeReunioes /></PrivateRoute>} />
+            <Route path="/" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Dashboard /></PrivateRoute>} />
+            <Route path="/Cadastro" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Cadastro /></PrivateRoute>} />
+            <Route path="/JornadaCrescimentoCore" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoCore /></PrivateRoute>} />
+            <Route path="/JornadaCrescimentoOverdelivery" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoOverDelivery /></PrivateRoute>} />
           </Routes>
         </div>
       </div>

@@ -56,9 +56,6 @@ const Topbar = ({ onMenuClick, onlyIcons = false }: { onMenuClick: () => void, o
                   <div className="topbar-right-menu-user-name">
                     <span style={{ color: '#667085', fontSize: '14px' }}>{username}</span>
                   </div>
-                  <div className="topbar-right-menu-user-role">
-                    <span style={{ color: '#667085', fontSize: '12px' }}>Desenvolvedor</span>
-                  </div>
                 </div>
                 <KeyboardArrowDownIcon
                   style={{

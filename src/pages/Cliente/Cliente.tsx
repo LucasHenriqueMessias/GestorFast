@@ -119,7 +119,6 @@ const Cliente = () => {
     { field: 'consultor_financeiro', headerName: 'Consultor Financeiro', width: 200 },
     { field: 'analista', headerName: 'Analista', width: 200 },
     { field: 'consultor_comercial', headerName: 'Consultor Comercial', width: 200 },
-    { field: 'cliente_fast', headerName: 'Cliente Fast', width: 120, type: 'boolean' },
   ];
 
   const getDetailPanelContent = React.useCallback((params: any) => {

@@ -16,12 +16,15 @@ const Login = () => {
         } else {
             setUsername(login);
             try {
+
+                console.log('Tentando fazer login com:', { login, password });
                 const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
-                    login,
+                    user: login,
                     password
                 });
                 const { access_token } = response.data;
-                
+                console.log('Login bem-sucedido:', response.data);
+                console.log('Access Token:', access_token);
                 setAccessToken(access_token);
 
                 const userResponse = await axios.get(`${process.env.REACT_APP_API_URL}/login/get/user/${login}`, {
