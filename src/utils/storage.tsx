@@ -58,3 +58,11 @@ export const getNivel = (): string | null => {
 export const setNivel = (nivel: string): void => {
     localStorage.setItem('nivel', nivel);
 }
+
+// Função para limpar todos os dados do usuário no localStorage
+export const clear = (): void => {
+    setAccessToken('null');
+    setUsername('null');
+    setDepartment('null');
+    setNivel('null');
+};

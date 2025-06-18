@@ -3,7 +3,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { getUsername, getNivel, getDepartment } from '../../utils/storage';
+import { getUsername, getNivel, getDepartment} from '../../utils/storage';
 import './Topbar.css'; // Assuming you have a CSS file for styling
 
 const Topbar = ({ onMenuClick, onlyIcons = false }: { onMenuClick: () => void, onlyIcons?: boolean }) => {
@@ -91,7 +91,6 @@ const Topbar = ({ onMenuClick, onlyIcons = false }: { onMenuClick: () => void, o
                   letterSpacing: 0.1,
                   fontWeight: 400
                 }}>
-                  <div style={{ fontWeight: 600, color: '#5C59E8', fontSize: 16, marginBottom: 4 }}>Informações do usuário</div>
                   <div><span style={{ color: '#888', fontWeight: 500 }}>Nível:</span> {nivel}</div>
                   <div><span style={{ color: '#888', fontWeight: 500 }}>Departamento:</span> {department}</div>
                 </div>
