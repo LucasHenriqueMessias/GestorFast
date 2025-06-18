@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
 import { Container, Typography, TextField, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import axios from 'axios';
-import { getAccessToken, getUsername } from '../../utils/storage';
+import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
+import MenuItem from '@mui/material/MenuItem';
+import EditIcon from '@mui/icons-material/Edit';
 
 interface OverDeliveryData {
   id: number;
@@ -44,13 +46,14 @@ const JornadaCrescimentoOverDelivery = () => {
     codigo_cultura: 0,
     overdelivery: true,
   });
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const fetchData = useCallback(async () => {
     try {
       const token = getAccessToken();
-      const response = await axios.get(`${apiUrl}/tab-roi`, {
+      const response = await axios.get(`${apiUrl}/tab-roi/overdelivery`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -109,7 +112,8 @@ const JornadaCrescimentoOverDelivery = () => {
 
       console.log(newRow)
 
-      newRow.colaborador = getUsername() ?? ''; // Adiciona o colaborador ao novo registro com fallback para string vazia
+      newRow.colaborador = getUsername() ?? '';
+      newRow.departamento = getDepartment() ?? '' // Adiciona o colaborador ao novo registro com fallback para string vazia
       newRow.overdelivery = true; // Define o valor de overdelivery como true
       const response = await axios.post(`${apiUrl}/tab-roi`, newRow, {
         headers: {
@@ -136,21 +140,70 @@ const JornadaCrescimentoOverDelivery = () => {
     }));
   };
 
+  const handleRowEditStart = (params: GridRowParams, event: MuiEvent) => {
+    event.defaultMuiPrevented = true;
+  };
+  const handleRowEditStop = (params: GridRowParams, event: MuiEvent) => {
+    event.defaultMuiPrevented = true;
+    setRowModesModel((prevModel) => ({
+      ...prevModel,
+      [params.id]: { mode: GridRowModes.View },
+    }));
+  };
+  const processRowUpdate = async (newRow: OverDeliveryData, oldRow: OverDeliveryData) => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.patch(`${apiUrl}/tab-roi/${newRow.id}`, newRow, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOverDeliveryData((prev: OverDeliveryData[]) => prev.map((row) => (row.id === newRow.id ? response.data : row)));
+      setFilteredData((prev: OverDeliveryData[]) => prev.map((row) => (row.id === newRow.id ? response.data : row)));
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao editar registro:', error);
+      return oldRow;
+    }
+  };
+  const handleEditClick = (id: number) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+  const handleRowModesModelChange = (newModel: GridRowModesModel) => {
+    setRowModesModel(newModel);
+  };
+
+  // SelectEditCell precisa ser declarado antes do array columns para evitar erro de hoisting
+  const SelectEditCell = (props: GridRenderEditCellParams) => (
+    <TextField select value={props.value ?? 0} onChange={e => props.api.setEditCellValue({ id: props.id, field: props.field, value: Number(e.target.value) }, e)} size="small" fullWidth>
+      {[0,1,2,3,4,5].map(option => (
+        <MenuItem key={option} value={option}>{option}</MenuItem>
+      ))}
+    </TextField>
+  );
+
   const columns: GridColDef[] = [
     { field: 'data_criacao', headerName: 'Data', width: 180 },
     { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'cliente', headerName: 'Cliente', width: 150 },
-    { field: 'colaborador', headerName: 'colaborador', width: 150 },
-    { field: 'departamento', headerName: 'Departamento', width: 150 },
-    { field: 'investimentos', headerName: 'Investimentos', width: 150 },
-    { field: 'ferias', headerName: 'Férias', width: 150 },
-    { field: 'ecossistema_fast', headerName: 'Ecossistema Fast', width: 150 },
-    { field: 'carta_valores', headerName: 'Carta de Valores', width: 150 },
-    { field: 'cultura_empresarial', headerName: 'Cultura Empresarial', width: 150 },
-    { field: 'organograma', headerName: 'Organograma', width: 150 },
-    { field: 'manuais', headerName: 'Manuais', width: 150 },
-    { field: 'mips', headerName: 'MIPS', width: 150 },
-    { field: 'codigo_cultura', headerName: 'Código de Cultura', width: 150 },
+    { field: 'cliente', headerName: 'Cliente', width: 150, editable: true },
+    { field: 'colaborador', headerName: 'Colaborador', width: 150, editable: false },
+    { field: 'departamento', headerName: 'Departamento', width: 150, editable: false },
+    { field: 'investimentos', headerName: 'Investimentos', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'ferias', headerName: 'Férias', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'ecossistema_fast', headerName: 'Ecossistema Fast', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'carta_valores', headerName: 'Carta de Valores', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'cultura_empresarial', headerName: 'Cultura Empresarial', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'organograma', headerName: 'Organograma', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'manuais', headerName: 'Manuais', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'mips', headerName: 'MIPS', width: 150, editable: true, renderEditCell: SelectEditCell },
+    { field: 'codigo_cultura', headerName: 'Código de Cultura', width: 150, editable: true, renderEditCell: SelectEditCell },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Ações',
+      width: 100,
+      getActions: (params) => [
+        <GridActionsCellItem icon={<EditIcon />} label="Editar" onClick={handleEditClick(params.id as number)} />
+      ],
+    },
   ];
 
   return (
@@ -185,6 +238,12 @@ const JornadaCrescimentoOverDelivery = () => {
           rows={filteredData}
           columns={columns}
           autoPageSize
+          editMode="row"
+          rowModesModel={rowModesModel}
+          onRowEditStart={handleRowEditStart}
+          onRowEditStop={handleRowEditStop}
+          processRowUpdate={processRowUpdate}
+          onRowModesModelChange={handleRowModesModelChange}
         />
       </div>
 
@@ -200,94 +259,122 @@ const JornadaCrescimentoOverDelivery = () => {
             onChange={handleInputChange}
           />
           <TextField
-            margin="dense"
-            label="Departamento"
-            name="departamento"
-            fullWidth
-            value={newRow.departamento}
-            onChange={handleInputChange}
-          />
-          <TextField
+            select
             margin="dense"
             label="Investimentos"
             name="investimentos"
-            type="number"
             fullWidth
             value={newRow.investimentos}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="Férias"
             name="ferias"
-            type="number"
             fullWidth
             value={newRow.ferias}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="Cultura Empresarial"
             name="cultura_empresarial"
-            type="number"
             fullWidth
             value={newRow.cultura_empresarial}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="Ecossistema Fast"
             name="ecossistema_fast"
-            type="number"
             fullWidth
             value={newRow.ecossistema_fast}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="Carta de Valores"
             name="carta_valores"
-            type="number"
             fullWidth
             value={newRow.carta_valores}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="Organograma"
             name="organograma"
-            type="number"
             fullWidth
             value={newRow.organograma}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="Manuais"
             name="manuais"
-            type="number"
             fullWidth
             value={newRow.manuais}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="MIPS"
             name="mips"
-            type="number"
             fullWidth
             value={newRow.mips}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
+            select
             margin="dense"
             label="Código de Cultura"
             name="codigo_cultura"
-            type="number"
             fullWidth
             value={newRow.codigo_cultura}
             onChange={handleInputChange}
-          />
+          >
+            {[0,1,2,3,4,5].map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="secondary">

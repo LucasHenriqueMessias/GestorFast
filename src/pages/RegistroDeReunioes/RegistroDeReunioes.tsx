@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { DataGrid, GridColDef, GridEventListener } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridEventListener,  GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
 import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getUsername } from '../../utils/storage';
+import EditIcon from '@mui/icons-material/Edit';
 
+
+interface Reuniao {
+  id: number;
+  user: string;
+  cliente: string;
+  status: string;
+  tipo_reuniao: string;
+  local_reuniao: string;
+  Ata_reuniao: string;
+  data_realizada: string;
+  nps_reuniao: string | number;
+}
 
 const RegistroDeReunioes = () => {
-  const [reuniaoData, setReuniaoData] = useState([]);
+  const [reuniaoData, setReuniaoData] = useState<Reuniao[]>([]);
   const [open, setOpen] = useState(false);
   const [newRecord, setNewRecord] = useState({
     user: '',
@@ -18,25 +31,61 @@ const RegistroDeReunioes = () => {
     data_realizada: '',
     nps_reuniao: '',
   });
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+
+  const TipoReuniaoEditCell = (props: GridRenderEditCellParams) => {
+    return (
+      <Select
+        value={props.value || ''}
+        onChange={(e) => props.api.setEditCellValue({ id: props.id, field: props.field, value: e.target.value }, e)}
+        fullWidth
+        size="small"
+      >
+        <MenuItem value="RD">RD</MenuItem>
+        <MenuItem value="RE">RE</MenuItem>
+        <MenuItem value="RC">RC</MenuItem>
+        <MenuItem value="RI">RI</MenuItem>
+        <MenuItem value="RP">RP</MenuItem>
+        <MenuItem value="RAE">RAE</MenuItem>
+        <MenuItem value="RA">RA</MenuItem>
+      </Select>
+    );
+  };
 
   const columns: GridColDef[] = [
-    { field: 'user', headerName: 'Colaborador', width: 150 },
-    { field: 'cliente', headerName: 'Cliente', width: 150 },
-    { field: 'status', headerName: 'Status', width: 150 },
-    { field: 'tipo_reuniao', headerName: 'Tipo de Reunião', width: 150 },
-    { field: 'local_reuniao', headerName: 'Local da Reunião', width: 150 },
+    { field: 'user', headerName: 'Colaborador', width: 150, editable: true },
+    { field: 'cliente', headerName: 'Cliente', width: 150, editable: true },
+    { field: 'status', headerName: 'Status', width: 150, editable: true },
+    {
+      field: 'tipo_reuniao',
+      headerName: 'Tipo de Reunião',
+      width: 150,
+      editable: true,
+      renderEditCell: (params) => <TipoReuniaoEditCell {...params} />,
+    },
+    { field: 'local_reuniao', headerName: 'Local da Reunião', width: 150, editable: true },
     {
       field: 'Ata_reuniao',
       headerName: 'Ata da Reunião',
       width: 200,
+      editable: true,
       renderCell: (params) => (
         <span style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}>
           {params.value}
         </span>
       ),
     },
-    { field: 'data_realizada', headerName: 'Data Realizada', width: 150 },
-    { field: 'nps_reuniao', headerName: 'NPS', width: 150, type: 'number' },
+    { field: 'data_realizada', headerName: 'Data Realizada', width: 150, editable: true },
+    { field: 'nps_reuniao', headerName: 'NPS', width: 150, type: 'number', editable: true },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Ações',
+      width: 100,
+      getActions: (params) => [
+        <GridActionsCellItem icon={<EditIcon />} label="Editar" onClick={handleEditClick(params.id as number)} />
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -101,6 +150,40 @@ const RegistroDeReunioes = () => {
     }
   };
 
+  const handleRowEditStart = (params: GridRowParams, event: MuiEvent) => {
+    event.defaultMuiPrevented = true;
+  };
+  const handleRowEditStop = (params: GridRowParams, event: MuiEvent) => {
+    event.defaultMuiPrevented = true;
+    // Salva a linha editada ao sair do modo edição
+    setRowModesModel((prevModel) => ({
+      ...prevModel,
+      [params.id]: { mode: GridRowModes.View },
+    }));
+  };
+  const processRowUpdate = async (newRow: Reuniao, oldRow: Reuniao) => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-reuniao/${newRow.id}`, newRow, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      // Atualiza o estado local para refletir a alteração imediatamente
+      setReuniaoData((prev: Reuniao[]) => prev.map((row) => (row.id === newRow.id ? response.data : row)));
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao editar registro:', error);
+      return oldRow;
+    }
+  };
+  const handleEditClick = (id: number) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+  const handleRowModesModelChange = (newModel: GridRowModesModel) => {
+    setRowModesModel(newModel);
+  };
+
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
@@ -115,7 +198,12 @@ const RegistroDeReunioes = () => {
           columns={columns}
           autoPageSize
           onCellDoubleClick={handleCellDoubleClick}
-         
+          editMode="row"
+          rowModesModel={rowModesModel}
+          onRowEditStart={handleRowEditStart}
+          onRowEditStop={handleRowEditStop}
+          processRowUpdate={processRowUpdate}
+          onRowModesModelChange={handleRowModesModelChange}
         />
       </div>
       <Dialog open={open} onClose={handleClose}>

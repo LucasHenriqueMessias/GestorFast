@@ -16,6 +16,16 @@ import { getAccessToken } from './utils/storage';
 import Cadastro from './pages/Cliente/Cadastro';
 import JornadaCrescimentoCore from './pages/Cliente/JornadaCrescimentoCore';
 import JornadaCrescimentoOverDelivery from './pages/Cliente/JornadaCrescimentoOverDelivery';
+import Consultar from './pages/Consultas/Consultar';
+import Alertas from './pages/Alertas/Alertas';
+import Funil from './pages/Comercial/Funil';
+import Highlights from './pages/Highlights/Highlights';
+import Fotografia from './pages/Fotografia/Fotografia';
+import Dores from './pages/Dores/Dores';
+import Socios from './pages/Socios/Socios';
+import Biblioteca from './pages/Biblioteca/Biblioteca';
+import Eventos from './pages/Eventos/Eventos';
+import Ferramentas from './pages/Ferramentas/Ferramentas';
 
 LicenseInfo.setLicenseKey('78ba75aca6b5ae150567b5de31e72a61Tz0xMTM2NDIsRT0xNzgwMDEyNzk5MDAwLFM9cHJvLExNPXN1YnNjcmlwdGlvbixQVj1RMy0yMDI0LEtWPTI=');
 
@@ -67,7 +77,7 @@ function AppLayout() {
     );
   }
   // Se rota não for reconhecida, redireciona para login SEM sidebar/topbar
-  if (!['/Clientes', '/RegistroDeReunioes', '/home', '/Cadastro', '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery'].includes(location) && !isLogin) {
+  if (!['/Clientes', '/Ferramentas' , '/RegistroDeReunioes', '/Eventos' ,'/Biblioteca' , '/Socios',  '/Funil', '/Fotografia' , '/Highlights' , '/home', '/Alertas', '/Cadastro', '/Dores' , '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery', '/ConsultarCNPJ'].includes(location) && !isLogin) {
     return (
       <Navigate to="/" replace />
     );
@@ -88,6 +98,16 @@ function AppLayout() {
             <Route path="/Cadastro" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Cadastro /></PrivateRoute>} />
             <Route path="/JornadaCrescimentoCore" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoCore /></PrivateRoute>} />
             <Route path="/JornadaCrescimentoOverdelivery" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoOverDelivery /></PrivateRoute>} />
+            <Route path="/ConsultarCNPJ" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Consultar/></PrivateRoute>} />
+            <Route path="/Alertas" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Alertas/></PrivateRoute>} />
+            <Route path="/Funil" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Funil/></PrivateRoute>} />
+            <Route path="/Highlights" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Highlights/></PrivateRoute>} />
+            <Route path="/Fotografia" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Fotografia/></PrivateRoute>} />
+            <Route path="/Dores" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Dores/></PrivateRoute>} />
+            <Route path="/Socios" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Socios/></PrivateRoute>} />
+            <Route path="/Biblioteca" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Biblioteca/></PrivateRoute>} />
+            <Route path="/Eventos" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Eventos/></PrivateRoute>} />
+            <Route path="/Ferramentas" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Ferramentas/></PrivateRoute>} />
           </Routes>
         </div>
       </div>

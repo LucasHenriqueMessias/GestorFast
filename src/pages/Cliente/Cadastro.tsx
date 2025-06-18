@@ -478,7 +478,7 @@ const Cadastro = () => {
 <div className="form-group">
   <label className="checkbox-label">
     <input type="checkbox" name="prospeccao" checked={formData.prospeccao} onChange={handleChange} />
-    Prospecção de Cliente
+    Funil
   </label>
 </div>
 {formData.prospeccao && (
