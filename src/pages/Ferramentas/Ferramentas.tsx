@@ -252,7 +252,7 @@ const Ferramentas = () => {
         )}
       </Box>
     );
-  }, [editingId, editData, handleSave, handleCancel, handleEdit, handleDelete, handleEditChange]);
+  }, [editingId, editData, handleSave, handleCancel, handleEdit, handleDelete, handleEditChange, clientes]);
 
   const getDetailPanelHeight = React.useCallback(() => 300, []);
 
