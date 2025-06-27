@@ -26,6 +26,13 @@ import Socios from './pages/Socios/Socios';
 import Biblioteca from './pages/Biblioteca/Biblioteca';
 import Eventos from './pages/Eventos/Eventos';
 import Ferramentas from './pages/Ferramentas/Ferramentas';
+import Relatorios from './pages/Relatorios/Relatorios';
+import RelatorioFast from './pages/Relatorios/RelatorioFast';
+import RelatorioConsultor from './pages/Relatorios/RelatorioConsultor';
+import RelatorioCliente from './pages/Relatorios/RelatorioCliente';
+import AtribuidosAMim from './pages/HelpDesk/AtribuidosAMim';
+import MeusChamados from './pages/HelpDesk/MeusChamados';
+import NovoChamado from './pages/HelpDesk/NovoChamado';
 
 LicenseInfo.setLicenseKey('78ba75aca6b5ae150567b5de31e72a61Tz0xMTM2NDIsRT0xNzgwMDEyNzk5MDAwLFM9cHJvLExNPXN1YnNjcmlwdGlvbixQVj1RMy0yMDI0LEtWPTI=');
 
@@ -77,7 +84,7 @@ function AppLayout() {
     );
   }
   // Se rota não for reconhecida, redireciona para login SEM sidebar/topbar
-  if (!['/Clientes', '/Ferramentas' , '/RegistroDeReunioes', '/Eventos' ,'/Biblioteca' , '/Socios',  '/Funil', '/Fotografia' , '/Highlights' , '/home', '/Alertas', '/Cadastro', '/Dores' , '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery', '/ConsultarCNPJ'].includes(location) && !isLogin) {
+  if (!['/Clientes','/Relatorios','/HelpDesk/AtribuidosAMim' , '/HelpDesk/MeusChamados', '/HelpDesk/NovoChamado' ,  '/Relatorios/Cliente', '/Relatorios/Consultor', '/Relatorios/Fast' , '/Ferramentas' , '/RegistroDeReunioes', '/Eventos' ,'/Biblioteca' , '/Socios',  '/Funil', '/Fotografia' , '/Highlights' , '/home', '/Alertas', '/Cadastro', '/Dores' , '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery', '/ConsultarCNPJ'].includes(location) && !isLogin) {
     return (
       <Navigate to="/" replace />
     );
@@ -108,6 +115,13 @@ function AppLayout() {
             <Route path="/Biblioteca" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Biblioteca/></PrivateRoute>} />
             <Route path="/Eventos" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Eventos/></PrivateRoute>} />
             <Route path="/Ferramentas" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Ferramentas/></PrivateRoute>} />
+            <Route path="/Relatorios" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Relatorios/></PrivateRoute>} />
+            <Route path="/Relatorios/Cliente" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioCliente /></PrivateRoute>} />
+            <Route path="/Relatorios/Consultor" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioConsultor /></PrivateRoute>} />
+            <Route path="/Relatorios/Fast" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioFast /></PrivateRoute>} />
+            <Route path="/HelpDesk/AtribuidosAMim" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><AtribuidosAMim /></PrivateRoute>} />
+            <Route path="/HelpDesk/MeusChamados" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><MeusChamados /></PrivateRoute>} />
+            <Route path="/HelpDesk/NovoChamado" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><NovoChamado /></PrivateRoute>} />
           </Routes>
         </div>
       </div>

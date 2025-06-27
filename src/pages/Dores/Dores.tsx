@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Autocomplete } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import { getAccessToken, getUsername } from '../../utils/storage';
 
 interface DoresData {
@@ -28,6 +29,8 @@ interface DoresData {
 const Dores = () => {
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [clientes, setClientes] = useState<string[]>([]);
   const [newDores, setNewDores] = useState<DoresData>({
     id: 0,
     cliente: '',
@@ -87,7 +90,25 @@ const Dores = () => {
     fetchData();
   }, []);
 
-  const handleAddDores = () => {
+  const fetchClientes = async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.data && Array.isArray(response.data)) {
+        const razoesSociais = response.data.map((item: { razao_social: string }) => item.razao_social);
+        setClientes(razoesSociais);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  };
+
+  const handleAddDores = async () => {
+    await fetchClientes();
     const username = getUsername(); // Obtém o nome do usuário
   setNewDores({
     ...newDores,
@@ -95,21 +116,58 @@ const Dores = () => {
   });
     setShowForm(true);
   };
-
   const handleCloseForm = () => {
     setShowForm(false);
+    setIsEditing(false);
+    setNewDores({
+      id: 0,
+      cliente: '',
+      consultor: '',
+      ausencia_salario: 0,
+      desconhecimento_lucratividade: 0,
+      precos_informal: 0,
+      ausencia_projecao: 0,
+      centralizacao_decisoes: 0,
+      ausencia_planejamento: 0,
+      ausencia_estrategia: 0,
+      inadequacao_estrutura: 0,
+      ausencia_controles: 0,
+      ausencia_processos: 0,
+      ausencia_tecnologia: 0,
+      ausencia_inovacao: 0,
+      ausencia_capital: 0,
+      utilizacao_linhas_credito: 0,
+      suporte_contabil_inadequado: 0,
+    });
   };
-
   const handleSubmitDores = async () => {
     try {
       const token = getAccessToken();
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-dores-cliente`, newDores, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setRows([...rows, response.data]);
+      
+      if (isEditing) {
+        // Atualizar registro existente
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-dores-cliente/${newDores.id}`, newDores, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        // Atualizar a linha na tabela
+        setRows(rows.map(row => 
+          row.id === newDores.id ? response.data : row
+        ));
+      } else {
+        // Criar novo registro
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-dores-cliente`, newDores, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setRows([...rows, response.data]);
+      }
+      
       setShowForm(false);
+      setIsEditing(false);
       setNewDores({
         id: 0,
         cliente: '',
@@ -131,10 +189,35 @@ const Dores = () => {
         suporte_contabil_inadequado: 0,
       });
     } catch (error) {
-      console.error('Erro ao cadastrar Dores:', error);
+      console.error('Erro ao salvar Dores:', error);
     }
   };
 
+  const handleEditDores = async (row: any) => {
+    await fetchClientes();
+    setNewDores({
+      id: row.id,
+      cliente: row.cliente,
+      consultor: row.consultor,
+      ausencia_salario: row.ausencia_salario,
+      desconhecimento_lucratividade: row.desconhecimento_lucratividade,
+      precos_informal: row.precos_informal,
+      ausencia_projecao: row.ausencia_projecao,
+      centralizacao_decisoes: row.centralizacao_decisoes,
+      ausencia_planejamento: row.ausencia_planejamento,
+      ausencia_estrategia: row.ausencia_estrategia,
+      inadequacao_estrutura: row.inadequacao_estrutura,
+      ausencia_controles: row.ausencia_controles,
+      ausencia_processos: row.ausencia_processos,
+      ausencia_tecnologia: row.ausencia_tecnologia,
+      ausencia_inovacao: row.ausencia_inovacao,
+      ausencia_capital: row.ausencia_capital,
+      utilizacao_linhas_credito: row.utilizacao_linhas_credito,
+      suporte_contabil_inadequado: row.suporte_contabil_inadequado,
+    });
+    setIsEditing(true);
+    setShowForm(true);
+  };
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'cliente', headerName: 'Cliente', width: 150 },
@@ -154,6 +237,20 @@ const Dores = () => {
     { field: 'ausencia_capital', headerName: 'Ausência Capital', width: 200 },
     { field: 'utilizacao_linhas_credito', headerName: 'Utilização Linhas Crédito', width: 200 },
     { field: 'suporte_contabil_inadequado', headerName: 'Suporte Contábil Inadequado', width: 200 },
+    {
+      field: 'actions',
+      headerName: 'Ações',
+      width: 100,
+      renderCell: (params) => (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => handleEditDores(params.row)}
+          startIcon={<EditIcon />}
+        >
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -161,9 +258,8 @@ const Dores = () => {
       <h1>Dores Cliente</h1>
       <Button variant="contained" color="primary" onClick={handleAddDores} style={{ marginBottom: '16px' }}>
         Cadastrar Dores
-      </Button>
-      <Dialog open={showForm} onClose={handleCloseForm}>
-        <DialogTitle>Cadastro de Dores</DialogTitle>
+      </Button>      <Dialog open={showForm} onClose={handleCloseForm}>
+        <DialogTitle>{isEditing ? 'Editar Dores' : 'Cadastro de Dores'}</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
@@ -174,14 +270,24 @@ const Dores = () => {
             onChange={(e) => setNewDores({ ...newDores, consultor: e.target.value })}
             disabled
           />
-          <TextField
-            margin="dense"
-            label="Cliente"
-            type="text"
-            fullWidth
+          <Autocomplete
+            options={clientes}
+            freeSolo
             value={newDores.cliente}
-            onChange={(e) => setNewDores({ ...newDores, cliente: e.target.value })}
-           
+            onChange={(event, newValue) => {
+              setNewDores({ ...newDores, cliente: newValue || '' });
+            }}
+            onInputChange={(event, newInputValue) => {
+              setNewDores({ ...newDores, cliente: newInputValue });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="dense"
+                label="Cliente"
+                fullWidth
+              />
+            )}
           />
           <TextField
             margin="dense"
@@ -307,13 +413,16 @@ const Dores = () => {
         <DialogActions>
           <Button onClick={handleCloseForm} color="primary">
             Cancelar
-          </Button>
-          <Button onClick={handleSubmitDores} color="primary">
-            Salvar
+          </Button>          <Button onClick={handleSubmitDores} color="primary">
+            {isEditing ? 'Atualizar' : 'Salvar'}
           </Button>
         </DialogActions>
       </Dialog>
-      <DataGrid rows={rows} columns={columns} autoPageSize/>
+      <DataGrid rows={rows} columns={columns} autoPageSize onCellClick={(params) => {
+        if (params.field !== '__check__' && params.field !== 'id') {
+          handleEditDores(params.row);
+        }
+      }} />
     </div>
   );
 };

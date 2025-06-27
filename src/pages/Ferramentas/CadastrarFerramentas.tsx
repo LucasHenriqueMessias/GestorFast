@@ -1,51 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { Container, TextField, Button } from '@mui/material';
+import { Container, TextField, Button, Box, Autocomplete } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getUsername } from '../../utils/storage';
 
 const CadastrarFerramentas = () => {
+  const [clientes, setClientes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    tipoArquivo: 'xlsx',
-    usuario: '',
+    nome_ferramenta: '',
+    cliente: '',
+    descricao: '',
+    url: '',
+    usuario_criacao: '',
   });
-  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
+    const fetchClientes = async () => {
+      try {
+        const token = getAccessToken();
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.data && Array.isArray(response.data)) {
+          const razoesSociais = response.data.map((item: { razao_social: string }) => item.razao_social);
+          setClientes(razoesSociais);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+      }
+    };
+
     const usuario = getUsername() || '';
-    setFormData((prevData) => ({ ...prevData, usuario }));
+    setFormData((prevData) => ({ ...prevData, usuario_criacao: usuario }));
+    fetchClientes();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
   const handleSubmit = async () => {
     try {
       const token = getAccessToken();
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('tipoArquivo', formData.tipoArquivo);
-      formDataToSend.append('usuario', formData.usuario);
-      if (file) {
-        formDataToSend.append('file', file);
-      }
+      
+      // Criar objeto com as datas atuais
+      const dataToSend = {
+        nome_ferramenta: formData.nome_ferramenta,
+        cliente: formData.cliente,
+        descricao: formData.descricao,
+        url: formData.url,
+        usuario_criacao: formData.usuario_criacao,
+        data_criacao: new Date().toISOString(),
+        data_atualizacao: new Date().toISOString()
+      };
 
-      await axios.post(`${process.env.REACT_APP_API_URL}/tab-upload/file`, formDataToSend, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/tab-ferramentas`, dataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         }
       });
+      
       alert('Ferramenta cadastrada com sucesso!');
+      
+      // Limpar formulário
+      setFormData({
+        nome_ferramenta: '',
+        cliente: '',
+        descricao: '',
+        url: '',
+        usuario_criacao: getUsername() || '',
+      });
+      
       window.location.reload(); // Refresh the page
     } catch (error) {
       console.error('Erro ao cadastrar ferramenta:', error);
@@ -55,43 +82,91 @@ const CadastrarFerramentas = () => {
 
   return (
     <Container>
-      <form noValidate autoComplete="off">
-      <label htmlFor="upload-file">
-          <Button variant="contained" color="primary" component="span" style={{ marginTop: 20 }}>
-            Selecionar o Arquivo (Somente XLSX)
-          </Button>
-        </label>
+      <Box component="form" noValidate autoComplete="off" sx={{ mt: 2 }}>
         <TextField
           margin="dense"
-          name="name"
+          name="nome_ferramenta"
           label="Nome da Ferramenta"
           type="text"
           fullWidth
-          value={formData.name}
+          required
+          value={formData.nome_ferramenta}
           onChange={handleChange}
+          sx={{ mb: 2 }}
         />
+        
+        <Autocomplete
+          options={clientes}
+          freeSolo
+          value={formData.cliente}
+          onChange={(event, newValue) => {
+            setFormData({ ...formData, cliente: newValue || '' });
+          }}
+          onInputChange={(event, newInputValue) => {
+            setFormData({ ...formData, cliente: newInputValue });
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              margin="dense"
+              label="Cliente"
+              fullWidth
+              required
+              sx={{ mb: 2 }}
+            />
+          )}
+        />
+        
         <TextField
           margin="dense"
-          name="description"
+          name="descricao"
           label="Descrição"
           type="text"
           fullWidth
-          value={formData.description}
+          multiline
+          rows={3}
+          required
+          value={formData.descricao}
           onChange={handleChange}
+          sx={{ mb: 2 }}
         />
-        <input
-          accept=".xlsx"
-          style={{ display: 'none' }}
-          id="upload-file"
-          type="file"
-          onChange={handleFileChange}
+        
+        <TextField
+          margin="dense"
+          name="url"
+          label="URL da Ferramenta"
+          type="url"
+          fullWidth
+          required
+          placeholder="https://exemplo.com/ferramenta"
+          value={formData.url}
+          onChange={handleChange}
+          sx={{ mb: 2 }}
         />
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
-            Cadastrar
+        
+        <TextField
+          margin="dense"
+          name="usuario_criacao"
+          label="Usuário Criação"
+          type="text"
+          fullWidth
+          disabled
+          value={formData.usuario_criacao}
+          sx={{ mb: 3 }}
+        />
+        
+        <Box sx={{ textAlign: 'center' }}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleSubmit}
+            disabled={!formData.nome_ferramenta || !formData.cliente || !formData.descricao}
+            sx={{ px: 4, py: 1 }}
+          >
+            Cadastrar Ferramenta
           </Button>
-        </div>
-      </form>
+        </Box>
+      </Box>
     </Container>
   );
 };

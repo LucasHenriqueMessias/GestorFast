@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, IconButton, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, IconButton, Select, MenuItem, SelectChangeEvent, Autocomplete } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
 import { getAccessToken, getUsername } from '../../utils/storage';
 
+interface Cliente {
+  razao_social: string;
+}
+
 const Alertas = () => {
   const [sinalAmareloData, setSinalAmareloData] = useState([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [open, setOpen] = useState(false);
   const [newRecord, setNewRecord] = useState({ usuario: '', cliente: '', status: '', motivoSinal: '' });
   const [editOpen, setEditOpen] = useState(false);
@@ -15,6 +20,7 @@ const Alertas = () => {
   const handleStatusChange = (record: any) => {
     setEditRecord(record);
     setEditOpen(true);
+    fetchClientes(); // Buscar clientes ao abrir o formulário de edição
   };
 
   const columns: GridColDef[] = [
@@ -61,9 +67,24 @@ const Alertas = () => {
     }
   };
 
+  const fetchClientes = async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setClientes(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  };
+
   const handleClickOpen = () => {
     setNewRecord({ ...newRecord, usuario: getUsername() || '' });
     setOpen(true);
+    fetchClientes(); // Buscar clientes ao abrir o formulário
   };
 
   const handleClose = () => {
@@ -75,6 +96,14 @@ const Alertas = () => {
   const handleNewRecordChange = (e: React.ChangeEvent<{ name?: string; value: unknown }> | SelectChangeEvent<string>) => {
     const { name, value } = e.target;
     setNewRecord({ ...newRecord, [name as string]: value });
+  };
+
+  const handleClienteChangeNew = (event: any, newValue: string | null) => {
+    setNewRecord({ ...newRecord, cliente: newValue || '' });
+  };
+
+  const handleClienteChangeEdit = (event: any, newValue: string | null) => {
+    setEditRecord({ ...editRecord, cliente: newValue || '' });
   };
 
   const handleSubmit = async () => {
@@ -131,15 +160,24 @@ const Alertas = () => {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Adicionar Novo Registro</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="cliente"
-            label="Cliente"
-            type="text"
-            fullWidth
+          <Autocomplete
+            freeSolo
+            options={clientes.map((cliente) => cliente.razao_social)}
             value={newRecord.cliente}
-            onChange={handleNewRecordChange}
+            onChange={handleClienteChangeNew}
+            onInputChange={(event, newInputValue) => {
+              setNewRecord({ ...newRecord, cliente: newInputValue });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                autoFocus
+                margin="dense"
+                label="Cliente"
+                fullWidth
+                placeholder="Digite ou selecione um cliente"
+              />
+            )}
           />
           <Select
             margin="dense"
@@ -178,15 +216,24 @@ const Alertas = () => {
       <Dialog open={editOpen} onClose={handleEditClose}>
         <DialogTitle>Editar Registro</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="cliente"
-            label="Cliente"
-            type="text"
-            fullWidth
+          <Autocomplete
+            freeSolo
+            options={clientes.map((cliente) => cliente.razao_social)}
             value={editRecord.cliente}
-            onChange={handleEditChange}
+            onChange={handleClienteChangeEdit}
+            onInputChange={(event, newInputValue) => {
+              setEditRecord({ ...editRecord, cliente: newInputValue });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                autoFocus
+                margin="dense"
+                label="Cliente"
+                fullWidth
+                placeholder="Digite ou selecione um cliente"
+              />
+            )}
           />
           <Select
             margin="dense"

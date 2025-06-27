@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox, Autocomplete } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import { getAccessToken, getUsername } from '../../utils/storage';
 
 interface FotografiaData {
   id: number;
   usuario: string;
-  cnpj: string;
+  cliente: string;
   data_criacao: Date;
   ferramentas: string;
   antecipacao_recebiveis: string;
@@ -29,10 +30,12 @@ interface FotografiaData {
 const Fotografia = () => {
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [clientes, setClientes] = useState<string[]>([]);
   const [newFotografia, setNewFotografia] = useState<FotografiaData>({
     id: 0,
     usuario: '',
-    cnpj: '',
+    cliente: '',
     data_criacao: new Date(),
     ferramentas: '',
     antecipacao_recebiveis: '',
@@ -63,7 +66,7 @@ const Fotografia = () => {
         const data = response.data.map((item: FotografiaData) => ({
           id: item.id,
           usuario: item.usuario,
-          cnpj: item.cnpj,
+          cliente: item.cliente,
           data_criacao: new Date(item.data_criacao).toLocaleDateString(),
           ferramentas: item.ferramentas,
           antecipacao_recebiveis: item.antecipacao_recebiveis,
@@ -90,7 +93,25 @@ const Fotografia = () => {
     fetchData();
   }, []);
 
-  const handleAddFotografia = () => {
+  const fetchClientes = async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.data && Array.isArray(response.data)) {
+        const razoesSociais = response.data.map((item: { razao_social: string }) => item.razao_social);
+        setClientes(razoesSociais);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  };
+
+  const handleAddFotografia = async () => {
+    await fetchClientes();
     const username = getUsername(); // Obtém o nome do usuário
     setNewFotografia({
       ...newFotografia,
@@ -98,25 +119,65 @@ const Fotografia = () => {
     });
     setShowForm(true);
   };
-
   const handleCloseForm = () => {
     setShowForm(false);
+    setIsEditing(false);
+    setNewFotografia({
+      id: 0,
+      usuario: '',
+      cliente: '',
+      data_criacao: new Date(),
+      ferramentas: '',
+      antecipacao_recebiveis: '',
+      pagamento_impostos_mes: '',
+      faturamento: '',
+      novas_fontes_receita: '',
+      numero_funcionarios: '',
+      numero_clientes: '',
+      margem_lucro: '',
+      parcelas_mensais: 0,
+      juros_mensais_pagos: 0,
+      inadimplencia: 0,
+      estrutura: '',
+      cultura_empresarial: '',
+      pro_labore: 0,
+      fotografia_inicial: false,
+    });
   };
-
   const handleSubmitFotografia = async () => {
     try {
       const token = getAccessToken();
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente`, newFotografia, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setRows([...rows, response.data]);
+      
+      if (isEditing) {
+        // Atualizar registro existente
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente/${newFotografia.id}`, newFotografia, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        // Atualizar a linha na tabela
+        setRows(rows.map(row => 
+          row.id === newFotografia.id 
+            ? { ...response.data, data_criacao: new Date(response.data.data_criacao).toLocaleDateString() }
+            : row
+        ));
+      } else {
+        // Criar novo registro
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente`, newFotografia, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setRows([...rows, { ...response.data, data_criacao: new Date(response.data.data_criacao).toLocaleDateString() }]);
+      }
+      
       setShowForm(false);
+      setIsEditing(false);
       setNewFotografia({
         id: 0,
         usuario: '',
-        cnpj: '',
+        cliente: '',
         data_criacao: new Date(),
         ferramentas: '',
         antecipacao_recebiveis: '',
@@ -133,18 +194,43 @@ const Fotografia = () => {
         cultura_empresarial: '',
         pro_labore: 0,
         fotografia_inicial: false,
-        
       });
     } catch (error) {
-      console.error('Erro ao cadastrar Fotografia:', error);
+      console.error('Erro ao salvar Fotografia:', error);
     }
   };
 
+  const handleEditFotografia = async (row: any) => {
+    await fetchClientes();
+    setNewFotografia({
+      id: row.id,
+      usuario: row.usuario,
+      cliente: row.cliente,
+      data_criacao: new Date(row.data_criacao.split('/').reverse().join('-')), // Converter de DD/MM/YYYY para Date
+      ferramentas: row.ferramentas,
+      antecipacao_recebiveis: row.antecipacao_recebiveis,
+      pagamento_impostos_mes: row.pagamento_impostos_mes,
+      faturamento: row.faturamento,
+      novas_fontes_receita: row.novas_fontes_receita,
+      numero_funcionarios: row.numero_funcionarios,
+      numero_clientes: row.numero_clientes,
+      margem_lucro: row.margem_lucro,
+      parcelas_mensais: row.parcelas_mensais,
+      juros_mensais_pagos: row.juros_mensais_pagos,
+      inadimplencia: row.inadimplencia,
+      estrutura: row.estrutura,
+      cultura_empresarial: row.cultura_empresarial,
+      pro_labore: row.pro_labore,
+      fotografia_inicial: row.fotografia_inicial,
+    });
+    setIsEditing(true);
+    setShowForm(true);
+  };
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'fotografia_inicial', headerName: 'Fotografia Inicial', width: 150, type: 'boolean' },
     { field: 'usuario', headerName: 'Consultor', width: 150 },
-    { field: 'cnpj', headerName: 'CNPJ', width: 150 },
+    { field: 'cliente', headerName: 'Cliente', width: 150 },
     { field: 'data_criacao', headerName: 'Data Criação', width: 150 },
     { field: 'ferramentas', headerName: 'Ferramentas', width: 150 },
     { field: 'antecipacao_recebiveis', headerName: 'Antecipação Recebíveis', width: 200 },
@@ -160,6 +246,20 @@ const Fotografia = () => {
     { field: 'estrutura', headerName: 'Estrutura', width: 150 },
     { field: 'cultura_empresarial', headerName: 'Cultura Empresarial', width: 200 },
     { field: 'pro_labore', headerName: 'Pro Labore', width: 150 },
+    {
+      field: 'actions',
+      headerName: 'Ações',
+      width: 100,
+      renderCell: (params) => (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => handleEditFotografia(params.row)}
+          startIcon={<EditIcon />}
+        >
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -172,9 +272,8 @@ const Fotografia = () => {
         style={{ marginBottom: '16px' }} // Adiciona margem inferior
       >
         Cadastrar Fotografia
-      </Button>
-      <Dialog open={showForm} onClose={handleCloseForm}>
-        <DialogTitle>Cadastro de Fotografia</DialogTitle>
+      </Button>      <Dialog open={showForm} onClose={handleCloseForm}>
+        <DialogTitle>{isEditing ? 'Editar Fotografia' : 'Cadastro de Fotografia'}</DialogTitle>
         <DialogContent>
         <FormControlLabel
             control={
@@ -196,13 +295,24 @@ const Fotografia = () => {
             onChange={(e) => setNewFotografia({ ...newFotografia, usuario: e.target.value })}
             disabled
           />
-          <TextField
-            margin="dense"
-            label="CNPJ"
-            type="text"
-            fullWidth
-            value={newFotografia.cnpj}
-            onChange={(e) => setNewFotografia({ ...newFotografia, cnpj: e.target.value })}
+          <Autocomplete
+            options={clientes}
+            freeSolo
+            value={newFotografia.cliente}
+            onChange={(event, newValue) => {
+              setNewFotografia({ ...newFotografia, cliente: newValue || '' });
+            }}
+            onInputChange={(event, newInputValue) => {
+              setNewFotografia({ ...newFotografia, cliente: newInputValue });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="dense"
+                label="Cliente"
+                fullWidth
+              />
+            )}
           />
           <TextField
             margin="dense"
@@ -328,9 +438,8 @@ const Fotografia = () => {
         <DialogActions>
           <Button onClick={handleCloseForm} color="primary">
             Cancelar
-          </Button>
-          <Button onClick={handleSubmitFotografia} color="primary">
-            Salvar
+          </Button>          <Button onClick={handleSubmitFotografia} color="primary">
+            {isEditing ? 'Atualizar' : 'Salvar'}
           </Button>
         </DialogActions>
       </Dialog>

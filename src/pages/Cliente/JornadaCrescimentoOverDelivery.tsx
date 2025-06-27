@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DataGrid, GridColDef, GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
-import { Container, Typography, TextField, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Container, Typography, TextField, Button, Dialog, DialogActions, DialogContent, DialogTitle, Autocomplete } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 import MenuItem from '@mui/material/MenuItem';
@@ -24,9 +24,14 @@ interface OverDeliveryData {
   overdelivery: boolean;
 }
 
+interface Cliente {
+  razao_social: string;
+}
+
 const JornadaCrescimentoOverDelivery = () => {
   const [OverDeliveryData, setOverDeliveryData] = useState<OverDeliveryData[]>([]);
   const [filteredData, setFilteredData] = useState<OverDeliveryData[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [filterUsuario, setFilterUsuario] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [newRow, setNewRow] = useState<OverDeliveryData>({
@@ -65,6 +70,20 @@ const JornadaCrescimentoOverDelivery = () => {
     }
   }, [apiUrl]);
 
+  const fetchClientes = useCallback(async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${apiUrl}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setClientes(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  }, [apiUrl]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -83,6 +102,7 @@ const JornadaCrescimentoOverDelivery = () => {
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
+    fetchClientes(); // Buscar clientes ao abrir o formulário
   };
 
   const handleCloseDialog = () => {
@@ -137,6 +157,13 @@ const JornadaCrescimentoOverDelivery = () => {
     setNewRow((prevRow) => ({
       ...prevRow,
       [name]: name === 'investimentos' || name === 'ferias' || name === 'cultura_empresarial' ? Number(value) : value,
+    }));
+  };
+
+  const handleClienteChange = (event: any, newValue: string | null) => {
+    setNewRow((prevRow) => ({
+      ...prevRow,
+      cliente: newValue || '',
     }));
   };
 
@@ -250,13 +277,26 @@ const JornadaCrescimentoOverDelivery = () => {
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>Adicionar Registro</DialogTitle>
         <DialogContent>
-          <TextField
-            margin="dense"
-            label="Cliente"
-            name="cliente"
-            fullWidth
+          <Autocomplete
+            freeSolo
+            options={clientes.map((cliente) => cliente.razao_social)}
             value={newRow.cliente}
-            onChange={handleInputChange}
+            onChange={handleClienteChange}
+            onInputChange={(event, newInputValue) => {
+              setNewRow((prevRow) => ({
+                ...prevRow,
+                cliente: newInputValue,
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="dense"
+                label="Cliente"
+                fullWidth
+                placeholder="Digite ou selecione um cliente"
+              />
+            )}
           />
           <TextField
             select

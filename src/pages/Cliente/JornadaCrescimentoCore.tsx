@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DataGrid, GridColDef, GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
-import { Container, Typography, Button, TextField, Modal, Box } from '@mui/material';
+import { Container, Typography, Button, TextField, Modal, Box, Autocomplete } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getUsername, getDepartment } from '../../utils/storage';
 import MenuItem from '@mui/material/MenuItem';
@@ -21,9 +21,14 @@ interface coreData {
   core: boolean;
 }
 
+interface Cliente {
+  razao_social: string;
+}
+
 const JornadaCrescimentoCore = () => {
   const [coreData, setcoreData] = useState<coreData[]>([]);
   const [filteredData, setFilteredData] = useState<coreData[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [filterCliente, setFilterCliente] = useState(''); // Estado para o filtro de cliente
   const [open, setOpen] = useState(false);
   const [newRow, setNewRow] = useState({
@@ -91,9 +96,36 @@ const JornadaCrescimentoCore = () => {
     }
   }, [apiUrl]);
 
+  const fetchClientes = useCallback(async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${apiUrl}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setClientes(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  }, [apiUrl]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Buscar clientes quando o modal for aberto
+  useEffect(() => {
+    if (open) {
+      fetchClientes();
+      setNewRow((prev) => ({
+        ...prev,
+        colaborador: getUsername() || '',
+        departamento: getDepartment() || '',
+        core: true, // Garante que o novo registro seja marcado como core
+      }));
+    }
+  }, [open, fetchClientes]);
 
   useEffect(() => {
     // Filtrar os dados conforme o valor digitado no campo de filtro
@@ -110,6 +142,10 @@ const JornadaCrescimentoCore = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewRow({ ...newRow, [e.target.name]: e.target.value });
+  };
+
+  const handleClienteChange = (event: any, newValue: string | null) => {
+    setNewRow({ ...newRow, cliente: newValue || '' });
   };
 
   const handleAdd = async () => {
@@ -136,18 +172,6 @@ const JornadaCrescimentoCore = () => {
       alert('Erro ao adicionar registro!');
     }
   };
-
-  // Sempre que abrir o modal, atualiza o Colaborador e departamento para o valor atual do storage
-  useEffect(() => {
-    if (open) {
-      setNewRow((prev) => ({
-        ...prev,
-        colaborador: getUsername() || '',
-        departamento: getDepartment() || '',
-        core: true, // Garante que o novo registro seja marcado como core
-      }));
-    }
-  }, [open]);
 
   const handleRowEditStart = (params: GridRowParams, event: MuiEvent) => {
     event.defaultMuiPrevented = true;
@@ -222,7 +246,24 @@ const JornadaCrescimentoCore = () => {
           gap: 2,
           position: 'relative',
         }}>
-          <TextField label="Cliente" name="cliente" value={newRow.cliente} onChange={handleChange} fullWidth size="small" />
+          <Autocomplete
+            freeSolo
+            options={clientes.map((cliente) => cliente.razao_social)}
+            value={newRow.cliente}
+            onChange={handleClienteChange}
+            onInputChange={(event, newInputValue) => {
+              setNewRow({ ...newRow, cliente: newInputValue });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Cliente"
+                fullWidth
+                size="small"
+                placeholder="Digite ou selecione um cliente"
+              />
+            )}
+          />
           <TextField select label="Máquina de Cartão" name="maquina_cartao" value={newRow.maquina_cartao} onChange={handleChange} fullWidth size="small">
             {[0,1,2,3,4,5].map((option) => (
               <MenuItem key={option} value={option}>{option}</MenuItem>

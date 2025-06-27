@@ -1,28 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, IconButton, Autocomplete } from '@mui/material';
+import { Edit as EditIcon } from '@mui/icons-material';
 import { getAccessToken } from '../../utils/storage';
 
 interface SocioData {
-  ID_Socio: number;
-  cnpj_empresa: string;
-  pais: null;
+  id: number;
+  razao_social: string;
   nome_socio: string;
-  codigo_pais: null;
-  faixa_etaria: string;
+  idade: number;
   cnpj_cpf_do_socio: string;
-  qualificacao_socio: string;
-  codigo_faixa_etaria: number;
-  data_entrada_sociedade: Date;
-  identificador_de_socio: number;
-  cpf_representante_legal: string;
-  nome_representante_legal: string;
-  codigo_qualificacao_socio: number;
-  qualificacao_representante_legal: string;
-  codigo_qualificacao_representante_legal: number;
+  data_nascimento: string;
+  data_entrada_sociedade: string;
+  formacao: string;
   disc: string;
-  serdip: string;
+  sedirp: string;
   eneagrama: string;
   hobbies: string;
   relatorio_prospeccao: string;
@@ -32,25 +25,19 @@ interface SocioData {
 const Socios = () => {
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [clientes, setClientes] = useState<string[]>([]);
   const [newSocio, setNewSocio] = useState<SocioData>({
-    ID_Socio: 0,
-    cnpj_empresa: '',
-    pais: null,
+    id: 0,
+    razao_social: '',
     nome_socio: '',
-    codigo_pais: null,
-    faixa_etaria: '',
+    idade: 0,
     cnpj_cpf_do_socio: '',
-    qualificacao_socio: '',
-    codigo_faixa_etaria: 0,
-    data_entrada_sociedade: new Date(),
-    identificador_de_socio: 0,
-    cpf_representante_legal: '',
-    nome_representante_legal: '',
-    codigo_qualificacao_socio: 0,
-    qualificacao_representante_legal: '',
-    codigo_qualificacao_representante_legal: 0,
+    data_nascimento: new Date().toISOString(),
+    data_entrada_sociedade: new Date().toISOString(),
+    formacao: '',
     disc: '',
-    serdip: '',
+    sedirp: '',
     eneagrama: '',
     hobbies: '',
     relatorio_prospeccao: '',
@@ -67,11 +54,24 @@ const Socios = () => {
 
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/tab-socios`, config);
-        const data = response.data.map((item: SocioData) => ({
-          id: item.ID_Socio,
-          ...item,
-          data_entrada_sociedade: new Date(item.data_entrada_sociedade).toLocaleDateString(),
-        }));
+        const data = response.data.map((item: any) => {
+          return {
+            id: item.id,
+            razao_social: item.razao_social,
+            nome_socio: item.nome_socio,
+            idade: item.idade,
+            cnpj_cpf_do_socio: item.cnpj_cpf_do_socio,
+            data_nascimento: item.data_nascimento,
+            data_entrada_sociedade: item.data_entrada_sociedade,
+            formacao: item.formacao,
+            disc: item.disc,
+            sedirp: item.sedirp,
+            eneagrama: item.eneagrama,
+            hobbies: item.hobbies,
+            relatorio_prospeccao: item.relatorio_prospeccao,
+            opcao_pelo_mei: item.opcao_pelo_mei,
+          };
+        });
         setRows(data);
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
@@ -81,12 +81,57 @@ const Socios = () => {
     fetchData();
   }, []);
 
-  const handleAddSocio = () => {
+  const fetchClientes = async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.data && Array.isArray(response.data)) {
+        const razoesSociais = response.data.map((item: { razao_social: string }) => item.razao_social);
+        setClientes(razoesSociais);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  };
+
+  const handleAddSocio = async () => {
+    await fetchClientes();
+    setIsEditing(false);
+    setShowForm(true);
+  };
+
+  const handleEditSocio = async (socio: SocioData) => {
+    await fetchClientes();
+    setIsEditing(true);
+    setNewSocio({
+      ...socio,
+    });
     setShowForm(true);
   };
 
   const handleCloseForm = () => {
     setShowForm(false);
+    setIsEditing(false);
+    setNewSocio({
+      id: 0,
+      razao_social: '',
+      nome_socio: '',
+      idade: 0,
+      cnpj_cpf_do_socio: '',
+      data_nascimento: new Date().toISOString(),
+      data_entrada_sociedade: new Date().toISOString(),
+      formacao: '',
+      disc: '',
+      sedirp: '',
+      eneagrama: '',
+      hobbies: '',
+      relatorio_prospeccao: '',
+      opcao_pelo_mei: false,
+    });
   };
 
   const handleSubmitSocio = async () => {
@@ -96,103 +141,108 @@ const Socios = () => {
     };
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-socios`, newSocio, config);
-      setRows([...rows, { id: response.data.ID_Socio, ...response.data }]);
+      if (isEditing) {
+        // Update existing socio
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-socios/${newSocio.id}`, newSocio, config);
+        setRows(rows.map(row => row.id === newSocio.id ? { ...response.data } : row));
+      } else {
+        // Create new socio
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-socios`, newSocio, config);
+        setRows([...rows, { id: response.data.id, ...response.data }]);
+      }
+      
       setShowForm(false);
+      setIsEditing(false);
       setNewSocio({
-        ID_Socio: 0,
-        cnpj_empresa: '',
-        pais: null,
+        id: 0,
+        razao_social: '',
         nome_socio: '',
-        codigo_pais: null,
-        faixa_etaria: '',
+        idade: 0,
         cnpj_cpf_do_socio: '',
-        qualificacao_socio: '',
-        codigo_faixa_etaria: 0,
-        data_entrada_sociedade: new Date(),
-        identificador_de_socio: 0,
-        cpf_representante_legal: '',
-        nome_representante_legal: '',
-        codigo_qualificacao_socio: 0,
-        qualificacao_representante_legal: '',
-        codigo_qualificacao_representante_legal: 0,
+        data_nascimento: new Date().toISOString(),
+        data_entrada_sociedade: new Date().toISOString(),
+        formacao: '',
         disc: '',
-        serdip: '',
+        sedirp: '',
         eneagrama: '',
         hobbies: '',
         relatorio_prospeccao: '',
         opcao_pelo_mei: false,
       });
     } catch (error) {
-      console.error('Erro ao cadastrar Sócio:', error);
+      console.error('Erro ao salvar Sócio:', error);
     }
   };
 
-//   const handleEditSocio = (index: number) => {
-//     const socio = rows[index];
-//     setEditSocio({
-//       ID_Socio: socio.id,
-//       cnpj_empresa: socio.cnpj_empresa,
-//       pais: socio.pais,
-//       nome_socio: socio.nome_socio,
-//       codigo_pais: socio.codigo_pais,
-//       faixa_etaria: socio.faixa_etaria,
-//       cnpj_cpf_do_socio: socio.cnpj_cpf_do_socio,
-//       qualificacao_socio: socio.qualificacao_socio,
-//       codigo_faixa_etaria: socio.codigo_faixa_etaria,
-//       data_entrada_sociedade: new Date(socio.data_entrada_sociedade),
-//       identificador_de_socio: socio.identificador_de_socio,
-//       cpf_representante_legal: socio.cpf_representante_legal,
-//       nome_representante_legal: socio.nome_representante_legal,
-//       codigo_qualificacao_socio: socio.codigo_qualificacao_socio,
-//       qualificacao_representante_legal: socio.qualificacao_representante_legal,
-//       codigo_qualificacao_representante_legal: socio.codigo_qualificacao_representante_legal,
-//       disc: socio.disc,
-//       serdip: socio.serdip,
-//       eneagrama: socio.eneagrama,
-//       hobbies: socio.hobbies,
-//       relatorio_prospeccao: socio.relatorio_prospeccao,
-//       opcao_pelo_mei: socio.opcao_pelo_mei,
-//     });
-//   };
-
   const handleSaveEditSocio = () => {
     if (editSocio) {
-      const updatedQsa = rows.map((socio) => (socio.id === editSocio.ID_Socio ? editSocio : socio));
+      const updatedQsa = rows.map((socio) => (socio.id === editSocio.id ? editSocio : socio));
       setRows(updatedQsa);
       setEditSocio(null);
     }
   };
 
-//   const handleChangeEditSocio = (field: string, value: string | number | boolean | null | Date) => {
-//     if (editSocio) {
-//       setEditSocio({ ...editSocio, [field]: value });
-//     }
-//   };
-
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID Sócio', width: 90 },
-    { field: 'cnpj_empresa', headerName: 'CNPJ Empresa', width: 150 },
-    { field: 'pais', headerName: 'País', width: 150 },
+    { field: 'id', headerName: 'ID', width: 90 },
+    { field: 'razao_social', headerName: 'Razão Social', width: 200 },
     { field: 'nome_socio', headerName: 'Nome Sócio', width: 150 },
-    { field: 'codigo_pais', headerName: 'Código País', width: 150 },
-    { field: 'faixa_etaria', headerName: 'Faixa Etária', width: 150 },
+    { field: 'idade', headerName: 'Idade', width: 100 },
     { field: 'cnpj_cpf_do_socio', headerName: 'CNPJ/CPF do Sócio', width: 150 },
-    { field: 'qualificacao_socio', headerName: 'Qualificação Sócio', width: 150 },
-    { field: 'codigo_faixa_etaria', headerName: 'Código Faixa Etária', width: 150 },
-    { field: 'data_entrada_sociedade', headerName: 'Data Entrada Sociedade', width: 150 },
-    { field: 'identificador_de_socio', headerName: 'Identificador de Sócio', width: 150 },
-    { field: 'cpf_representante_legal', headerName: 'CPF Representante Legal', width: 150 },
-    { field: 'nome_representante_legal', headerName: 'Nome Representante Legal', width: 150 },
-    { field: 'codigo_qualificacao_socio', headerName: 'Código Qualificação Sócio', width: 150 },
-    { field: 'qualificacao_representante_legal', headerName: 'Qualificação Representante Legal', width: 150 },
-    { field: 'codigo_qualificacao_representante_legal', headerName: 'Código Qualificação Representante Legal', width: 150 },
-    { field: 'disc', headerName: 'DISC', width: 150 },
-    { field: 'serdip', headerName: 'SERDIP', width: 150 },
-    { field: 'eneagrama', headerName: 'Eneagrama', width: 150 },
+    { 
+      field: 'data_nascimento', 
+      headerName: 'Data Nascimento', 
+      width: 150,
+    },
+    { 
+      field: 'data_entrada_sociedade', 
+      headerName: 'Data Entrada Sociedade', 
+      width: 180,
+    },
+    { field: 'formacao', headerName: 'Formação', width: 150 },
+    { field: 'disc', headerName: 'DISC', width: 100 },
+    { field: 'sedirp', headerName: 'SEDIRP', width: 100 },
+    { field: 'eneagrama', headerName: 'Eneagrama', width: 120 },
     { field: 'hobbies', headerName: 'Hobbies', width: 150 },
-    { field: 'relatorio_prospeccao', headerName: 'Relatório Prospecção', width: 150 },
-    { field: 'opcao_pelo_mei', headerName: 'Opção pelo MEI', width: 150 },
+    { 
+      field: 'relatorio_prospeccao', 
+      headerName: 'Relatório ', 
+      width: 180,
+      renderCell: (params) => {
+        if (!params.value) return <span>-</span>;
+        
+        // Verifica se a URL já tem protocolo, se não tiver adiciona https://
+        const url = params.value.startsWith('http://') || params.value.startsWith('https://') 
+          ? params.value 
+          : `https://${params.value}`;
+        
+        return (
+          <a 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ 
+              color: '#1976d2', 
+              textDecoration: 'underline',
+              cursor: 'pointer'
+            }}
+          >
+            {params.value.length > 25 ? `${params.value.substring(0, 25)}...` : params.value}
+          </a>
+        );
+      }
+    },
+    { field: 'opcao_pelo_mei', headerName: 'Opção pelo MEI', width: 130, type: 'boolean' },
+    {
+      field: 'actions',
+      headerName: 'Ações',
+      width: 100,
+      sortable: false,
+      renderCell: (params) => (
+        <IconButton onClick={() => handleEditSocio(params.row)} color="primary">
+          <EditIcon />
+        </IconButton>
+      ),
+    },
   ];
   return (
     <div style={{ height: 600, width: '100%' }}>
@@ -201,15 +251,26 @@ const Socios = () => {
         Cadastrar Sócio
       </Button>
       <Dialog open={showForm} onClose={handleCloseForm}>
-        <DialogTitle>Cadastro de Sócio</DialogTitle>
+        <DialogTitle>{isEditing ? 'Editar Sócio' : 'Cadastro de Sócio'}</DialogTitle>
         <DialogContent>
-          <TextField
-            margin="dense"
-            label="CNPJ Empresa"
-            type="text"
-            fullWidth
-            value={newSocio.cnpj_empresa}
-            onChange={(e) => setNewSocio({ ...newSocio, cnpj_empresa: e.target.value })}
+          <Autocomplete
+            options={clientes}
+            freeSolo
+            value={newSocio.razao_social}
+            onChange={(event, newValue) => {
+              setNewSocio({ ...newSocio, razao_social: newValue || '' });
+            }}
+            onInputChange={(event, newInputValue) => {
+              setNewSocio({ ...newSocio, razao_social: newInputValue });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="dense"
+                label="Razão Social"
+                fullWidth
+              />
+            )}
           />
           <TextField
             margin="dense"
@@ -221,11 +282,11 @@ const Socios = () => {
           />
           <TextField
             margin="dense"
-            label="Faixa Etária"
-            type="text"
+            label="Idade"
+            type="number"
             fullWidth
-            value={newSocio.faixa_etaria}
-            onChange={(e) => setNewSocio({ ...newSocio, faixa_etaria: e.target.value })}
+            value={newSocio.idade}
+            onChange={(e) => setNewSocio({ ...newSocio, idade: Number(e.target.value) })}
           />
           <TextField
             margin="dense"
@@ -237,75 +298,29 @@ const Socios = () => {
           />
           <TextField
             margin="dense"
-            label="Qualificação Sócio"
-            type="text"
+            label="Data Nascimento"
+            type="date"
             fullWidth
-            value={newSocio.qualificacao_socio}
-            onChange={(e) => setNewSocio({ ...newSocio, qualificacao_socio: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Código Faixa Etária"
-            type="number"
-            fullWidth
-            value={newSocio.codigo_faixa_etaria}
-            onChange={(e) => setNewSocio({ ...newSocio, codigo_faixa_etaria: Number(e.target.value) })}
+            InputLabelProps={{ shrink: true }}
+            value={newSocio.data_nascimento ? newSocio.data_nascimento.split('T')[0] : ''}
+            onChange={(e) => setNewSocio({ ...newSocio, data_nascimento: e.target.value ? new Date(e.target.value).toISOString() : '' })}
           />
           <TextField
             margin="dense"
             label="Data Entrada Sociedade"
             type="date"
             fullWidth
-            value={newSocio.data_entrada_sociedade.toISOString().split('T')[0]}
-            onChange={(e) => setNewSocio({ ...newSocio, data_entrada_sociedade: new Date(e.target.value) })}
+            InputLabelProps={{ shrink: true }}
+            value={newSocio.data_entrada_sociedade ? newSocio.data_entrada_sociedade.split('T')[0] : ''}
+            onChange={(e) => setNewSocio({ ...newSocio, data_entrada_sociedade: e.target.value ? new Date(e.target.value).toISOString() : '' })}
           />
           <TextField
             margin="dense"
-            label="Identificador de Sócio"
-            type="number"
-            fullWidth
-            value={newSocio.identificador_de_socio}
-            onChange={(e) => setNewSocio({ ...newSocio, identificador_de_socio: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="CPF Representante Legal"
+            label="Formação"
             type="text"
             fullWidth
-            value={newSocio.cpf_representante_legal}
-            onChange={(e) => setNewSocio({ ...newSocio, cpf_representante_legal: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Nome Representante Legal"
-            type="text"
-            fullWidth
-            value={newSocio.nome_representante_legal}
-            onChange={(e) => setNewSocio({ ...newSocio, nome_representante_legal: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Código Qualificação Sócio"
-            type="number"
-            fullWidth
-            value={newSocio.codigo_qualificacao_socio}
-            onChange={(e) => setNewSocio({ ...newSocio, codigo_qualificacao_socio: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Qualificação Representante Legal"
-            type="text"
-            fullWidth
-            value={newSocio.qualificacao_representante_legal}
-            onChange={(e) => setNewSocio({ ...newSocio, qualificacao_representante_legal: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Código Qualificação Representante Legal"
-            type="number"
-            fullWidth
-            value={newSocio.codigo_qualificacao_representante_legal}
-            onChange={(e) => setNewSocio({ ...newSocio, codigo_qualificacao_representante_legal: Number(e.target.value) })}
+            value={newSocio.formacao}
+            onChange={(e) => setNewSocio({ ...newSocio, formacao: e.target.value })}
           />
           <TextField
             margin="dense"
@@ -317,11 +332,11 @@ const Socios = () => {
           />
           <TextField
             margin="dense"
-            label="SERDIP"
+            label="SEDIRP"
             type="text"
             fullWidth
-            value={newSocio.serdip}
-            onChange={(e) => setNewSocio({ ...newSocio, serdip: e.target.value })}
+            value={newSocio.sedirp}
+            onChange={(e) => setNewSocio({ ...newSocio, sedirp: e.target.value })}
           />
           <TextField
             margin="dense"
@@ -341,7 +356,7 @@ const Socios = () => {
           />
           <TextField
             margin="dense"
-            label="Relatório Prospecção"
+            label="Relatório "
             type="text"
             fullWidth
             value={newSocio.relatorio_prospeccao}
@@ -359,7 +374,7 @@ const Socios = () => {
             Cancelar
           </Button>
           <Button onClick={handleSubmitSocio} color="primary">
-            Salvar
+            {isEditing ? 'Atualizar' : 'Salvar'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -3,13 +3,13 @@ import './Sidebar.css';
 import StoreIcon from '@mui/icons-material/Store';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ConstructionIcon from '@mui/icons-material/Construction';
-// import AddTaskIcon from '@mui/icons-material/AddTask';
+import AddTaskIcon from '@mui/icons-material/AddTask';
 
 export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: boolean, children?: React.ReactNode }) {
     const [gestaoOpen, setGestaoOpen] = useState(false);
     const [clienteOpen, setClienteOpen] = useState(false);
     const [ferramentasOpen, setFerramentasOpen] = useState(false);
-    // const [helpdeskOpen, setHelpdeskOpen] = useState(false);
+    const [helpdeskOpen, setHelpdeskOpen] = useState(false);
     const [consultorOpen, setConsultorOpen] = useState(false);
     const [comercialOpen, setComercialOpen] = useState(false);
 
@@ -20,13 +20,15 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
         <div className={onlyIcons ? "sidebar sidebar--collapsed" : "sidebar"}>
             <div className="logo-container">
                 <a href="/home">
-                    <img src="https://www.fastassessoria.com.br/img/logo.png" style={{ width: '100%', marginTop: '5%' }} alt='logotipo fast assessoria' />
+                    <img src="https://www.fastassessoria.com.br/img/logo.png" style={{ width: '100%', marginTop: 'calc(8%)' }} alt='logotipo fast assessoria' />
                 </a>
             </div>
             <div className="menu">
                 <div className="main-menu">
                     <button
                         className="single-menu-item"
+                        onClick={() => window.location.href = '/Relatorios'}
+                        style={{ cursor: 'pointer' }}
                     >
                         <div className="grid-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -180,7 +182,7 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                                 </li>
                             </ul>
                         )}
-                        {/* <div
+                        <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
                             onClick={() => setHelpdeskOpen((open) => !open)}
@@ -207,11 +209,11 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                         </div>
                         {!onlyIcons && helpdeskOpen && (
                             <ul className="gestao-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                <li className="dropdown-menu-item">Novo Chamado</li>
-                                <li className="dropdown-menu-item">Meus Chamados</li>
-                                <li className="dropdown-menu-item">Atribuidos a Mim</li>
+                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/HelpDesk/NovoChamado'}>Novo Chamado</li>
+                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/HelpDesk/MeusChamados'}>Meus Chamados</li>
+                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/HelpDesk/AtribuidosAMim'}>Atribuidos A Mim</li>
                             </ul>
-                        )} */}
+                        )}
                     </div>
                 </div>
                 <div className="secondary-menu"></div>

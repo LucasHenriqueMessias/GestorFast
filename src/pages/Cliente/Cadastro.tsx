@@ -541,7 +541,7 @@ const Cadastro = () => {
 )}
 
 
-<div className="form-group">
+{/* <div className="form-group">
   <label className="checkbox-label">
     <input
       type="checkbox"
@@ -584,7 +584,7 @@ const Cadastro = () => {
       />
     </div>
   </>
-)}
+)} */}
 
 
 
@@ -601,22 +601,13 @@ const Cadastro = () => {
           <label>Consultor Financeiro:</label>
           <input type="text" name="consultor_financeiro" value={formData.consultor_financeiro} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label>Analista:</label>
-          <input type="text" name="analista" value={formData.analista} onChange={handleChange} />
-        </div>
-
-        <div className="form-group">
-          <label>Número de Funcionários:</label>
-          <input type="number" name="numero_funcionarios" value={formData.numero_funcionarios} onChange={handleChange} />
-        </div>
-
+  
         <div className="form-group">
           <label>Ponto de Apoio:</label>
           <input type="text" name="ponto_apoio" value={formData.ponto_apoio} onChange={handleChange} />
         </div>
         <div className="form-group">
-          <label>Perfil:</label>
+          <label>Perfil do Ponto de Apoio:</label>
           <input type="text" name="perfil" value={formData.perfil} onChange={handleChange} />
         </div>
         <div className="form-group">
@@ -653,24 +644,15 @@ const Cadastro = () => {
             onChange={handleChange}
           />
         </div>
-        <div className="form-group">
-          <label>Nome Ponte:</label>
-          <input type="text" name="nome_ponte" value={formData.nome_ponte} onChange={handleChange} />
-        </div>
+       
 
 
         <div className="form-group">
           <label>Valor Fatura Cliente:</label>
           <input type="number" name="valor_fatura_cliente" value={formData.valor_fatura_cliente} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label>Grupo Econômico Cliente:</label>
-          <input type="text" name="grupo_economico_cliente" value={formData.grupo_economico_cliente} onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label>Coluna Mãe:</label>
-          <input type="text" name="coluna_mae" value={formData.coluna_mae} onChange={handleChange} />
-        </div>
+        
+        
         <div className="form-group">
           <label>UF:</label>
           <input type="text" name="uf" value={formData.uf} onChange={handleChange} />

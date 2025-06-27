@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid, GridColDef, GridEventListener,  GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
-import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent, Autocomplete } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getUsername } from '../../utils/storage';
 import EditIcon from '@mui/icons-material/Edit';
@@ -18,8 +18,13 @@ interface Reuniao {
   nps_reuniao: string | number;
 }
 
+interface Cliente {
+  razao_social: string;
+}
+
 const RegistroDeReunioes = () => {
   const [reuniaoData, setReuniaoData] = useState<Reuniao[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [open, setOpen] = useState(false);
   const [newRecord, setNewRecord] = useState({
     user: '',
@@ -106,12 +111,38 @@ const RegistroDeReunioes = () => {
     }
   };
 
+  const fetchClientes = async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setClientes(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  };
+
   const handleClickOpen = () => {
     setOpen(true);
+    fetchClientes(); // Buscar clientes ao abrir o formulário
   };
 
   const handleClose = () => {
     setOpen(false);
+    // Limpar o formulário ao fechar
+    setNewRecord({
+      user: '',
+      cliente: '',
+      status: '',
+      tipo_reuniao: '',
+      local_reuniao: '',
+      Ata_reuniao: '',
+      data_realizada: '',
+      nps_reuniao: '',
+    });
   };
 
   const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -122,6 +153,10 @@ const RegistroDeReunioes = () => {
   const handleSelectChange = (e: SelectChangeEvent<string>) => {
     const { name, value } = e.target;
     setNewRecord({ ...newRecord, [name]: value });
+  };
+
+  const handleAutocompleteChange = (event: any, newValue: string | null) => {
+    setNewRecord({ ...newRecord, cliente: newValue || '' });
   };
 
   const handleSubmit = async () => {
@@ -209,14 +244,23 @@ const RegistroDeReunioes = () => {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Adicionar Novo Registro</DialogTitle>
         <DialogContent>
-          <TextField
-            margin="dense"
-            name="cliente"
-            label="Cliente"
-            type="text"
-            fullWidth
+          <Autocomplete
+            freeSolo
+            options={clientes.map((cliente) => cliente.razao_social)}
             value={newRecord.cliente}
-            onChange={handleTextFieldChange}
+            onChange={handleAutocompleteChange}
+            onInputChange={(event, newInputValue) => {
+              setNewRecord({ ...newRecord, cliente: newInputValue });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="dense"
+                label="Cliente"
+                fullWidth
+                placeholder="Digite ou selecione um cliente"
+              />
+            )}
           />
           <Select
             margin="dense"
