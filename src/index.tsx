@@ -99,29 +99,29 @@ function AppLayout() {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="*" element={<Navigate to="/" />} />
-            <Route path="/Clientes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Cliente /></PrivateRoute>} />
-            <Route path="/RegistroDeReunioes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RegistroDeReunioes /></PrivateRoute>} />
-            <Route path="/home" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Dashboard /></PrivateRoute>} />
-            <Route path="/Cadastro" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Cadastro /></PrivateRoute>} />
-            <Route path="/JornadaCrescimentoCore" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoCore /></PrivateRoute>} />
-            <Route path="/JornadaCrescimentoOverdelivery" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoOverDelivery /></PrivateRoute>} />
-            <Route path="/ConsultarCNPJ" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Consultar/></PrivateRoute>} />
-            <Route path="/Alertas" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Alertas/></PrivateRoute>} />
-            <Route path="/Funil" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Funil/></PrivateRoute>} />
-            <Route path="/Highlights" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Highlights/></PrivateRoute>} />
-            <Route path="/Fotografia" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Fotografia/></PrivateRoute>} />
-            <Route path="/Dores" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Dores/></PrivateRoute>} />
-            <Route path="/Socios" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Socios/></PrivateRoute>} />
-            <Route path="/Biblioteca" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Biblioteca/></PrivateRoute>} />
-            <Route path="/Eventos" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Eventos/></PrivateRoute>} />
-            <Route path="/Ferramentas" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Ferramentas/></PrivateRoute>} />
-            <Route path="/Relatorios" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><Relatorios/></PrivateRoute>} />
-            <Route path="/Relatorios/Cliente" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioCliente /></PrivateRoute>} />
-            <Route path="/Relatorios/Consultor" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioConsultor /></PrivateRoute>} />
-            <Route path="/Relatorios/Fast" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioFast /></PrivateRoute>} />
-            <Route path="/HelpDesk/AtribuidosAMim" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><AtribuidosAMim /></PrivateRoute>} />
-            <Route path="/HelpDesk/MeusChamados" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><MeusChamados /></PrivateRoute>} />
-            <Route path="/HelpDesk/NovoChamado" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "developer", "Diretor", "Gestor", "Consultor", "CS"]}><NovoChamado /></PrivateRoute>} />
+            <Route path="/Clientes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Cliente /></PrivateRoute>} />
+            <Route path="/RegistroDeReunioes" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><RegistroDeReunioes /></PrivateRoute>} />
+            <Route path="/home" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Dashboard /></PrivateRoute>} />
+            <Route path="/Cadastro" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Cadastro /></PrivateRoute>} />
+            <Route path="/JornadaCrescimentoCore" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoCore /></PrivateRoute>} />
+            <Route path="/JornadaCrescimentoOverdelivery" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><JornadaCrescimentoOverDelivery /></PrivateRoute>} />
+            <Route path="/ConsultarCNPJ" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Consultar/></PrivateRoute>} />
+            <Route path="/Alertas" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Alertas/></PrivateRoute>} />
+            <Route path="/Funil" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Funil/></PrivateRoute>} />
+            <Route path="/Highlights" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Highlights/></PrivateRoute>} />
+            <Route path="/Fotografia" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Fotografia/></PrivateRoute>} />
+            <Route path="/Dores" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Dores/></PrivateRoute>} />
+            <Route path="/Socios" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Socios/></PrivateRoute>} />
+            <Route path="/Biblioteca" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Biblioteca/></PrivateRoute>} />
+            <Route path="/Eventos" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Eventos/></PrivateRoute>} />
+            <Route path="/Ferramentas" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Ferramentas/></PrivateRoute>} />
+            <Route path="/Relatorios" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Relatorios/></PrivateRoute>} />
+            <Route path="/Relatorios/Cliente" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioCliente /></PrivateRoute>} />
+            <Route path="/Relatorios/Consultor" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioConsultor /></PrivateRoute>} />
+            <Route path="/Relatorios/Fast" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><RelatorioFast /></PrivateRoute>} />
+            <Route path="/HelpDesk/AtribuidosAMim" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><AtribuidosAMim /></PrivateRoute>} />
+            <Route path="/HelpDesk/MeusChamados" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><MeusChamados /></PrivateRoute>} />
+            <Route path="/HelpDesk/NovoChamado" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><NovoChamado /></PrivateRoute>} />
           </Routes>
         </div>
       </div>

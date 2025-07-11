@@ -177,6 +177,7 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Biblioteca'}>Biblioteca</li>
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Eventos'}>Eventos</li>
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Ferramentas'}>Ferramentas Desenvolvidas</li>
+                                {/* <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/SalaDeReuniao'} >Sala de Reunião</li> */}
                                 <li className="dropdown-menu-item">
                                     <a href="/ConsultarCNPJ" style={{ color: '#222', textDecoration: 'none', display: 'block', }}>Consultar CNPJ</a>
                                 </li>
