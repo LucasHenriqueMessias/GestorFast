@@ -108,7 +108,6 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                                 </li>
                                 <li className="dropdown-menu-item">    <a href="/Alertas" style={{ color: '#222', textDecoration: 'none', display: 'block', }}>Alertas</a>
                                 </li>
-                                <li className="dropdown-menu-item">CS</li>
                             </ul>
                         )}
                         <div
