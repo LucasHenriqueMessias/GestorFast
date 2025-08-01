@@ -37,18 +37,25 @@ const Highlights = () => {
 
   // Opções disponíveis para o campo "Descrição"
   const descricaoOptions = [
-    'Receita Bruta',
-    'Deduções da Receita',
-    'Receita Líquida',
-    'Custo dos Produtos Vendidos',
-    'Lucro Bruto',
-    'Despesas Operacionais',
-    'Resultado Operacional',
-    'Receitas Financeiras',
-    'Despesas Financeiras',
-    'Resultado Antes dos Impostos',
-    'Impostos',
-    'Lucro Líquido',
+    'receita bruta',
+    'dedução de receita bruta',
+    'receita líquida',
+    'cmv/cpv/csv',
+    'margem de contribuição',
+    'despesas administrativas',
+    'despesas RH',
+    'despesas operacionais',
+    'despesas de vendas',
+    'despesas de marketing',
+    'total de despesas gerais',
+    'resultado operacional',
+    'despesas financeiras',
+    'receitas financeiras',
+    'empréstimos',
+    'investimentos e aquisições',
+    'lucro líquido',
+    'retirada sócios',
+    'lucro líquido pós retirada',
   ];
 
   useEffect(() => {

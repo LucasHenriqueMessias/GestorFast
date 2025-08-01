@@ -333,7 +333,7 @@ const Fotografia = () => {
           <TextField
             margin="dense"
             label="Antecipação Recebíveis"
-            type="text"
+            type="number"
             fullWidth
             value={newFotografia.antecipacao_recebiveis}
             onChange={(e) => setNewFotografia({ ...newFotografia, antecipacao_recebiveis: e.target.value })}
@@ -341,7 +341,7 @@ const Fotografia = () => {
           <TextField
             margin="dense"
             label="Pagamento Impostos Mês"
-            type="text"
+            type="number"
             fullWidth
             value={newFotografia.pagamento_impostos_mes}
             onChange={(e) => setNewFotografia({ ...newFotografia, pagamento_impostos_mes: e.target.value })}
@@ -349,7 +349,7 @@ const Fotografia = () => {
           <TextField
             margin="dense"
             label="Faturamento"
-            type="text"
+            type="number"
             fullWidth
             value={newFotografia.faturamento}
             onChange={(e) => setNewFotografia({ ...newFotografia, faturamento: e.target.value })}
@@ -365,7 +365,7 @@ const Fotografia = () => {
           <TextField
             margin="dense"
             label="Número Funcionários"
-            type="text"
+            type="number"
             fullWidth
             value={newFotografia.numero_funcionarios}
             onChange={(e) => setNewFotografia({ ...newFotografia, numero_funcionarios: e.target.value })}
@@ -373,7 +373,7 @@ const Fotografia = () => {
           <TextField
             margin="dense"
             label="Número Clientes"
-            type="text"
+            type="number"
             fullWidth
             value={newFotografia.numero_clientes}
             onChange={(e) => setNewFotografia({ ...newFotografia, numero_clientes: e.target.value })}
@@ -381,7 +381,7 @@ const Fotografia = () => {
           <TextField
             margin="dense"
             label="Margem Lucro"
-            type="text"
+            type="number"
             fullWidth
             value={newFotografia.margem_lucro}
             onChange={(e) => setNewFotografia({ ...newFotografia, margem_lucro: e.target.value })}

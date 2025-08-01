@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid, GridColDef, GridEventListener,  GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
-import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent, Autocomplete } from '@mui/material';
+import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent, FormControl, InputLabel, Autocomplete } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getUsername } from '../../utils/storage';
 import EditIcon from '@mui/icons-material/Edit';
@@ -132,7 +132,7 @@ const RegistroDeReunioes = () => {
 
   const handleClose = () => {
     setOpen(false);
-    // Limpar o formulário ao fechar
+    // Limpar o formulário ao fechar (importante limpar cliente primeiro para desabilitar campos)
     setNewRecord({
       user: '',
       cliente: '',
@@ -155,7 +155,7 @@ const RegistroDeReunioes = () => {
     setNewRecord({ ...newRecord, [name]: value });
   };
 
-  const handleAutocompleteChange = (event: any, newValue: string | null) => {
+  const handleClienteChange = (event: React.SyntheticEvent, newValue: string | null) => {
     setNewRecord({ ...newRecord, cliente: newValue || '' });
   };
 
@@ -245,57 +245,60 @@ const RegistroDeReunioes = () => {
         <DialogTitle>Adicionar Novo Registro</DialogTitle>
         <DialogContent>
           <Autocomplete
-            freeSolo
             options={clientes.map((cliente) => cliente.razao_social)}
-            value={newRecord.cliente}
-            onChange={handleAutocompleteChange}
-            onInputChange={(event, newInputValue) => {
-              setNewRecord({ ...newRecord, cliente: newInputValue });
-            }}
+            value={newRecord.cliente || null}
+            onChange={handleClienteChange}
             renderInput={(params) => (
               <TextField
                 {...params}
-                margin="dense"
                 label="Cliente"
+                margin="dense"
                 fullWidth
-                placeholder="Digite ou selecione um cliente"
+                placeholder="Digite para buscar um cliente..."
               />
             )}
+            freeSolo
+            filterOptions={(options, params) => {
+              const filtered = options.filter((option) =>
+                option.toLowerCase().includes(params.inputValue.toLowerCase())
+              );
+              return filtered;
+            }}
           />
-          <Select
-            margin="dense"
-            name="status"
-            value={newRecord.status}
-            onChange={handleSelectChange}
-            fullWidth
-            displayEmpty
-          >
-            <MenuItem value="" disabled>
-              Status
-            </MenuItem>
-            <MenuItem value="Pendente">Pendente</MenuItem>
-            <MenuItem value="Realizado">Realizado</MenuItem>
-            <MenuItem value="NA">Não Aplicável</MenuItem>
-          </Select>
-          <Select
-            margin="dense"
-            name="tipo_reuniao"
-            value={newRecord.tipo_reuniao}
-            onChange={handleSelectChange}
-            fullWidth
-            displayEmpty
-          >
-            <MenuItem value="" disabled>
-              Selecione o Tipo de Reunião
-            </MenuItem>
-            <MenuItem value="RD">RD</MenuItem>
-            <MenuItem value="RE">RE</MenuItem>
-            <MenuItem value="RC">RC</MenuItem>
-            <MenuItem value="RI">RI</MenuItem>
-            <MenuItem value="RP">RP</MenuItem>
-            <MenuItem value="RAE">RAE</MenuItem>
-            <MenuItem value="RA">RA</MenuItem>
-          </Select>
+          <FormControl fullWidth margin="dense">
+            <InputLabel id="status-select-label">Status</InputLabel>
+            <Select
+              labelId="status-select-label"
+              name="status"
+              value={newRecord.status}
+              onChange={handleSelectChange}
+              label="Status"
+              disabled={!newRecord.cliente}
+            >
+              <MenuItem value="Pendente">Pendente</MenuItem>
+              <MenuItem value="Realizado">Realizado</MenuItem>
+              <MenuItem value="NA">Não Aplicável</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="dense">
+            <InputLabel id="tipo-reuniao-select-label">Tipo de Reunião</InputLabel>
+            <Select
+              labelId="tipo-reuniao-select-label"
+              name="tipo_reuniao"
+              value={newRecord.tipo_reuniao}
+              onChange={handleSelectChange}
+              label="Tipo de Reunião"
+              disabled={!newRecord.cliente}
+            >
+              <MenuItem value="RD">RD</MenuItem>
+              <MenuItem value="RE">RE</MenuItem>
+              <MenuItem value="RC">RC</MenuItem>
+              <MenuItem value="RI">RI</MenuItem>
+              <MenuItem value="RP">RP</MenuItem>
+              <MenuItem value="RAE">RAE</MenuItem>
+              <MenuItem value="RA">RA</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             margin="dense"
             name="local_reuniao"
@@ -304,6 +307,7 @@ const RegistroDeReunioes = () => {
             fullWidth
             value={newRecord.local_reuniao}
             onChange={handleTextFieldChange}
+            disabled={!newRecord.cliente}
           />
           <TextField
             margin="dense"
@@ -313,6 +317,7 @@ const RegistroDeReunioes = () => {
             fullWidth
             value={newRecord.Ata_reuniao}
             onChange={handleTextFieldChange}
+            disabled={!newRecord.cliente}
           />
           <TextField
             margin="dense"
@@ -322,6 +327,7 @@ const RegistroDeReunioes = () => {
             fullWidth
             value={newRecord.data_realizada}
             onChange={handleTextFieldChange}
+            disabled={!newRecord.cliente}
             InputLabelProps={{
               shrink: true,
             }}
@@ -334,6 +340,7 @@ const RegistroDeReunioes = () => {
             fullWidth
             value={newRecord.nps_reuniao}
             onChange={handleTextFieldChange}
+            disabled={!newRecord.cliente}
           />
         </DialogContent>
         <DialogActions>
