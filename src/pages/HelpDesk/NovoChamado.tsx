@@ -10,7 +10,8 @@ import {
   MenuItem, 
   FormControl, 
   InputLabel, 
-  Alert
+  Alert,
+  Autocomplete
 } from '@mui/material';
 import { ArrowBack, Save, PersonAdd } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +22,7 @@ interface NovoChamadoData {
   Solicitante: string;
   Responsavel: string;
   Setor: string;
+  Cliente: string;
   Titulo: string;
   Descricao: string;
   Expectativa_Conclusao: string;
@@ -40,12 +42,17 @@ interface UserData {
   analista: string;
 }
 
+interface ClienteData {
+  razao_social: string;
+}
+
 const NovoChamado = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<NovoChamadoData>({
     Solicitante: '',
     Responsavel: '',
     Setor: '',
+    Cliente: '',
     Titulo: '',
     Descricao: '',
     Expectativa_Conclusao: ''
@@ -54,6 +61,8 @@ const NovoChamado = () => {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserData[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [clientes, setClientes] = useState<ClienteData[]>([]);
+  const [loadingClientes, setLoadingClientes] = useState(false);
 
   useEffect(() => {
     // Preencher automaticamente o solicitante com o usuário logado
@@ -61,11 +70,34 @@ const NovoChamado = () => {
     if (username) {
       setFormData(prev => ({ ...prev, Solicitante: username }));
     }
+    
+    // Carregar clientes na inicialização
+    fetchClientes();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const fetchClientes = async () => {
+    setLoadingClientes(true);
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      setClientes(response.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+      setClientes([]);
+      setAlert({ type: 'error', message: 'Erro ao carregar lista de clientes.' });
+    } finally {
+      setLoadingClientes(false);
+    }
   };
 
   const fetchUsersByDepartment = async (department: string) => {
@@ -155,6 +187,7 @@ const NovoChamado = () => {
     return formData.Solicitante && 
            formData.Responsavel && 
            formData.Setor && 
+           formData.Cliente &&
            formData.Titulo && 
            formData.Descricao;
   };
@@ -230,6 +263,30 @@ const NovoChamado = () => {
               </Select>
             </FormControl>
           </Box>
+
+          <Autocomplete
+            fullWidth
+            options={clientes.map(cliente => cliente.razao_social)}
+            value={formData.Cliente}
+            onChange={(event, newValue) => {
+              setFormData(prev => ({ ...prev, Cliente: newValue || '' }));
+            }}
+            onInputChange={(event, newInputValue) => {
+              setFormData(prev => ({ ...prev, Cliente: newInputValue }));
+            }}
+            freeSolo
+            loading={loadingClientes}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Cliente"
+                required
+                placeholder="Digite ou selecione um cliente"
+                helperText="Você pode digitar diretamente ou selecionar da lista"
+              />
+            )}
+            sx={{ mb: 2 }}
+          />
 
           <TextField
             fullWidth

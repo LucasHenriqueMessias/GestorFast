@@ -28,7 +28,8 @@ import {
   Select,
   MenuItem,
   IconButton,
-  Snackbar
+  Snackbar,
+  Autocomplete
 } from '@mui/material';
 import { ArrowBack, Assignment, AccessTime, Person, Business, ExpandMore, ExpandLess, Edit, Save, Cancel, FilterList, Sort, Clear, Notes, Description } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +41,7 @@ interface Chamado {
   Solicitante: string;
   Responsavel: string;
   Setor: string;
+  Cliente: string;
   Titulo: string;
   Descricao: string;
   Anotacao: string;
@@ -52,6 +54,7 @@ interface Chamado {
 interface EditFormData {
   Titulo: string;
   Descricao: string;
+  Cliente: string;
   Expectativa_Conclusao: string;
 }
 
@@ -67,6 +70,10 @@ interface SortState {
   direction: 'asc' | 'desc';
 }
 
+interface ClienteData {
+  razao_social: string;
+}
+
 const MeusChamados = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -78,6 +85,7 @@ const MeusChamados = () => {
   const [editFormData, setEditFormData] = useState<EditFormData>({
     Titulo: '',
     Descricao: '',
+    Cliente: '',
     Expectativa_Conclusao: ''
   });
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -100,10 +108,31 @@ const MeusChamados = () => {
   const [selectedChamado, setSelectedChamado] = useState<Chamado | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [clientes, setClientes] = useState<ClienteData[]>([]);
+  const [loadingClientes, setLoadingClientes] = useState(false);
 
   useEffect(() => {
     fetchChamados();
   }, []);
+
+  const fetchClientes = async () => {
+    setLoadingClientes(true);
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      setClientes(response.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+      setClientes([]);
+    } finally {
+      setLoadingClientes(false);
+    }
+  };
 
   const fetchChamados = async () => {
     try {
@@ -170,10 +199,14 @@ const MeusChamados = () => {
     setEditFormData({
       Titulo: chamado.Titulo,
       Descricao: chamado.Descricao,
+      Cliente: chamado.Cliente || '',
       Expectativa_Conclusao: chamado.Expectativa_Conclusao ? new Date(chamado.Expectativa_Conclusao).toISOString().split('T')[0] : ''
     });
     setDetailOpen(true);
     setEditMode(true);
+    
+    // Buscar clientes quando entrar no modo de edição
+    fetchClientes();
   };
 
   const handleEditFormChange = (field: string, value: string) => {
@@ -225,7 +258,8 @@ const MeusChamados = () => {
           chamado.Titulo.toLowerCase().includes(searchLower) ||
           chamado.Descricao.toLowerCase().includes(searchLower) ||
           chamado.Responsavel.toLowerCase().includes(searchLower) ||
-          chamado.Setor.toLowerCase().includes(searchLower)
+          chamado.Setor.toLowerCase().includes(searchLower) ||
+          chamado.Cliente.toLowerCase().includes(searchLower)
         );
       }
       
@@ -258,6 +292,7 @@ const MeusChamados = () => {
     setEditFormData({
       Titulo: chamado.Titulo,
       Descricao: chamado.Descricao,
+      Cliente: chamado.Cliente || '',
       Expectativa_Conclusao: chamado.Expectativa_Conclusao ? new Date(chamado.Expectativa_Conclusao).toISOString().split('T')[0] : ''
     });
     setDetailOpen(true);
@@ -275,9 +310,16 @@ const MeusChamados = () => {
       setEditFormData({
         Titulo: selectedChamado.Titulo,
         Descricao: selectedChamado.Descricao,
+        Cliente: selectedChamado.Cliente || '',
         Expectativa_Conclusao: selectedChamado.Expectativa_Conclusao ? new Date(selectedChamado.Expectativa_Conclusao).toISOString().split('T')[0] : ''
       });
     }
+    
+    // Buscar clientes quando entrar no modo de edição
+    if (!editMode) {
+      fetchClientes();
+    }
+    
     setEditMode(!editMode);
   };
 
@@ -290,6 +332,7 @@ const MeusChamados = () => {
       const updateData = {
         Titulo: editFormData.Titulo,
         Descricao: editFormData.Descricao,
+        Cliente: editFormData.Cliente,
         Expectativa_Conclusao: editFormData.Expectativa_Conclusao ? new Date(editFormData.Expectativa_Conclusao).toISOString() : null
       };
 
@@ -310,6 +353,7 @@ const MeusChamados = () => {
         ...selectedChamado, 
         Titulo: updateData.Titulo,
         Descricao: updateData.Descricao,
+        Cliente: updateData.Cliente,
         Expectativa_Conclusao: updateData.Expectativa_Conclusao ? new Date(updateData.Expectativa_Conclusao) : null
       };
       setSelectedChamado(updatedChamado);
@@ -387,7 +431,7 @@ const MeusChamados = () => {
                 label="Buscar"
                 value={filters.searchText}
                 onChange={(e) => handleFilterChange('searchText', e.target.value)}
-                placeholder="Título, descrição, responsável..."
+                placeholder="Título, descrição, responsável, cliente..."
               />
               
               <FormControl fullWidth>
@@ -415,6 +459,8 @@ const MeusChamados = () => {
                   <MenuItem value="Data">Data Criação</MenuItem>
                   <MenuItem value="Titulo">Título</MenuItem>
                   <MenuItem value="Responsavel">Responsável</MenuItem>
+                  <MenuItem value="Setor">Setor</MenuItem>
+                  <MenuItem value="Cliente">Cliente</MenuItem>
                   <MenuItem value="Kanban">Status</MenuItem>
                   <MenuItem value="Expectativa_Conclusao">Expectativa</MenuItem>
                 </Select>
@@ -463,6 +509,8 @@ const MeusChamados = () => {
               {sortConfig.field === 'Data' ? 'Data Criação' : 
                sortConfig.field === 'Titulo' ? 'Título' :
                sortConfig.field === 'Responsavel' ? 'Responsável' :
+               sortConfig.field === 'Setor' ? 'Setor' :
+               sortConfig.field === 'Cliente' ? 'Cliente' :
                sortConfig.field === 'Kanban' ? 'Status' : 'Expectativa'} 
               ({sortConfig.direction === 'asc' ? 'A-Z' : 'Z-A'})
             </Typography>
@@ -530,6 +578,13 @@ const MeusChamados = () => {
                         </Typography>
                       </Box>
                       
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Business sx={{ mr: 1, fontSize: 16, color: '#666' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Cliente: {chamado.Cliente || 'Não informado'}
+                        </Typography>
+                      </Box>
+                      
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <AccessTime sx={{ mr: 1, fontSize: 16, color: '#666' }} />
                         <Typography variant="body2" color="text.secondary">
@@ -580,6 +635,9 @@ const MeusChamados = () => {
                       <TableCell sx={{ fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleSortChange('Setor')}>
                         Setor {sortConfig.field === 'Setor' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                       </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleSortChange('Cliente')}>
+                        Cliente {sortConfig.field === 'Cliente' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleSortChange('Kanban')}>
                         Status {sortConfig.field === 'Kanban' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                       </TableCell>
@@ -616,6 +674,7 @@ const MeusChamados = () => {
                         </TableCell>
                         <TableCell>{chamado.Responsavel}</TableCell>
                         <TableCell>{chamado.Setor}</TableCell>
+                        <TableCell>{chamado.Cliente || 'Não informado'}</TableCell>
                         <TableCell>
                           <Chip 
                             label={chamado.Kanban} 
@@ -700,6 +759,12 @@ const MeusChamados = () => {
                   </Box>
                   <Box>
                     <Typography variant="body2" color="text.secondary">
+                      <Business sx={{ mr: 1, fontSize: 16, verticalAlign: 'middle' }} />
+                      Cliente: {selectedChamado.Cliente || 'Não informado'}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
                       <AccessTime sx={{ mr: 1, fontSize: 16, verticalAlign: 'middle' }} />
                       Criado em: {formatDate(selectedChamado.Data)}
                     </Typography>
@@ -733,6 +798,50 @@ const MeusChamados = () => {
                   <Paper elevation={1} sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
                     <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
                       {selectedChamado.Descricao}
+                    </Typography>
+                  </Paper>
+                )}
+              </Box>
+
+              {/* Cliente */}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Business />
+                  Cliente
+                </Typography>
+                {editMode ? (
+                  <Autocomplete
+                    fullWidth
+                    options={clientes.map(cliente => cliente.razao_social)}
+                    value={editFormData.Cliente}
+                    onChange={(event, newValue) => {
+                      handleEditFormChange('Cliente', newValue || '');
+                    }}
+                    loading={loadingClientes}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Cliente"
+                        placeholder="Selecione um cliente"
+                        variant="outlined"
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <React.Fragment>
+                              {loadingClientes ? <CircularProgress color="inherit" size={20} /> : null}
+                              {params.InputProps.endAdornment}
+                            </React.Fragment>
+                          ),
+                        }}
+                      />
+                    )}
+                    noOptionsText="Nenhum cliente encontrado"
+                    loadingText="Carregando clientes..."
+                  />
+                ) : (
+                  <Paper elevation={1} sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
+                    <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+                      {selectedChamado.Cliente || 'Não informado'}
                     </Typography>
                   </Paper>
                 )}

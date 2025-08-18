@@ -61,6 +61,16 @@ const Cliente = () => {
           consultor_financeiro: item.consultor_financeiro,
           analista: item.analista,
           cliente_fast: item.cliente_fast ?? false,
+          parceiro: item.parceiro ?? false,
+          prospeccao: item.prospeccao ?? false,
+          origem_lead: item.origem_lead,
+          data_reajuste_financeiro: item.data_reajuste_financeiro,
+          porcentagem_reajuste_financeiro: item.porcentagem_reajuste_financeiro,
+          data_aviso_previo: item.data_aviso_previo,
+          empresa_contratada: item.empresa_contratada,
+          vencimento_fatura_1: item.vencimento_fatura_1,
+          vencimento_fatura_2: item.vencimento_fatura_2,
+          observacao_fatura: item.observacao_fatura,
         }));
         setRows(data);
         console.log('Dados:', data);
@@ -87,6 +97,12 @@ const Cliente = () => {
   };
 
   const handleSaveEdit = React.useCallback(async () => {
+    // Validação: pelo menos uma das opções deve estar selecionada
+    if (!editData.cliente_fast && !editData.parceiro && !editData.prospeccao) {
+      alert('É obrigatório selecionar pelo menos uma das opções: Cliente Fast, Parceiro Fast ou Funil.');
+      return;
+    }
+    
     setLoading(true);
     try {
       const token = getAccessToken();
@@ -94,8 +110,29 @@ const Cliente = () => {
       if (patchData.cliente_fast === false) {
         patchData.data_saida_fast = new Date().toISOString();
       }
+      
+      // Sanitize CNPJ to remove formatting before sending to API
+      if (patchData.cnpj) {
+        patchData.cnpj = patchData.cnpj.replace(/\D/g, '');
+      }
+
+      // Convert empty date strings to null
+      const dateFields = [
+        'data_situacao_cadastral',
+        'data_contratacao_fast', 
+        'data_saida_fast',
+        'data_reajuste_financeiro',
+        'data_aviso_previo'
+      ];
+      
+      dateFields.forEach(field => {
+        if (patchData[field] === '') {
+          patchData[field] = null;
+        }
+      });
+
       await axios.patch(
-        `http://localhost:3002/loja/update/${editData.cnpj}`,
+        `${process.env.REACT_APP_API_URL}/loja/update/${editData.cnpj}`,
         patchData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -128,48 +165,245 @@ const Cliente = () => {
       <Box sx={{ p: 2, background: '#f9f9f9' }}>
         {isEditing ? (
           <>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <input value={editData.uf || ''} onChange={e => handleEditChange('uf', e.target.value)} placeholder="UF" />
-              <input value={editData.cep || ''} onChange={e => handleEditChange('cep', e.target.value)} placeholder="CEP" />
-              <input value={editData.email || ''} onChange={e => handleEditChange('email', e.target.value)} placeholder="Email" />
-              <input value={editData.porte || ''} onChange={e => handleEditChange('porte', e.target.value)} placeholder="Porte" />
-              <input value={editData.bairro || ''} onChange={e => handleEditChange('bairro', e.target.value)} placeholder="Bairro" />
-              <input value={editData.numero || ''} onChange={e => handleEditChange('numero', e.target.value)} placeholder="Número" />
-              <input value={editData.municipio || ''} onChange={e => handleEditChange('municipio', e.target.value)} placeholder="Município" />
-              <input value={editData.logradouro || ''} onChange={e => handleEditChange('logradouro', e.target.value)} placeholder="Logradouro" />
-              <input value={editData.cnae_fiscal || ''} onChange={e => handleEditChange('cnae_fiscal', e.target.value)} placeholder="CNAE Fiscal" />
-              <input value={editData.complemento || ''} onChange={e => handleEditChange('complemento', e.target.value)} placeholder="Complemento" />
-              <input value={editData.ddd_telefone_1 || ''} onChange={e => handleEditChange('ddd_telefone_1', e.target.value)} placeholder="DDD Telefone 1" />
-              <input value={editData.ddd_telefone_2 || ''} onChange={e => handleEditChange('ddd_telefone_2', e.target.value)} placeholder="DDD Telefone 2" />
-              <input value={editData.natureza_juridica || ''} onChange={e => handleEditChange('natureza_juridica', e.target.value)} placeholder="Natureza Jurídica" />
-              <input value={editData.opcao_pelo_simples || ''} onChange={e => handleEditChange('opcao_pelo_simples', e.target.value)} placeholder="Opção pelo Simples" />
-              <input value={editData.cnae_fiscal_descricao || ''} onChange={e => handleEditChange('cnae_fiscal_descricao', e.target.value)} placeholder="Descrição CNAE Fiscal" />
-              <input value={editData.data_situacao_cadastral || ''} onChange={e => handleEditChange('data_situacao_cadastral', e.target.value)} placeholder="Data Situação Cadastral" />
-              <input value={editData.descricao_situacao_cadastral || ''} onChange={e => handleEditChange('descricao_situacao_cadastral', e.target.value)} placeholder="Descrição Situação Cadastral" />
-              <input value={editData.descricao_identificador_matriz_filial || ''} onChange={e => handleEditChange('descricao_identificador_matriz_filial', e.target.value)} placeholder="Descrição Identificador Matriz/Filial" />
-              <input value={editData.cnae_secundario || ''} onChange={e => handleEditChange('cnae_secundario', e.target.value)} placeholder="CNAE Secundário" />
-              <input value={editData.numero_funcionarios || ''} onChange={e => handleEditChange('numero_funcionarios', e.target.value)} placeholder="Número de Funcionários" />
-              <input value={editData.valor_fatura_cliente || ''} onChange={e => handleEditChange('valor_fatura_cliente', e.target.value)} placeholder="Valor da Fatura" />
-              <input value={editData.ponto_apoio || ''} onChange={e => handleEditChange('ponto_apoio', e.target.value)} placeholder="Ponto de Apoio" />
-              <input value={editData.perfil || ''} onChange={e => handleEditChange('perfil', e.target.value)} placeholder="Perfil" />
-              <input value={editData.area_atuacao || ''} onChange={e => handleEditChange('area_atuacao', e.target.value)} placeholder="Área de Atuação" />
-              <input value={editData.segmento || ''} onChange={e => handleEditChange('segmento', e.target.value)} placeholder="Segmento" />
-              <input value={editData.numero_reunioes || ''} onChange={e => handleEditChange('numero_reunioes', e.target.value)} placeholder="Número de Reuniões" />
-              <input value={editData.status || ''} onChange={e => handleEditChange('status', e.target.value)} placeholder="Status" />
-              <input value={editData.data_contratacao_fast || ''} onChange={e => handleEditChange('data_contratacao_fast', e.target.value)} placeholder="Data de Contratação Fast" />
-              <input value={editData.data_saida_fast || ''} onChange={e => handleEditChange('data_saida_fast', e.target.value)} placeholder="Data de Saída Fast" />
-              <input value={editData.nome_ponte || ''} onChange={e => handleEditChange('nome_ponte', e.target.value)} placeholder="Nome da Ponte" />
-              <input value={editData.consultor_comercial || ''} onChange={e => handleEditChange('consultor_comercial', e.target.value)} placeholder="Consultor Comercial" />
-              <input value={editData.consultor_financeiro || ''} onChange={e => handleEditChange('consultor_financeiro', e.target.value)} placeholder="Consultor Financeiro" />
-              <input value={editData.analista || ''} onChange={e => handleEditChange('analista', e.target.value)} placeholder="Analista" />
-              <Box>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={!!editData.cliente_fast}
-                    onChange={e => handleEditChange('cliente_fast', e.target.checked)}
-                  /> Cliente Fast
-                </label>
+            <Typography variant="h6" sx={{ mb: 2 }}>Editar Cliente</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              
+              {/* Dados de Endereço */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>Dados de Endereço</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption">UF:</Typography>
+                  <input value={editData.uf || ''} onChange={e => handleEditChange('uf', e.target.value)} placeholder="UF" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">CEP:</Typography>
+                  <input value={editData.cep || ''} onChange={e => handleEditChange('cep', e.target.value)} placeholder="CEP" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Bairro:</Typography>
+                  <input value={editData.bairro || ''} onChange={e => handleEditChange('bairro', e.target.value)} placeholder="Bairro" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Número:</Typography>
+                  <input value={editData.numero || ''} onChange={e => handleEditChange('numero', e.target.value)} placeholder="Número" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Município:</Typography>
+                  <input value={editData.municipio || ''} onChange={e => handleEditChange('municipio', e.target.value)} placeholder="Município" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Logradouro:</Typography>
+                  <input value={editData.logradouro || ''} onChange={e => handleEditChange('logradouro', e.target.value)} placeholder="Logradouro" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Complemento:</Typography>
+                  <input value={editData.complemento || ''} onChange={e => handleEditChange('complemento', e.target.value)} placeholder="Complemento" style={{width: '100%', padding: '8px'}} />
+                </Box>
+              </Box>
+
+              {/* Dados de Contato */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>Dados de Contato</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption">Email:</Typography>
+                  <input value={editData.email || ''} onChange={e => handleEditChange('email', e.target.value)} placeholder="Email" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">DDD Telefone 1:</Typography>
+                  <input value={editData.ddd_telefone_1 || ''} onChange={e => handleEditChange('ddd_telefone_1', e.target.value)} placeholder="DDD Telefone 1" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">DDD Telefone 2:</Typography>
+                  <input value={editData.ddd_telefone_2 || ''} onChange={e => handleEditChange('ddd_telefone_2', e.target.value)} placeholder="DDD Telefone 2" style={{width: '100%', padding: '8px'}} />
+                </Box>
+              </Box>
+
+              {/* Dados da Empresa */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>Dados da Empresa</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption">Porte:</Typography>
+                  <input value={editData.porte || ''} onChange={e => handleEditChange('porte', e.target.value)} placeholder="Porte" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">CNAE Fiscal:</Typography>
+                  <input value={editData.cnae_fiscal || ''} onChange={e => handleEditChange('cnae_fiscal', e.target.value)} placeholder="CNAE Fiscal" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Descrição CNAE Fiscal:</Typography>
+                  <input value={editData.cnae_fiscal_descricao || ''} onChange={e => handleEditChange('cnae_fiscal_descricao', e.target.value)} placeholder="Descrição CNAE Fiscal" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">CNAE Secundário:</Typography>
+                  <input value={editData.cnae_secundario || ''} onChange={e => handleEditChange('cnae_secundario', e.target.value)} placeholder="CNAE Secundário" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Natureza Jurídica:</Typography>
+                  <input value={editData.natureza_juridica || ''} onChange={e => handleEditChange('natureza_juridica', e.target.value)} placeholder="Natureza Jurídica" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Opção pelo Simples:</Typography>
+                  <input value={editData.opcao_pelo_simples || ''} onChange={e => handleEditChange('opcao_pelo_simples', e.target.value)} placeholder="Opção pelo Simples" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Data da Situação Cadastral:</Typography>
+                  <input type="date" value={editData.data_situacao_cadastral || ''} onChange={e => handleEditChange('data_situacao_cadastral', e.target.value)} placeholder="Data da Situação Cadastral" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Descrição Situação Cadastral:</Typography>
+                  <input value={editData.descricao_situacao_cadastral || ''} onChange={e => handleEditChange('descricao_situacao_cadastral', e.target.value)} placeholder="Descrição Situação Cadastral" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Descrição Identificador Matriz/Filial:</Typography>
+                  <input value={editData.descricao_identificador_matriz_filial || ''} onChange={e => handleEditChange('descricao_identificador_matriz_filial', e.target.value)} placeholder="Descrição Identificador Matriz/Filial" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Número de Funcionários:</Typography>
+                  <input value={editData.numero_funcionarios || ''} onChange={e => handleEditChange('numero_funcionarios', e.target.value)} placeholder="Número de Funcionários" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Ponto de Apoio:</Typography>
+                  <input value={editData.ponto_apoio || ''} onChange={e => handleEditChange('ponto_apoio', e.target.value)} placeholder="Ponto de Apoio" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Perfil:</Typography>
+                  <input value={editData.perfil || ''} onChange={e => handleEditChange('perfil', e.target.value)} placeholder="Perfil" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Área de Atuação:</Typography>
+                  <select value={editData.area_atuacao || ''} onChange={e => handleEditChange('area_atuacao', e.target.value)} style={{width: '100%', padding: '8px'}}>
+                    <option value="" disabled>Selecione a área de atuação</option>
+                    <option value="industria">Indústria</option>
+                    <option value="comercio">Comércio</option>
+                    <option value="servicos">Serviços</option>
+                    <option value="hibrido">Híbrido</option>
+                  </select>
+                </Box>
+                <Box>
+                  <Typography variant="caption">Segmento:</Typography>
+                  <input value={editData.segmento || ''} onChange={e => handleEditChange('segmento', e.target.value)} placeholder="Segmento" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Número de Reuniões:</Typography>
+                  <input value={editData.numero_reunioes || ''} onChange={e => handleEditChange('numero_reunioes', e.target.value)} placeholder="Número de Reuniões" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Status:</Typography>
+                  <input value={editData.status || ''} onChange={e => handleEditChange('status', e.target.value)} placeholder="Status" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Data de Contratação Fast:</Typography>
+                  <input type="date" value={editData.data_contratacao_fast || ''} onChange={e => handleEditChange('data_contratacao_fast', e.target.value)} placeholder="Data de Contratação Fast" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Data de Saída Fast:</Typography>
+                  <input type="date" value={editData.data_saida_fast || ''} onChange={e => handleEditChange('data_saida_fast', e.target.value)} placeholder="Data de Saída Fast" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Nome da Ponte:</Typography>
+                  <input value={editData.nome_ponte || ''} onChange={e => handleEditChange('nome_ponte', e.target.value)} placeholder="Nome da Ponte" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Consultor Comercial:</Typography>
+                  <input value={editData.consultor_comercial || ''} onChange={e => handleEditChange('consultor_comercial', e.target.value)} placeholder="Consultor Comercial" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Consultor Financeiro:</Typography>
+                  <input value={editData.consultor_financeiro || ''} onChange={e => handleEditChange('consultor_financeiro', e.target.value)} placeholder="Consultor Financeiro" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Analista:</Typography>
+                  <input value={editData.analista || ''} onChange={e => handleEditChange('analista', e.target.value)} placeholder="Analista" style={{width: '100%', padding: '8px'}} />
+                </Box>
+              </Box>
+
+              {/* Origem e Dados Comerciais */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>Origem e Dados Comerciais</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption">Origem do Lead:</Typography>
+                  <select value={editData.origem_lead || ''} onChange={e => handleEditChange('origem_lead', e.target.value)} style={{width: '100%', padding: '8px'}}>
+                    <option value="" disabled>Selecione a origem do lead</option>
+                    <option value="google busca orgânica">Google Busca Orgânica</option>
+                    <option value="google ADS">Google ADS</option>
+                    <option value="instagram orgânico">Instagram Orgânico</option>
+                    <option value="instagram tráfego pago">Instagram Tráfego Pago</option>
+                    <option value="prospecção comercial">Prospecção Comercial</option>
+                    <option value="indicação consultor financeiro">Indicação Consultor Financeiro</option>
+                    <option value="indicação cliente">Indicação Cliente</option>
+                    <option value="network hygor">Network Hygor</option>
+                    <option value="indicação parceiro">Indicação Parceiro</option>
+                  </select>
+                </Box>
+              </Box>
+
+              {/* Dados Financeiros */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>Dados Financeiros</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption">Valor da Fatura:</Typography>
+                  <input value={editData.valor_fatura_cliente || ''} onChange={e => handleEditChange('valor_fatura_cliente', e.target.value)} placeholder="Valor da Fatura" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Data do Reajuste Financeiro:</Typography>
+                  <input type="date" value={editData.data_reajuste_financeiro || ''} onChange={e => handleEditChange('data_reajuste_financeiro', e.target.value)} placeholder="Data do Reajuste Financeiro" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Porcentagem Reajuste Financeiro (%):</Typography>
+                  <input type="number" step="0.01" value={editData.porcentagem_reajuste_financeiro || ''} onChange={e => handleEditChange('porcentagem_reajuste_financeiro', e.target.value)} placeholder="Porcentagem Reajuste Financeiro (%)" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Data do Aviso Prévio:</Typography>
+                  <input type="date" value={editData.data_aviso_previo || ''} onChange={e => handleEditChange('data_aviso_previo', e.target.value)} placeholder="Data do Aviso Prévio" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Empresa Contratada:</Typography>
+                  <input value={editData.empresa_contratada || ''} onChange={e => handleEditChange('empresa_contratada', e.target.value)} placeholder="Empresa Contratada" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Vencimento Fatura 1 (Dia):</Typography>
+                  <input type="number" min="1" max="31" value={editData.vencimento_fatura_1 || ''} onChange={e => handleEditChange('vencimento_fatura_1', e.target.value)} placeholder="Vencimento Fatura 1 (Dia)" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Vencimento Fatura 2 (Dia):</Typography>
+                  <input type="number" min="0" max="31" value={editData.vencimento_fatura_2 || ''} onChange={e => handleEditChange('vencimento_fatura_2', e.target.value)} placeholder="Vencimento Fatura 2 (Dia)" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box sx={{ gridColumn: 'span 2' }}>
+                  <Typography variant="caption">Observação Fatura:</Typography>
+                  <textarea value={editData.observacao_fatura || ''} onChange={e => handleEditChange('observacao_fatura', e.target.value)} placeholder="Observação Fatura" rows={3} style={{width: '100%', padding: '8px'}}></textarea>
+                </Box>
+              </Box>
+
+              {/* Classificações */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>Classificações</Typography>
+              <Box sx={{ display: 'flex', gap: 3 }}>
+                <Box>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!!editData.cliente_fast}
+                      onChange={e => handleEditChange('cliente_fast', e.target.checked)}
+                    /> Cliente Fast
+                  </label>
+                </Box>
+                <Box>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!!editData.parceiro}
+                      onChange={e => handleEditChange('parceiro', e.target.checked)}
+                    /> Parceiro Fast
+                  </label>
+                </Box>
+                <Box>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!!editData.prospeccao}
+                      onChange={e => handleEditChange('prospeccao', e.target.checked)}
+                    /> Funil
+                  </label>
+                </Box>
               </Box>
             </Box>
             <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
@@ -194,7 +428,7 @@ const Cliente = () => {
             <Typography><strong>Natureza Jurídica:</strong> {row.natureza_juridica}</Typography>
             <Typography><strong>Opção pelo Simples:</strong> {row.opcao_pelo_simples ? 'Sim' : 'Não'}</Typography>
             <Typography><strong>Descrição CNAE Fiscal:</strong> {row.cnae_fiscal_descricao}</Typography>
-            <Typography><strong>Data Situação Cadastral:</strong> {row.data_situacao_cadastral}</Typography>
+            <Typography><strong>Data da Situação Cadastral:</strong> {row.data_situacao_cadastral ? new Date(row.data_situacao_cadastral).toLocaleDateString('pt-BR') : ''}</Typography>
             <Typography><strong>Descrição Situação Cadastral:</strong> {row.descricao_situacao_cadastral}</Typography>
             <Typography><strong>Descrição Identificador Matriz/Filial:</strong> {row.descricao_identificador_matriz_filial}</Typography>
             <Typography><strong>CNAE Secundário:</strong> {row.cnae_secundario}</Typography>
@@ -206,12 +440,26 @@ const Cliente = () => {
             <Typography><strong>Segmento:</strong> {row.segmento}</Typography>
             <Typography><strong>Número de Reuniões:</strong> {row.numero_reunioes}</Typography>
             <Typography><strong>Status:</strong> {row.status}</Typography>
-            <Typography><strong>Data de Contratação Fast:</strong> {row.data_contratacao_fast}</Typography>
+            <Typography><strong>Data de Contratação Fast:</strong> {row.data_contratacao_fast ? new Date(row.data_contratacao_fast).toLocaleDateString('pt-BR') : ''}</Typography>
             <Typography><strong>Data de Saída Fast:</strong> {row.data_saida_fast ? new Date(row.data_saida_fast).toLocaleDateString('pt-BR') : ''}</Typography>
             <Typography><strong>Nome da Ponte:</strong> {row.nome_ponte}</Typography>
             <Typography><strong>Consultor Comercial:</strong> {row.consultor_comercial}</Typography>
             <Typography><strong>Consultor Financeiro:</strong> {row.consultor_financeiro}</Typography>
             <Typography><strong>Analista:</strong> {row.analista}</Typography>
+            <Typography><strong>Cliente Fast:</strong> {row.cliente_fast ? 'Sim' : 'Não'}</Typography>
+            <Typography><strong>Parceiro Fast:</strong> {row.parceiro ? 'Sim' : 'Não'}</Typography>
+            <Typography><strong>Funil:</strong> {row.prospeccao ? 'Sim' : 'Não'}</Typography>
+            
+            {/* Novos campos adicionados */}
+            <Typography><strong>Origem do Lead:</strong> {row.origem_lead}</Typography>
+            <Typography><strong>Data do Reajuste Financeiro:</strong> {row.data_reajuste_financeiro ? new Date(row.data_reajuste_financeiro).toLocaleDateString('pt-BR') : ''}</Typography>
+            <Typography><strong>Porcentagem Reajuste Financeiro:</strong> {row.porcentagem_reajuste_financeiro}%</Typography>
+            <Typography><strong>Data do Aviso Prévio:</strong> {row.data_aviso_previo ? new Date(row.data_aviso_previo).toLocaleDateString('pt-BR') : ''}</Typography>
+            <Typography><strong>Empresa Contratada:</strong> {row.empresa_contratada}</Typography>
+            <Typography><strong>Vencimento Fatura 1:</strong> {row.vencimento_fatura_1}</Typography>
+            <Typography><strong>Vencimento Fatura 2:</strong> {row.vencimento_fatura_2}</Typography>
+            <Typography><strong>Observação Fatura:</strong> {row.observacao_fatura}</Typography>
+            
             <Button variant="outlined" sx={{ mt: 2 }} onClick={() => handleEditClick(row)}>Editar</Button>
           </>
         )}
@@ -219,7 +467,7 @@ const Cliente = () => {
     );
   }, [editRowId, editData, loading, handleSaveEdit]);
 
-  const getDetailPanelHeight = React.useCallback(() => 400, []);
+  const getDetailPanelHeight = React.useCallback(() => 600, []);
 
 
 

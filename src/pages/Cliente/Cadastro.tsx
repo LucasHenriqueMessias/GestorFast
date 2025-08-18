@@ -6,6 +6,15 @@ import SearchIcon from '@mui/icons-material/Search'; // Import the SearchIcon
 import './Cadastro.css'; // Import the CSS file for styling
 import { getAccessToken } from '../../utils/storage'; // Import the function to get the access token
 
+function formatCNPJ(value: string) {
+  value = value.replace(/\D/g, '');
+  value = value.replace(/(\d{2})(\d)/, '$1.$2');
+  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+  value = value.replace(/(\d{3})(\d)/, '$1/$2');
+  value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  return value;
+}
+
 type ClienteData = {
   id_icone?: string;
   razao_social: string;
@@ -92,6 +101,13 @@ const Cadastro = () => {
     id_icone: 0,
     comercial: '',
     cnae_secundario: null,
+    origem_lead: '',
+    data_reajuste_financeiro: null,
+    porcentagem_reajuste_financeiro: 0,
+    empresa_contratada: '',
+    vencimento_fatura_1: 0,
+    vencimento_fatura_2: 0,
+    observacao_fatura: '',
   });
 
 
@@ -144,8 +160,10 @@ const Cadastro = () => {
   const handleCnpjBlur = async () => {
     if (formData.cnpj) {
       try {
+        // Remove formatting for API call
+        const cnpjNumbers = formData.cnpj.replace(/\D/g, '');
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const response = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${formData.cnpj}`);
+        const response = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${cnpjNumbers}`);
         const data = response.data;
 
         // Atualiza os campos do formulário com os dados retornados
@@ -183,15 +201,22 @@ const Cadastro = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
 
+    let processedValue = value;
+    
+    // Apply CNPJ formatting
+    if (name === 'cnpj') {
+      processedValue = formatCNPJ(value);
+    }
+
     setFormData({
       ...formData,
       [name]: type === 'checkbox'
         ? (e.target as HTMLInputElement).checked
-        : type === 'date' && value === ''
+        : type === 'date' && processedValue === ''
           ? null // Envia null para campos de data vazios
           : type === 'number'
-            ? Number(value)
-            : value,
+            ? Number(processedValue)
+            : processedValue,
     });
   };
 
@@ -199,14 +224,37 @@ const Cadastro = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação: pelo menos uma das opções deve estar selecionada
+    if (!formData.cliente_fast && !formData.parceiro && !formData.prospeccao) {
+      alert('É obrigatório selecionar pelo menos uma das opções: Cliente Fast, Parceiro Fast ou Funil.');
+      return;
+    }
+    
     const token = getAccessToken();
 
     try {
       const payload = {
         ...formData,
+        // Remove caracteres especiais do CNPJ antes de enviar para a API
+        cnpj: formData.cnpj.replace(/\D/g, ''),
         data_criacao: new Date().toISOString(),
         data_alteracao: new Date().toISOString(),
       };
+
+      // Convert empty date strings to null
+      const dateFields = [
+        'data_situacao_cadastral',
+        'data_contratacao_fast', 
+        'data_saida_fast',
+        'data_reajuste_financeiro'
+      ];
+      
+      dateFields.forEach(field => {
+        if ((payload as any)[field] === '') {
+          (payload as any)[field] = null;
+        }
+      });
 
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/loja`, payload, {
         headers: {
@@ -216,6 +264,9 @@ const Cadastro = () => {
 
       alert('Cadastro realizado com sucesso!');
       console.log('Response:', response.data);
+      
+      // Limpa o formulário após cadastro bem-sucedido
+      handleNew();
     } catch (error: any) {
       if (error.response && error.response.status === 409) {
         alert('Cliente já cadastrado');
@@ -298,6 +349,13 @@ const Cadastro = () => {
       id_icone: 0,
       comercial: '',
       cnae_secundario: null,
+      origem_lead: '',
+      data_reajuste_financeiro: null,
+      porcentagem_reajuste_financeiro: 0,
+      empresa_contratada: '',
+      vencimento_fatura_1: 0,
+      vencimento_fatura_2: 0,
+      observacao_fatura: '',
     })
   };
 
@@ -591,7 +649,15 @@ const Cadastro = () => {
 
         <div className="form-group">
           <label>CNPJ:</label>
-          <input type="text" name="cnpj" value={formData.cnpj} onChange={handleChange} onBlur={handleCnpjBlur} />
+          <input 
+            type="text" 
+            name="cnpj" 
+            value={formData.cnpj} 
+            onChange={handleChange} 
+            onBlur={handleCnpjBlur} 
+            placeholder="00.000.000/0000-00"
+            maxLength={18}
+          />
         </div>
         <div className="form-group">
           <label>Consultor Comercial:</label>
@@ -612,7 +678,18 @@ const Cadastro = () => {
         </div>
         <div className="form-group">
           <label>Área de Atuação:</label>
-          <input type="text" name="area_atuacao" value={formData.area_atuacao} onChange={handleChange} />
+          <select 
+            name="area_atuacao" 
+            value={formData.area_atuacao} 
+            onChange={handleChange}
+            className="select-input"
+          >
+            <option value="" disabled>Selecione a área de atuação</option>
+            <option value="industria">Indústria</option>
+            <option value="comercio">Comércio</option>
+            <option value="servicos">Serviços</option>
+            <option value="hibrido">Híbrido</option>
+          </select>
         </div>
         <div className="form-group">
           <label>Segmento:</label>
@@ -737,6 +814,78 @@ const Cadastro = () => {
         <div className="form-group">
           <label>Descrição Identificador Matriz/Filial:</label>
           <input type="text" name="descricao_identificador_matriz_filial" value={formData.descricao_identificador_matriz_filial} onChange={handleChange} />
+        </div>
+
+        {/* Novos campos adicionados */}
+        <div className="form-group">
+          <label>Origem do Lead:</label>
+          <select 
+            name="origem_lead" 
+            value={formData.origem_lead} 
+            onChange={handleChange}
+            className="select-input"
+          >
+            <option value="" disabled>Selecione a origem do lead</option>
+            <option value="google busca orgânica">Google Busca Orgânica</option>
+            <option value="google ADS">Google ADS</option>
+            <option value="instagram orgânico">Instagram Orgânico</option>
+            <option value="instagram tráfego pago">Instagram Tráfego Pago</option>
+            <option value="prospecção comercial">Prospecção Comercial</option>
+            <option value="indicação consultor financeiro">Indicação Consultor Financeiro</option>
+            <option value="indicação cliente">Indicação Cliente</option>
+            <option value="network hygor">Network Hygor</option>
+            <option value="indicação parceiro">Indicação Parceiro</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Data Reajuste Financeiro:</label>
+          <input
+            type="date"
+            name="data_reajuste_financeiro"
+            value={formData.data_reajuste_financeiro || ''}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="form-group">
+          <label>Porcentagem Reajuste Financeiro (%):</label>
+          <input type="number" name="porcentagem_reajuste_financeiro" value={formData.porcentagem_reajuste_financeiro} onChange={handleChange} step="0.01" />
+        </div>
+        <div className="form-group">
+          <label>Empresa Contratada:</label>
+          <input type="text" name="empresa_contratada" value={formData.empresa_contratada} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label>Vencimento Fatura 1 (Dia do Mês):</label>
+          <input
+            type="number"
+            name="vencimento_fatura_1"
+            value={formData.vencimento_fatura_1}
+            onChange={handleChange}
+            min="1"
+            max="31"
+            placeholder="Dia (1-31)"
+          />
+        </div>
+        <div className="form-group">
+          <label>Vencimento Fatura 2 (Dia do Mês):</label>
+          <input
+            type="number"
+            name="vencimento_fatura_2"
+            value={formData.vencimento_fatura_2}
+            onChange={handleChange}
+            min="0"
+            max="31"
+            placeholder="Dia (0-31)"
+          />
+        </div>
+        <div className="form-group">
+          <label>Observação Fatura:</label>
+          <textarea 
+            name="observacao_fatura" 
+            value={formData.observacao_fatura} 
+            onChange={handleChange}
+            rows={3}
+          />
         </div>
 
 

@@ -47,10 +47,20 @@ const JornadaCrescimentoCore = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // Opções para os selects com descrições
+  const getScoreOptions = () => [
+    { value: 0, label: "0 - Não Se aplica: O tema não é pertinente à realidade do cliente" },
+    { value: 1, label: "1 - Tema Não Tratado: O consultor ainda não iniciou qualquer abordagem" },
+    { value: 2, label: "2 - Tema identificado: Identificado como relevante, mas sem ações concretas" },
+    { value: 3, label: "3 - Tema em andamento: Ações iniciadas, mas sem implementação perceptível" },
+    { value: 4, label: "4 - Tema Tratado Parcialmente: Houve implementação, mas resultados iniciais" },
+    { value: 5, label: "5 - Tema tratado com excelência: Mudança concreta e resultados significativos" }
+  ];
+
   const SelectEditCell = (props: GridRenderEditCellParams) => (
     <TextField select value={props.value ?? 0} onChange={e => props.api.setEditCellValue({ id: props.id, field: props.field, value: Number(e.target.value) }, e)} size="small" fullWidth>
-      {[0,1,2,3,4,5].map(option => (
-        <MenuItem key={option} value={option}>{option}</MenuItem>
+      {getScoreOptions().map(option => (
+        <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
       ))}
     </TextField>
   );
@@ -209,17 +219,6 @@ const JornadaCrescimentoCore = () => {
       <Typography variant="h4" gutterBottom>
         Jornada de Crescimento Core
       </Typography>
-      <div>
-  <p><strong>Descrição de cada Valor a ser preenchido:</strong></p>
-  <p>
-    <strong>0 Não Se aplica:</strong> O tema não é pertinente à realidade do cliente (ex: o cliente não utiliza máquina de cartão).<br />
-    <strong>1 Tema Não Tratado:</strong> O consultor ainda não iniciou qualquer abordagem ou análise sobre o tema.<br />
-    <strong>2 Tema identificado:</strong> O consultor identificou o tema como relevante, mas ainda não realizou ações concretas (ex: apenas anotado no plano de ação).<br />
-    <strong> 3 Tema em andamento:</strong> O consultor já iniciou ações (ex: comparou taxas, levantou dados), mas ainda sem implementação ou resultado perceptível.<br />
-    <strong>4 Tema Tratado Parcialmente:</strong> O consultor atuou, houve implementação ou mudança, mas os resultados ainda são iniciais ou abaixo do esperado.<br />
-    <strong>5 Tema tratado com excelência:</strong> O consultor atuou de forma estratégica, houve mudança concreta e os resultados foram significativos para o cliente.
-  </p>
-</div>
       <br />
       <TextField
         margin="normal"
@@ -265,33 +264,33 @@ const JornadaCrescimentoCore = () => {
             )}
           />
           <TextField select label="Máquina de Cartão" name="maquina_cartao" value={newRow.maquina_cartao} onChange={handleChange} fullWidth size="small">
-            {[0,1,2,3,4,5].map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+            {getScoreOptions().map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
             ))}
           </TextField>
           <TextField select label="Empréstimos/Financiamentos" name="emprestimos_financiamentos" value={newRow.emprestimos_financiamentos} onChange={handleChange} fullWidth size="small">
-            {[0,1,2,3,4,5].map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+            {getScoreOptions().map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
             ))}
           </TextField>
           <TextField select label="Telefonia" name="telefonia" value={newRow.telefonia} onChange={handleChange} fullWidth size="small">
-            {[0,1,2,3,4,5].map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+            {getScoreOptions().map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
             ))}
           </TextField>
           <TextField select label="Contabilidade" name="contabilidade" value={newRow.contabilidade} onChange={handleChange} fullWidth size="small">
-            {[0,1,2,3,4,5].map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+            {getScoreOptions().map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
             ))}
           </TextField>
           <TextField select label="Taxas Bancárias" name="taxas_bancarias" value={newRow.taxas_bancarias} onChange={handleChange} fullWidth size="small">
-            {[0,1,2,3,4,5].map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+            {getScoreOptions().map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
             ))}
           </TextField>
           <TextField select label="Taxas Administrativas" name="taxas_administrativas" value={newRow.taxas_administrativas} onChange={handleChange} fullWidth size="small">
-            {[0,1,2,3,4,5].map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+            {getScoreOptions().map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
             ))}
           </TextField>
           <Button variant="contained" color="primary" onClick={handleAdd} sx={{ mt: 2 }}>Salvar</Button>

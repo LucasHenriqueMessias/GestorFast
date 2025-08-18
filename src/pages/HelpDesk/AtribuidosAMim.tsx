@@ -40,6 +40,7 @@ interface Chamado {
   Solicitante: string;
   Responsavel: string;
   Setor: string;
+  Cliente: string;
   Titulo: string;
   Descricao: string;
   Anotacao: string;
@@ -225,7 +226,8 @@ const AtribuidosAMim = () => {
           chamado.Titulo.toLowerCase().includes(searchLower) ||
           chamado.Descricao.toLowerCase().includes(searchLower) ||
           chamado.Solicitante.toLowerCase().includes(searchLower) ||
-          chamado.Setor.toLowerCase().includes(searchLower)
+          chamado.Setor.toLowerCase().includes(searchLower) ||
+          chamado.Cliente.toLowerCase().includes(searchLower)
         );
       }
       
@@ -386,7 +388,7 @@ const AtribuidosAMim = () => {
                 label="Buscar"
                 value={filters.searchText}
                 onChange={(e) => handleFilterChange('searchText', e.target.value)}
-                placeholder="Título, descrição, solicitante..."
+                placeholder="Título, descrição, solicitante, cliente..."
               />
               
               <FormControl fullWidth>
@@ -414,6 +416,8 @@ const AtribuidosAMim = () => {
                   <MenuItem value="Data">Data Criação</MenuItem>
                   <MenuItem value="Titulo">Título</MenuItem>
                   <MenuItem value="Solicitante">Solicitante</MenuItem>
+                  <MenuItem value="Setor">Setor</MenuItem>
+                  <MenuItem value="Cliente">Cliente</MenuItem>
                   <MenuItem value="Kanban">Status</MenuItem>
                   <MenuItem value="Expectativa_Conclusao">Expectativa</MenuItem>
                 </Select>
@@ -462,6 +466,8 @@ const AtribuidosAMim = () => {
               {sortConfig.field === 'Data' ? 'Data Criação' : 
                sortConfig.field === 'Titulo' ? 'Título' :
                sortConfig.field === 'Solicitante' ? 'Solicitante' :
+               sortConfig.field === 'Setor' ? 'Setor' :
+               sortConfig.field === 'Cliente' ? 'Cliente' :
                sortConfig.field === 'Kanban' ? 'Status' : 'Expectativa'} 
               ({sortConfig.direction === 'asc' ? 'A-Z' : 'Z-A'})
             </Typography>
@@ -529,6 +535,13 @@ const AtribuidosAMim = () => {
                         </Typography>
                       </Box>
                       
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Business sx={{ mr: 1, fontSize: 16, color: '#666' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Cliente: {chamado.Cliente || 'Não informado'}
+                        </Typography>
+                      </Box>
+                      
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <AccessTime sx={{ mr: 1, fontSize: 16, color: '#666' }} />
                         <Typography variant="body2" color="text.secondary">
@@ -579,6 +592,9 @@ const AtribuidosAMim = () => {
                       <TableCell sx={{ fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleSortChange('Setor')}>
                         Setor {sortConfig.field === 'Setor' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                       </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleSortChange('Cliente')}>
+                        Cliente {sortConfig.field === 'Cliente' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleSortChange('Kanban')}>
                         Status {sortConfig.field === 'Kanban' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                       </TableCell>
@@ -615,6 +631,7 @@ const AtribuidosAMim = () => {
                         </TableCell>
                         <TableCell>{chamado.Solicitante}</TableCell>
                         <TableCell>{chamado.Setor}</TableCell>
+                        <TableCell>{chamado.Cliente || 'Não informado'}</TableCell>
                         <TableCell>
                           <Chip 
                             label={chamado.Kanban} 
@@ -684,6 +701,12 @@ const AtribuidosAMim = () => {
                     <Typography variant="body2" color="text.secondary">
                       <Business sx={{ mr: 1, fontSize: 16, verticalAlign: 'middle' }} />
                       Setor: {selectedChamado.Setor}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      <Business sx={{ mr: 1, fontSize: 16, verticalAlign: 'middle' }} />
+                      Cliente: {selectedChamado.Cliente || 'Não informado'}
                     </Typography>
                   </Box>
                   <Box>

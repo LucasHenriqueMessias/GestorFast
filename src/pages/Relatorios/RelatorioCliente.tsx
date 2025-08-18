@@ -1205,7 +1205,7 @@ const RelatorioCliente = () => {
                 mb: 2
               }}
             >
-              Dados DRE - Demonstrativo de Resultado do Exercício
+              Highlights
             </Typography>
 
             {/* DRE Summary */}
@@ -1354,7 +1354,7 @@ const RelatorioCliente = () => {
                 {/* Resumo Financeiro DRE */}
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2, color: '#333', fontWeight: 'bold' }}>
-                    📊 Resumo Financeiro DRE
+                    📊 Resumo dos Highlights
                   </Typography>
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                     <Paper sx={{ p: 3, border: '1px solid #4CAF50', borderRadius: 2 }}>
@@ -1390,7 +1390,7 @@ const RelatorioCliente = () => {
               </>
             ) : (
               <Alert severity="warning">
-                Nenhum dado DRE encontrado para esta empresa.
+                Nenhum Highlight encontrado para esta empresa.
               </Alert>
             )}
           </Box>
@@ -1406,7 +1406,7 @@ const RelatorioCliente = () => {
                   mb: 3
                 }}
               >
-                Análise Detalhada por Tipo de Descrição DRE
+                Análise Detalhada por Tipo de Descrição do Highlight
               </Typography>
 
               <Typography 
@@ -1421,7 +1421,7 @@ const RelatorioCliente = () => {
                   borderRadius: 2
                 }}
               >
-                Esta análise mostra a evolução temporal de cada tipo de registro DRE, comparando os dados mais antigos com os mais recentes para identificar tendências financeiras.
+                Esta análise mostra a evolução temporal de cada tipo do Highlight, comparando os dados mais antigos com os mais recentes para identificar tendências financeiras.
               </Typography>
 
               {/* Summary Statistics */}
