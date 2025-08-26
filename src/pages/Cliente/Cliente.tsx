@@ -333,6 +333,7 @@ const Cliente = () => {
                     <option value="indicação cliente">Indicação Cliente</option>
                     <option value="network hygor">Network Hygor</option>
                     <option value="indicação parceiro">Indicação Parceiro</option>
+                    <option value="evento">Evento</option>
                   </select>
                 </Box>
               </Box>
