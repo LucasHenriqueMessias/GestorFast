@@ -33,6 +33,8 @@ import RelatorioCliente from './pages/Relatorios/RelatorioCliente';
 import AtribuidosAMim from './pages/HelpDesk/AtribuidosAMim';
 import MeusChamados from './pages/HelpDesk/MeusChamados';
 import NovoChamado from './pages/HelpDesk/NovoChamado';
+import ChecklistAcompanhamento from './pages/CS/ChecklistAcompanhamento';
+import PesquisaICR from './pages/CS/PesquisaICR';
 
 LicenseInfo.setLicenseKey('78ba75aca6b5ae150567b5de31e72a61Tz0xMTM2NDIsRT0xNzgwMDEyNzk5MDAwLFM9cHJvLExNPXN1YnNjcmlwdGlvbixQVj1RMy0yMDI0LEtWPTI=');
 
@@ -84,7 +86,7 @@ function AppLayout() {
     );
   }
   // Se rota não for reconhecida, redireciona para login SEM sidebar/topbar
-  if (!['/Clientes','/Relatorios','/HelpDesk/AtribuidosAMim' , '/HelpDesk/MeusChamados', '/HelpDesk/NovoChamado' ,  '/Relatorios/Cliente', '/Relatorios/Consultor', '/Relatorios/Fast' , '/Ferramentas' , '/RegistroDeReunioes', '/Eventos' ,'/Biblioteca' , '/Socios',  '/Funil', '/Fotografia' , '/Highlights' , '/home', '/Alertas', '/Cadastro', '/Dores' , '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery', '/ConsultarCNPJ'].includes(location) && !isLogin) {
+  if (!['/Clientes','/Relatorios','/HelpDesk/AtribuidosAMim' , '/HelpDesk/MeusChamados', '/HelpDesk/NovoChamado' ,  '/Relatorios/Cliente', '/Relatorios/Consultor', '/Relatorios/Fast' , '/Ferramentas' , '/RegistroDeReunioes', '/Eventos' ,'/Biblioteca' , '/Socios',  '/Funil', '/Fotografia' , '/Highlights' , '/home', '/Alertas', '/Cadastro', '/Dores' , '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery', '/ConsultarCNPJ', '/Checklist/Acompanhamento/Cliente', '/Pesquisa/Satisfacao/ICR'].includes(location) && !isLogin) {
     return (
       <Navigate to="/" replace />
     );
@@ -122,6 +124,8 @@ function AppLayout() {
             <Route path="/HelpDesk/AtribuidosAMim" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><AtribuidosAMim /></PrivateRoute>} />
             <Route path="/HelpDesk/MeusChamados" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><MeusChamados /></PrivateRoute>} />
             <Route path="/HelpDesk/NovoChamado" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><NovoChamado /></PrivateRoute>} />
+            <Route path="/Checklist/Acompanhamento/Cliente" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><ChecklistAcompanhamento/></PrivateRoute>} />
+            <Route path="/Pesquisa/Satisfacao/ICR" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><PesquisaICR/></PrivateRoute>} />
           </Routes>
         </div>
       </div>

@@ -8,6 +8,7 @@ import AddTaskIcon from '@mui/icons-material/AddTask';
 export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: boolean, children?: React.ReactNode }) {
     const [gestaoOpen, setGestaoOpen] = useState(false);
     const [clienteOpen, setClienteOpen] = useState(false);
+    const [csOpen, setCsOpen] = useState(false);
     const [ferramentasOpen, setFerramentasOpen] = useState(false);
     const [helpdeskOpen, setHelpdeskOpen] = useState(false);
     const [consultorOpen, setConsultorOpen] = useState(false);
@@ -144,6 +145,18 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Fotografia'}>Fotografia</li>
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Dores'}>Dores</li>
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Socios'}>Socios</li>
+                                <li className="dropdown-menu-item" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => setCsOpen((open) => !open)}>
+                                    <span>CS</span>
+                                    <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: csOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                        <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                    </svg>
+                                </li>
+                                {csOpen && (
+                                    <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                                        <li className="dropdown-menu-item" style={{ paddingLeft: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/Checklist/Acompanhamento/Cliente'}>Checklist de Acompanhamento</li>
+                                        <li className="dropdown-menu-item" style={{ paddingLeft: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/Pesquisa/Satisfacao/ICR'}>Pesquisa ICR</li>
+                                    </ul>
+                                )}
                             </ul>
                         )}
                         <div
