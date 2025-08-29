@@ -359,7 +359,11 @@ const Cliente = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption">Empresa Contratada:</Typography>
-                  <input value={editData.empresa_contratada || ''} onChange={e => handleEditChange('empresa_contratada', e.target.value)} placeholder="Empresa Contratada" style={{width: '100%', padding: '8px'}} />
+                  <select value={editData.empresa_contratada || ''} onChange={e => handleEditChange('empresa_contratada', e.target.value)} style={{width: '100%', padding: '8px'}}>
+                    <option value="" disabled>Selecione a empresa</option>
+                    <option value="Prise">Prise</option>
+                    <option value="Fast">Fast</option>
+                  </select>
                 </Box>
                 <Box>
                   <Typography variant="caption">Vencimento Fatura 1 (Dia):</Typography>

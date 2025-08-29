@@ -104,7 +104,7 @@ const Cadastro = () => {
     origem_lead: '',
     data_reajuste_financeiro: null,
     porcentagem_reajuste_financeiro: 0,
-    empresa_contratada: '',
+    empresa_contratada: 'Prise',
     vencimento_fatura_1: 0,
     vencimento_fatura_2: 0,
     observacao_fatura: '',
@@ -853,7 +853,11 @@ const Cadastro = () => {
         </div>
         <div className="form-group">
           <label>Empresa Contratada:</label>
-          <input type="text" name="empresa_contratada" value={formData.empresa_contratada} onChange={handleChange} />
+          <select name="empresa_contratada" value={formData.empresa_contratada} onChange={handleChange} className="select-input">
+            <option value="" disabled>Selecione a empresa</option>
+            <option value="Prise">Prise</option>
+            <option value="Fast">Fast</option>
+          </select>
         </div>
         <div className="form-group">
           <label>Vencimento Fatura 1 (Dia do Mês):</label>

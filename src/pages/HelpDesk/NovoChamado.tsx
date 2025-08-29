@@ -236,6 +236,7 @@ const NovoChamado = () => {
                 <MenuItem value="Gestor">Gestor</MenuItem>
                 <MenuItem value="Consultor">Consultor</MenuItem>
                 <MenuItem value="CS">CS</MenuItem>
+                <MenuItem value="HelpDesk">HelpDesk</MenuItem>
               </Select>
             </FormControl>
 
