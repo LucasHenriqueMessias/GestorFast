@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Box, Container, Typography, CircularProgress, Chip, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, FormControlLabel, Checkbox, MenuItem } from '@mui/material';
+import { Box, Container, Typography, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, FormControlLabel, Checkbox, MenuItem, Autocomplete } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { getAccessToken } from '../../utils/storage';
 
@@ -8,21 +8,38 @@ interface Checklist {
   id: number;
   empresa: string;
   responsável: string;
-  data_fechamento_contrato: string;
+  data_fechamento_contrato: string | null;
   possui_ponto_apoio: boolean;
   contrato_assinado: string;
-  data_onboarding: string;
+  data_onboarding: string | null;
   consultor: string;
   envio_briefing_para_consultor: boolean;
   grupo_wa: boolean;
-  data_dossie: string;
+  data_dossie: string | null;
   feedback_dossie: string;
   instalacao_dropbox: boolean;
   plano_de_contas: boolean;
   treinamento_equipe_operacional: string;
+  descricao_atividades_cs: string;
 }
 
 const ChecklistAcompanhamento: React.FC = () => {
+  // Estado para lista de clientes
+  const [clientes, setClientes] = useState<{ razao_social: string }[]>([]);
+  // Buscar clientes para o select de empresa
+  const fetchClientes = async () => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setClientes(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+    }
+  };
   const [data, setData] = useState<Checklist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +60,9 @@ const ChecklistAcompanhamento: React.FC = () => {
     instalacao_dropbox: false,
     plano_de_contas: false,
     treinamento_equipe_operacional: 'A ser agendado',
+    descricao_atividades_cs: '',
   });
+  const [detailRow, setDetailRow] = useState<Checklist | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -61,7 +80,10 @@ const ChecklistAcompanhamento: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    fetchClientes();
+  }, []);
 
   const handleOpenDialog = (row?: Checklist) => {
     if (row) {
@@ -83,7 +105,8 @@ const ChecklistAcompanhamento: React.FC = () => {
         feedback_dossie: '',
         instalacao_dropbox: false,
         plano_de_contas: false,
-        treinamento_equipe_operacional: 'A ser agendado'
+        treinamento_equipe_operacional: 'A ser agendado',
+        descricao_atividades_cs: '',
       });
       setEditId(null);
     }
@@ -99,13 +122,28 @@ const ChecklistAcompanhamento: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getAccessToken();
+    // Corrigir campos de data vazios para null
+    const dateFields: (keyof typeof form)[] = [
+      'data_fechamento_contrato',
+      'data_onboarding',
+      'data_dossie'
+    ];
+    const formToSend = { ...form };
+    dateFields.forEach(field => {
+      if (formToSend[field] === '') {
+        // Type guard: only assign null to fields that are string | null
+        if (field === 'data_fechamento_contrato' || field === 'data_onboarding' || field === 'data_dossie') {
+          (formToSend as any)[field] = null;
+        }
+      }
+    });
     try {
       if (editId) {
         // PATCH
-        await axios.patch(`${process.env.REACT_APP_API_URL}/tab-checklist-cliente-cs/${editId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.patch(`${process.env.REACT_APP_API_URL}/tab-checklist-cliente-cs/${editId}`, formToSend, { headers: { Authorization: `Bearer ${token}` } });
       } else {
         // POST
-        await axios.post(`${process.env.REACT_APP_API_URL}/tab-checklist-cliente-cs`, form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post(`${process.env.REACT_APP_API_URL}/tab-checklist-cliente-cs`, formToSend, { headers: { Authorization: `Bearer ${token}` } });
       }
       handleCloseDialog();
       fetchData();
@@ -114,87 +152,17 @@ const ChecklistAcompanhamento: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Tem certeza que deseja excluir este checklist?')) return;
-    const token = getAccessToken();
-    try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/tab-checklist-cliente-cs/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      fetchData();
-    } catch (err) {
-      alert('Erro ao excluir checklist.');
-    }
-  };
-
-  const renderBool = (value: boolean) => (
-    value ? <Chip label="Sim" color="success" size="small" /> : <Chip label="Não" color="default" size="small" />
-  );
+  // Funções handleDelete e renderBool removidas pois não estão em uso.
 
   // Definição das colunas para o DataGrid
   const columns: GridColDef[] = [
     { field: 'empresa', headerName: 'Empresa', flex: 1 },
-    { field: 'responsável', headerName: 'Responsável', flex: 1 },
     { field: 'data_fechamento_contrato', headerName: 'Data Fechamento Contrato', flex: 1, renderCell: (params: GridRenderCellParams) => {
       const value = params.row?.data_fechamento_contrato;
       if (!value) return '';
-      // Se vier só yyyy-mm-dd, tratar como local
       const date = value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value);
       return isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
     } },
-    { field: 'possui_ponto_apoio', headerName: 'Possui Ponto Apoio', flex: 1, renderCell: (params: GridRenderCellParams) => renderBool(params.value) },
-    { field: 'contrato_assinado', headerName: 'Contrato Assinado', flex: 1, renderCell: (params: GridRenderCellParams) => {
-      if (params.value === 'Sim') return <Chip label="Sim" color="success" size="small" />;
-      if (params.value === 'Em Análise') return <Chip label="Em Análise" color="warning" size="small" />;
-      if (params.value === 'Ainda Não Enviado') return <Chip label="Ainda Não Enviado" color="default" size="small" />;
-      return <Chip label={params.value} size="small" />;
-    } },
-    { field: 'data_onboarding', headerName: 'Data Onboarding', flex: 1, renderCell: (params: GridRenderCellParams) => {
-      const value = params.row?.data_onboarding;
-      if (!value) return '';
-      const date = value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value);
-      return isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
-    } },
-    { field: 'consultor', headerName: 'Consultor', flex: 1 },
-    { field: 'envio_briefing_para_consultor', headerName: 'Envio Briefing', flex: 1, renderCell: (params: GridRenderCellParams) => renderBool(params.value) },
-    { field: 'grupo_wa', headerName: 'Grupo WhatsApp', flex: 1, renderCell: (params: GridRenderCellParams) => renderBool(params.value) },
-    { field: 'data_dossie', headerName: 'Data Dossiê', flex: 1, renderCell: (params: GridRenderCellParams) => {
-      const value = params.row?.data_dossie;
-      if (!value) return '';
-      const date = value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value);
-      return isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
-    } },
-    { field: 'feedback_dossie', headerName: 'Feedback Dossiê', flex: 1 },
-    { field: 'instalacao_dropbox', headerName: 'Instalação Dropbox', flex: 1, renderCell: (params: GridRenderCellParams) => renderBool(params.value) },
-    { field: 'plano_de_contas', headerName: 'Plano de Contas', flex: 1, renderCell: (params: GridRenderCellParams) => renderBool(params.value) },
-    { field: 'treinamento_equipe_operacional', headerName: 'Treinamento Equipe Operacional', flex: 1, renderCell: (params: GridRenderCellParams) => {
-      const value = params.value;
-      let color: 'default' | 'warning' | 'success' | 'info' = 'default';
-      if (value === 'realizado') color = 'success';
-      else if (value === 'agendado') color = 'info';
-      else if (value === 'A ser agendado') color = 'warning';
-      return <Chip label={value} color={color} size="small" />;
-    } },
-    {
-      field: 'actions',
-      headerName: 'Ações',
-      minWidth: 180,
-      sortable: false,
-      filterable: false,
-      disableExport: true,
-      renderCell: (params: GridRenderCellParams) => {
-        // Garante que params.row existe e tem id
-        if (!params.row || typeof params.row.id === 'undefined') return null;
-        return (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="outlined" color="primary" size="small" onClick={() => handleOpenDialog(params.row)}>
-              Editar
-            </Button>
-            <Button variant="outlined" color="secondary" size="small" onClick={() => handleDelete(params.row.id)}>
-              Excluir
-            </Button>
-          </Box>
-        );
-      },
-    },
   ];
 
   return (
@@ -203,37 +171,91 @@ const ChecklistAcompanhamento: React.FC = () => {
       <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ mb: 2 }}>
         Adicionar Checklist
       </Button>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <CircularProgress />
-        </Box>
-      ) : error ? (
-        <Typography color="error">{error}</Typography>
-      ) : (
-        <Box sx={{ height: 600, width: '100%' }}>
-          <DataGrid
-            rows={data}
-            columns={columns}
-            pageSizeOptions={[10, 20, 50, 100]}
-            disableRowSelectionOnClick
-            getRowId={(row) => row.id}
-            autoHeight
-          />
-        </Box>
-      )}
-  <Dialog open={openDialog} onClose={handleCloseDialog} disableEnforceFocus={false}>
+      <>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Typography color="error">{error}</Typography>
+        ) : (
+          <Box sx={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={data}
+              columns={columns}
+              pageSizeOptions={[10, 20, 50, 100]}
+              disableRowSelectionOnClick
+              getRowId={(row) => row.id}
+              autoHeight
+              onRowClick={(params) => setDetailRow(params.row)}
+            />
+          </Box>
+        )}
+        {/* Master-detail dialog */}
+        <Dialog open={!!detailRow} onClose={() => setDetailRow(null)} maxWidth="md" fullWidth>
+          <DialogTitle>Relatório do Cliente</DialogTitle>
+          <DialogContent dividers>
+            {detailRow && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="subtitle1"><b>Empresa:</b> {detailRow.empresa}</Typography>
+                <Typography variant="subtitle1"><b>Responsável:</b> {detailRow.responsável}</Typography>
+                <Typography variant="subtitle1"><b>Data Fechamento Contrato:</b> {detailRow.data_fechamento_contrato ? (detailRow.data_fechamento_contrato.length === 10 ? new Date(detailRow.data_fechamento_contrato + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(detailRow.data_fechamento_contrato).toLocaleDateString('pt-BR')) : ''}</Typography>
+                <Typography variant="subtitle1"><b>Possui Ponto Apoio:</b> {detailRow.possui_ponto_apoio ? 'Sim' : 'Não'}</Typography>
+                <Typography variant="subtitle1"><b>Contrato Assinado:</b> {detailRow.contrato_assinado}</Typography>
+                <Typography variant="subtitle1"><b>Data Onboarding:</b> {detailRow.data_onboarding ? (detailRow.data_onboarding.length === 10 ? new Date(detailRow.data_onboarding + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(detailRow.data_onboarding).toLocaleDateString('pt-BR')) : ''}</Typography>
+                <Typography variant="subtitle1"><b>Consultor:</b> {detailRow.consultor}</Typography>
+                <Typography variant="subtitle1"><b>Envio Briefing para Consultor:</b> {detailRow.envio_briefing_para_consultor ? 'Sim' : 'Não'}</Typography>
+                <Typography variant="subtitle1"><b>Grupo WhatsApp:</b> {detailRow.grupo_wa ? 'Sim' : 'Não'}</Typography>
+                <Typography variant="subtitle1"><b>Data Dossiê:</b> {detailRow.data_dossie ? (detailRow.data_dossie.length === 10 ? new Date(detailRow.data_dossie + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(detailRow.data_dossie).toLocaleDateString('pt-BR')) : ''}</Typography>
+                <Typography variant="subtitle1"><b>Feedback Dossiê:</b> {detailRow.feedback_dossie}</Typography>
+                <Typography variant="subtitle1"><b>Instalação Dropbox:</b> {detailRow.instalacao_dropbox ? 'Sim' : 'Não'}</Typography>
+                <Typography variant="subtitle1"><b>Plano de Contas:</b> {detailRow.plano_de_contas ? 'Sim' : 'Não'}</Typography>
+                <Typography variant="subtitle1"><b>Treinamento Equipe Operacional:</b> {detailRow.treinamento_equipe_operacional}</Typography>
+                <Typography variant="subtitle1"><b>Descrição das Atividades CS:</b></Typography>
+                <Box sx={{ whiteSpace: 'pre-line', border: '1px solid #eee', borderRadius: 1, p: 2, bgcolor: '#fafafa' }}>
+                  {detailRow.descricao_atividades_cs || <i>Sem informações</i>}
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDetailRow(null)} color="primary">Fechar</Button>
+            {detailRow && (
+              <Button
+                color="primary"
+                variant="outlined"
+                onClick={() => {
+                  handleOpenDialog(detailRow);
+                  setDetailRow(null);
+                }}
+              >
+                Editar
+              </Button>
+            )}
+          </DialogActions>
+        </Dialog>
+        <Dialog open={openDialog} onClose={handleCloseDialog} disableEnforceFocus={false}>
         <DialogTitle>{editId ? 'Editar' : 'Adicionar'} Checklist</DialogTitle>
         <DialogContent>
-          <TextField
+          <Autocomplete
             autoFocus
-            margin="dense"
-            name="empresa"
-            label="Empresa"
-            type="text"
-            fullWidth
-            variant="outlined"
+            options={clientes.map((c) => c.razao_social)}
             value={form.empresa}
-            onChange={handleFormChange}
+            onChange={(_event, newValue) => {
+              setForm((prev) => ({ ...prev, empresa: newValue || '' }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="dense"
+                name="empresa"
+                label="Empresa"
+                variant="outlined"
+                fullWidth
+              />
+            )}
+            isOptionEqualToValue={(option, value) => option === value}
+            freeSolo={false}
           />
           <TextField
             margin="dense"
@@ -344,6 +366,8 @@ const ChecklistAcompanhamento: React.FC = () => {
             variant="outlined"
             value={form.feedback_dossie}
             onChange={handleFormChange}
+            multiline
+            minRows={3}
           />
           <FormControlLabel
             control={
@@ -381,6 +405,18 @@ const ChecklistAcompanhamento: React.FC = () => {
               <MenuItem key={option} value={option}>{option}</MenuItem>
             ))}
           </TextField>
+          <TextField
+            margin="dense"
+            name="descricao_atividades_cs"
+            label="Descrição das Atividades CS"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={form.descricao_atividades_cs}
+            onChange={handleFormChange}
+            multiline
+            minRows={3}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="primary">
@@ -391,6 +427,7 @@ const ChecklistAcompanhamento: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      </>
     </Container>
   );
 };
