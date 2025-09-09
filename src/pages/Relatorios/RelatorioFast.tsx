@@ -130,15 +130,16 @@ const RelatorioFast = () => {
                     color: '#9C27B0',
                     fontWeight: 'bold',
                     fontSize: {
-                      xs: data.soma_fatura >= 1000000 ? '1.1rem' : '1.5rem',
-                      sm: data.soma_fatura >= 1000000 ? '1.3rem' : '2rem',
-                      md: data.soma_fatura >= 1000000 ? '1.6rem' : '2.5rem',
+                      xs: '1.1rem',
+                      sm: '1.5rem',
+                      md: '1.8rem',
                     },
-                    wordBreak: 'break-all',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                     lineHeight: 1.1,
                     letterSpacing: '-0.5px',
                     maxWidth: '100%',
-                    overflowWrap: 'break-word',
                   }}
                 >
                   {`R$ ${Number(data.soma_fatura).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
