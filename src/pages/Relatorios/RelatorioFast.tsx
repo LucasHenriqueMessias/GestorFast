@@ -122,9 +122,27 @@ const RelatorioFast = () => {
               </Paper>
             </Box>
             <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #9C27B0' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #9C27B0', minHeight: 120 }}>
                 <Typography variant="h6" sx={{ color: '#9C27B0', fontWeight: 'bold' }}>Soma Fatura</Typography>
-                <Typography variant="h3" sx={{ color: '#9C27B0', fontWeight: 'bold' }}>R$ {data.soma_fatura.toLocaleString('pt-BR')}</Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: '#9C27B0',
+                    fontWeight: 'bold',
+                    fontSize: {
+                      xs: data.soma_fatura >= 1000000 ? '1.1rem' : '1.5rem',
+                      sm: data.soma_fatura >= 1000000 ? '1.3rem' : '2rem',
+                      md: data.soma_fatura >= 1000000 ? '1.6rem' : '2.5rem',
+                    },
+                    wordBreak: 'break-all',
+                    lineHeight: 1.1,
+                    letterSpacing: '-0.5px',
+                    maxWidth: '100%',
+                    overflowWrap: 'break-word',
+                  }}
+                >
+                  {`R$ ${Number(data.soma_fatura).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </Typography>
               </Paper>
             </Box>
           </Box>

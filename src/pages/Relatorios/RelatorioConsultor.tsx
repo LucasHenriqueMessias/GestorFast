@@ -856,7 +856,7 @@ const RelatorioConsultor = () => {
             />
             <MetricCard 
               title="Ticket Médio" 
-              value={`R$ ${data["ticket medio clientes ativos"].toLocaleString('pt-BR')}`} 
+              value={`R$ ${Number(data["ticket medio clientes ativos"]).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
               icon={<TrendingUp />} 
             />
             <MetricCard 
