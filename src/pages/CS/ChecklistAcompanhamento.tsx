@@ -21,6 +21,9 @@ interface Checklist {
   plano_de_contas: boolean;
   treinamento_equipe_operacional: string;
   descricao_atividades_cs: string;
+  faturamento?: number;
+  principais_dores_cliente?: string;
+  informacoes_relevantes?: string;
 }
 
 const ChecklistAcompanhamento: React.FC = () => {
@@ -45,6 +48,8 @@ const ChecklistAcompanhamento: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  // Para o input tipo calculadora, armazenar string de dígitos para faturamento
+  const [moneyDigits, setMoneyDigits] = useState<string>('');
   const [form, setForm] = useState<Omit<Checklist, 'id'>>({
     empresa: '',
     responsável: '',
@@ -61,6 +66,9 @@ const ChecklistAcompanhamento: React.FC = () => {
     plano_de_contas: false,
     treinamento_equipe_operacional: 'A ser agendado',
     descricao_atividades_cs: '',
+    faturamento: undefined,
+    principais_dores_cliente: '',
+    informacoes_relevantes: '',
   });
   const [detailRow, setDetailRow] = useState<Checklist | null>(null);
 
@@ -90,6 +98,13 @@ const ChecklistAcompanhamento: React.FC = () => {
       const { id, ...rest } = row;
       setForm(rest);
       setEditId(id);
+      // Preencher moneyDigits a partir do valor existente
+      if (rest.faturamento !== undefined && rest.faturamento !== null) {
+        // Ex: 12.34 -> '1234'
+        setMoneyDigits(Math.round(rest.faturamento * 100).toString());
+      } else {
+        setMoneyDigits('');
+      }
     } else {
       setForm({
         empresa: '',
@@ -107,7 +122,11 @@ const ChecklistAcompanhamento: React.FC = () => {
         plano_de_contas: false,
         treinamento_equipe_operacional: 'A ser agendado',
         descricao_atividades_cs: '',
+        faturamento: undefined,
+        principais_dores_cliente: '',
+        informacoes_relevantes: '',
       });
+      setMoneyDigits('');
       setEditId(null);
     }
     setOpenDialog(true);
@@ -198,7 +217,7 @@ const ChecklistAcompanhamento: React.FC = () => {
             {detailRow && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Typography variant="subtitle1"><b>Empresa:</b> {detailRow.empresa}</Typography>
-                <Typography variant="subtitle1"><b>Responsável:</b> {detailRow.responsável}</Typography>
+                <Typography variant="subtitle1"><b>Principal Contato na Empresa:</b> {detailRow.responsável}</Typography>
                 <Typography variant="subtitle1"><b>Data Fechamento Contrato:</b> {detailRow.data_fechamento_contrato ? (detailRow.data_fechamento_contrato.length === 10 ? new Date(detailRow.data_fechamento_contrato + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(detailRow.data_fechamento_contrato).toLocaleDateString('pt-BR')) : ''}</Typography>
                 <Typography variant="subtitle1"><b>Possui Ponto Apoio:</b> {detailRow.possui_ponto_apoio ? 'Sim' : 'Não'}</Typography>
                 <Typography variant="subtitle1"><b>Contrato Assinado:</b> {detailRow.contrato_assinado}</Typography>
@@ -214,6 +233,17 @@ const ChecklistAcompanhamento: React.FC = () => {
                 <Typography variant="subtitle1"><b>Descrição das Atividades CS:</b></Typography>
                 <Box sx={{ whiteSpace: 'pre-line', border: '1px solid #eee', borderRadius: 1, p: 2, bgcolor: '#fafafa' }}>
                   {detailRow.descricao_atividades_cs || <i>Sem informações</i>}
+                </Box>
+                <Typography variant="subtitle1"><b>Faturamento:</b> {detailRow.faturamento !== undefined && detailRow.faturamento !== null
+                  ? detailRow.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                  : <i>Não informado</i>}</Typography>
+                <Typography variant="subtitle1"><b>Principais Dores do Cliente:</b></Typography>
+                <Box sx={{ whiteSpace: 'pre-line', border: '1px solid #eee', borderRadius: 1, p: 2, bgcolor: '#fafafa' }}>
+                  {detailRow.principais_dores_cliente || <i>Sem informações</i>}
+                </Box>
+                <Typography variant="subtitle1"><b>Informações Relevantes:</b></Typography>
+                <Box sx={{ whiteSpace: 'pre-line', border: '1px solid #eee', borderRadius: 1, p: 2, bgcolor: '#fafafa' }}>
+                  {detailRow.informacoes_relevantes || <i>Sem informações</i>}
                 </Box>
               </Box>
             )}
@@ -260,7 +290,7 @@ const ChecklistAcompanhamento: React.FC = () => {
           <TextField
             margin="dense"
             name="responsável"
-            label="Responsável"
+            label="Principal Contato na Empresa"
             type="text"
             fullWidth
             variant="outlined"
@@ -416,6 +446,75 @@ const ChecklistAcompanhamento: React.FC = () => {
             onChange={handleFormChange}
             multiline
             minRows={3}
+          />
+          <TextField
+            margin="dense"
+            name="faturamento"
+            label="Faturamento (R$)"
+            fullWidth
+            variant="outlined"
+            value={(() => {
+              // Formatar moneyDigits para moeda
+              let digits = moneyDigits.replace(/\D/g, '');
+              if (!digits) return 'R$ 0,00';
+              let intVal = parseInt(digits, 10);
+              let cents = intVal % 100;
+              let reais = Math.floor(intVal / 100);
+              return `R$ ${reais.toLocaleString('pt-BR')},${cents.toString().padStart(2, '0')}`;
+            })()}
+            inputProps={{
+              style: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+              maxLength: 15
+            }}
+            onChange={e => {
+              // Não permitir digitação manual, só via teclado numérico
+            }}
+            onKeyDown={e => {
+              if (e.ctrlKey || e.metaKey || e.altKey) return;
+              if (e.key === 'Backspace') {
+                setMoneyDigits(prev => prev.slice(0, -1));
+                setForm(prev => ({ ...prev, faturamento: moneyDigits.length > 1 ? parseInt(moneyDigits.slice(0, -1), 10) / 100 : undefined }));
+                e.preventDefault();
+                return;
+              }
+              if (/^[0-9]$/.test(e.key)) {
+                if (moneyDigits.length < 13) { // até trilhões
+                  const newDigits = moneyDigits + e.key;
+                  setMoneyDigits(newDigits);
+                  setForm(prev => ({ ...prev, faturamento: parseInt(newDigits, 10) / 100 }));
+                }
+                e.preventDefault();
+                return;
+              }
+              // Bloquear qualquer outra tecla
+              e.preventDefault();
+            }}
+          />
+          <TextField
+            margin="dense"
+            name="principais_dores_cliente"
+            label="Principais Dores do Cliente"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={form.principais_dores_cliente}
+            onChange={handleFormChange}
+            multiline
+            minRows={2}
+          />
+          <TextField
+            margin="dense"
+            name="informacoes_relevantes"
+            label="Informações Relevantes"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={form.informacoes_relevantes}
+            onChange={handleFormChange}
+            multiline
+            minRows={2}
           />
         </DialogContent>
         <DialogActions>
