@@ -45,9 +45,13 @@ const Cadastro = () => {
     complemento: '',
     razao_social: '',
     nome_fantasia: '',
-    capital_social: 0,
+    capital_social: '',
     ddd_telefone_1: '',
     ddd_telefone_2: '',
+    representante_legal_1: '',
+    cpf_representante_legal_1: '',
+    representante_legal_2: '',
+    cpf_representante_legal_2: '',
     natureza_juridica: '',
     opcao_pelo_simples: false,
     cnae_fiscal_descricao: '',
@@ -90,7 +94,7 @@ const Cadastro = () => {
     observacao_indicacao: '',
     SLA: '',
     data_sla: null,
-    valor_fatura_cliente: 0,
+    valor_fatura_cliente: '',
     grupo_economico_cliente: '',
     coluna_mae: '',
     data_inicio_parceria: null,
@@ -108,6 +112,9 @@ const Cadastro = () => {
     vencimento_fatura_1: 0,
     vencimento_fatura_2: 0,
     observacao_fatura: '',
+    indicacao_lead: '',
+    comissao_indicacao: 0,
+    comissao_fechamento: 0,
   });
 
 
@@ -166,6 +173,14 @@ const Cadastro = () => {
         const response = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${cnpjNumbers}`);
         const data = response.data;
 
+        // Converter capital_social do CNPJ API (number) para string de dígitos
+        const formatCapitalSocialToDigits = (val: number) => {
+          if (val && val > 0) {
+            return Math.round(val * 100).toString();
+          }
+          return '';
+        };
+
         // Atualiza os campos do formulário com os dados retornados
         setFormData({
           ...formData,
@@ -179,12 +194,16 @@ const Cadastro = () => {
           cep: data.cep || '',
           complemento: data.complemento || '',
           natureza_juridica: data.natureza_juridica || '',
-          capital_social: data.capital_social || 0,
+          capital_social: formatCapitalSocialToDigits(data.capital_social),
           cnae_fiscal: data.cnae_fiscal || 0,
           cnae_fiscal_descricao: data.cnae_fiscal_descricao || '',
           pais: data.pais || '',
           ddd_telefone_1: data.ddd_telefone_1 || '',
           ddd_telefone_2: data.ddd_telefone_2 || '',
+          representante_legal_1: data.representante_legal_1 || '',
+          cpf_representante_legal_1: data.cpf_representante_legal_1 || '',
+          representante_legal_2: data.representante_legal_2 || '',
+          cpf_representante_legal_2: data.cpf_representante_legal_2 || '',
           email: data.email || '',
           porte: data.porte || '',
           opcao_pelo_simples: data.opcao_pelo_simples || false,
@@ -234,10 +253,26 @@ const Cadastro = () => {
     const token = getAccessToken();
 
     try {
+      // Converter valor_fatura_cliente (string com dígitos) para double (ex: 1113,58)
+      const valorFaturaDigits = (typeof formData.valor_fatura_cliente === 'string' ? formData.valor_fatura_cliente : '').replace(/\D/g, '');
+      let valorFaturaNumber = 0;
+      if (valorFaturaDigits.length > 0) {
+        valorFaturaNumber = parseInt(valorFaturaDigits, 10) / 100;
+      }
+      
+      // Converter capital_social (string com dígitos) para double (ex: 1113,58)
+      const capitalSocialDigits = (typeof formData.capital_social === 'string' ? formData.capital_social : '').replace(/\D/g, '');
+      let capitalSocialNumber = 0;
+      if (capitalSocialDigits.length > 0) {
+        capitalSocialNumber = parseInt(capitalSocialDigits, 10) / 100;
+      }
+      
       const payload = {
         ...formData,
         // Remove caracteres especiais do CNPJ antes de enviar para a API
         cnpj: formData.cnpj.replace(/\D/g, ''),
+        valor_fatura_cliente: valorFaturaNumber,
+        capital_social: capitalSocialNumber,
         data_criacao: new Date().toISOString(),
         data_alteracao: new Date().toISOString(),
       };
@@ -293,9 +328,13 @@ const Cadastro = () => {
       complemento: '',
       razao_social: '',
       nome_fantasia: '',
-      capital_social: 0,
+      capital_social: '',
       ddd_telefone_1: '',
       ddd_telefone_2: '',
+      representante_legal_1: '',
+      cpf_representante_legal_1: '',
+      representante_legal_2: '',
+      cpf_representante_legal_2: '',
       natureza_juridica: '',
       opcao_pelo_simples: false,
       cnae_fiscal_descricao: '',
@@ -338,7 +377,7 @@ const Cadastro = () => {
       observacao_indicacao: '',
       SLA: '',
       data_sla: null,
-      valor_fatura_cliente: 0,
+      valor_fatura_cliente: '',
       grupo_economico_cliente: '',
       coluna_mae: '',
       data_inicio_parceria: null,
@@ -356,6 +395,9 @@ const Cadastro = () => {
       vencimento_fatura_1: 0,
       vencimento_fatura_2: 0,
       observacao_fatura: '',
+      indicacao_lead: '',
+      comissao_indicacao: 0,
+      comissao_fechamento: 0,
     })
   };
 
@@ -725,8 +767,43 @@ const Cadastro = () => {
 
 
         <div className="form-group">
-          <label>Valor Fatura Cliente:</label>
-          <input type="number" name="valor_fatura_cliente" value={formData.valor_fatura_cliente} onChange={handleChange} />
+          <label>Valor Fatura Cliente (R$):</label>
+          <input
+            type="text"
+            name="valor_fatura_cliente"
+            value={(() => {
+              let digits = (typeof formData.valor_fatura_cliente === 'string' ? formData.valor_fatura_cliente : '').replace(/\D/g, '');
+              if (!digits) return 'R$ 0,00';
+              let intVal = parseInt(digits, 10);
+              let cents = intVal % 100;
+              let reais = Math.floor(intVal / 100);
+              return `R$ ${reais.toLocaleString('pt-BR')},${cents.toString().padStart(2, '0')}`;
+            })()}
+            style={{
+              textAlign: 'right',
+              fontVariantNumeric: 'tabular-nums'
+            }}
+            onChange={() => {}}
+            onKeyDown={e => {
+              if (e.ctrlKey || e.metaKey || e.altKey) return;
+              if (e.key === 'Backspace') {
+                const prev = typeof formData.valor_fatura_cliente === 'string' ? formData.valor_fatura_cliente : '';
+                const newDigits = prev.slice(0, -1);
+                setFormData({ ...formData, valor_fatura_cliente: newDigits });
+                e.preventDefault();
+                return;
+              }
+              if (/^[0-9]$/.test(e.key)) {
+                const prev = typeof formData.valor_fatura_cliente === 'string' ? formData.valor_fatura_cliente : '';
+                if (prev.length < 13) {
+                  setFormData({ ...formData, valor_fatura_cliente: prev + e.key });
+                }
+                e.preventDefault();
+                return;
+              }
+              e.preventDefault();
+            }}
+          />
         </div>
         
         
@@ -784,8 +861,43 @@ const Cadastro = () => {
           <input type="text" name="nome_fantasia" value={formData.nome_fantasia} onChange={handleChange} />
         </div>
         <div className="form-group">
-          <label>Capital Social:</label>
-          <input type="number" name="capital_social" value={formData.capital_social} onChange={handleChange} />
+          <label>Capital Social (R$):</label>
+          <input
+            type="text"
+            name="capital_social"
+            value={(() => {
+              let digits = (typeof formData.capital_social === 'string' ? formData.capital_social : '').replace(/\D/g, '');
+              if (!digits) return 'R$ 0,00';
+              let intVal = parseInt(digits, 10);
+              let cents = intVal % 100;
+              let reais = Math.floor(intVal / 100);
+              return `R$ ${reais.toLocaleString('pt-BR')},${cents.toString().padStart(2, '0')}`;
+            })()}
+            style={{
+              textAlign: 'right',
+              fontVariantNumeric: 'tabular-nums'
+            }}
+            onChange={() => {}}
+            onKeyDown={e => {
+              if (e.ctrlKey || e.metaKey || e.altKey) return;
+              if (e.key === 'Backspace') {
+                const prev = typeof formData.capital_social === 'string' ? formData.capital_social : '';
+                const newDigits = prev.slice(0, -1);
+                setFormData({ ...formData, capital_social: newDigits });
+                e.preventDefault();
+                return;
+              }
+              if (/^[0-9]$/.test(e.key)) {
+                const prev = typeof formData.capital_social === 'string' ? formData.capital_social : '';
+                if (prev.length < 13) {
+                  setFormData({ ...formData, capital_social: prev + e.key });
+                }
+                e.preventDefault();
+                return;
+              }
+              e.preventDefault();
+            }}
+          />
         </div>
         <div className="form-group">
           <label>DDD Telefone 1:</label>
@@ -794,6 +906,22 @@ const Cadastro = () => {
         <div className="form-group">
           <label>DDD Telefone 2:</label>
           <input type="text" name="ddd_telefone_2" value={formData.ddd_telefone_2} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label>Representante Legal 1:</label>
+          <input type="text" name="representante_legal_1" value={formData.representante_legal_1} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label>CPF Representante Legal 1:</label>
+          <input type="text" name="cpf_representante_legal_1" value={formData.cpf_representante_legal_1} onChange={handleChange} placeholder="000.000.000-00" />
+        </div>
+        <div className="form-group">
+          <label>Representante Legal 2:</label>
+          <input type="text" name="representante_legal_2" value={formData.representante_legal_2} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label>CPF Representante Legal 2:</label>
+          <input type="text" name="cpf_representante_legal_2" value={formData.cpf_representante_legal_2} onChange={handleChange} placeholder="000.000.000-00" />
         </div>
         <div className="form-group">
           <label>Natureza Jurídica:</label>
@@ -830,6 +958,7 @@ const Cadastro = () => {
             <option value="google ADS">Google ADS</option>
             <option value="instagram orgânico">Instagram Orgânico</option>
             <option value="instagram tráfego pago">Instagram Tráfego Pago</option>
+            <option value="TikTok">TikTok</option>
             <option value="prospecção comercial">Prospecção Comercial</option>
             <option value="indicação consultor financeiro">Indicação Consultor Financeiro</option>
             <option value="indicação cliente">Indicação Cliente</option>
@@ -891,6 +1020,18 @@ const Cadastro = () => {
             onChange={handleChange}
             rows={3}
           />
+        </div>
+        <div className="form-group">
+          <label>Indicação do Lead:</label>
+          <input type="text" name="indicacao_lead" value={formData.indicacao_lead} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label>Comissão Indicação (%):</label>
+          <input type="number" name="comissao_indicacao" value={formData.comissao_indicacao} onChange={handleChange} step="0.01" min="0" max="100" />
+        </div>
+        <div className="form-group">
+          <label>Comissão Fechamento (%):</label>
+          <input type="number" name="comissao_fechamento" value={formData.comissao_fechamento} onChange={handleChange} step="0.01" min="0" max="100" />
         </div>
 
 

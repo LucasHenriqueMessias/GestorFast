@@ -11,6 +11,7 @@ interface SocioData {
   nome_socio: string;
   idade: number;
   cnpj_cpf_do_socio: string;
+  telefone: string;
   data_nascimento: string;
   data_entrada_sociedade: string;
   formacao: string;
@@ -33,6 +34,7 @@ const Socios = () => {
     nome_socio: '',
     idade: 0,
     cnpj_cpf_do_socio: '',
+    telefone: '',
     data_nascimento: new Date().toISOString(),
     data_entrada_sociedade: new Date().toISOString(),
     formacao: '',
@@ -61,6 +63,7 @@ const Socios = () => {
             nome_socio: item.nome_socio,
             idade: item.idade,
             cnpj_cpf_do_socio: item.cnpj_cpf_do_socio,
+            telefone: item.telefone,
             data_nascimento: item.data_nascimento,
             data_entrada_sociedade: item.data_entrada_sociedade,
             formacao: item.formacao,
@@ -122,6 +125,7 @@ const Socios = () => {
       nome_socio: '',
       idade: 0,
       cnpj_cpf_do_socio: '',
+      telefone: '',
       data_nascimento: new Date().toISOString(),
       data_entrada_sociedade: new Date().toISOString(),
       formacao: '',
@@ -159,6 +163,7 @@ const Socios = () => {
         nome_socio: '',
         idade: 0,
         cnpj_cpf_do_socio: '',
+        telefone: '',
         data_nascimento: new Date().toISOString(),
         data_entrada_sociedade: new Date().toISOString(),
         formacao: '',
@@ -188,6 +193,7 @@ const Socios = () => {
     { field: 'nome_socio', headerName: 'Nome Sócio', width: 150 },
     { field: 'idade', headerName: 'Idade', width: 100 },
     { field: 'cnpj_cpf_do_socio', headerName: 'CNPJ/CPF do Sócio', width: 150 },
+    { field: 'telefone', headerName: 'Telefone', width: 130 },
     { 
       field: 'data_nascimento', 
       headerName: 'Data Nascimento', 
@@ -295,6 +301,15 @@ const Socios = () => {
             fullWidth
             value={newSocio.cnpj_cpf_do_socio}
             onChange={(e) => setNewSocio({ ...newSocio, cnpj_cpf_do_socio: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Telefone"
+            type="tel"
+            fullWidth
+            value={newSocio.telefone}
+            onChange={(e) => setNewSocio({ ...newSocio, telefone: e.target.value })}
+            placeholder="(00) 00000-0000"
           />
           <TextField
             margin="dense"

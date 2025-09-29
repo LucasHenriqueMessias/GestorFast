@@ -39,6 +39,10 @@ const Cliente = () => {
           capital_social: item.capital_social,
           ddd_telefone_1: item.ddd_telefone_1,
           ddd_telefone_2: item.ddd_telefone_2,
+          representante_legal_1: item.representante_legal_1,
+          cpf_representante_legal_1: item.cpf_representante_legal_1,
+          representante_legal_2: item.representante_legal_2,
+          cpf_representante_legal_2: item.cpf_representante_legal_2,
           natureza_juridica: item.natureza_juridica,
           opcao_pelo_simples: item.opcao_pelo_simples,
           cnae_fiscal_descricao: item.cnae_fiscal_descricao,
@@ -71,6 +75,9 @@ const Cliente = () => {
           vencimento_fatura_1: item.vencimento_fatura_1,
           vencimento_fatura_2: item.vencimento_fatura_2,
           observacao_fatura: item.observacao_fatura,
+          indicacao_lead: item.indicacao_lead,
+          comissao_indicacao: item.comissao_indicacao,
+          comissao_fechamento: item.comissao_fechamento,
         }));
         setRows(data);
         console.log('Dados:', data);
@@ -87,9 +94,17 @@ const Cliente = () => {
     setEditData({ ...row });
   };
 
-  const handleEditChange = (field: string, value: any) => {
+  const handleEditChange = React.useCallback((field: string, value: any) => {
+    // Special handling for cliente_fast field when setting to false
+    if (field === 'cliente_fast' && value === false && editData.cliente_fast === true) {
+      const confirmed = window.confirm(`Gostaria de remover ${editData.razao_social} como cliente fast?`);
+      if (!confirmed) {
+        return; // Cancel the change if user clicks "No"
+      }
+    }
+    
     setEditData((prev: any) => ({ ...prev, [field]: value }));
-  };
+  }, [editData.cliente_fast, editData.razao_social]);
 
   const handleCancelEdit = () => {
     setEditRowId(null);
@@ -97,11 +112,7 @@ const Cliente = () => {
   };
 
   const handleSaveEdit = React.useCallback(async () => {
-    // Validação: pelo menos uma das opções deve estar selecionada
-    if (!editData.cliente_fast && !editData.parceiro && !editData.prospeccao) {
-      alert('É obrigatório selecionar pelo menos uma das opções: Cliente Fast, Parceiro Fast ou Funil.');
-      return;
-    }
+  
     
     setLoading(true);
     try {
@@ -152,7 +163,21 @@ const Cliente = () => {
     { field: 'razao_social', headerName: 'Razão Social', width: 300 },
     { field: 'cnpj', headerName: 'CNPJ', width: 140 },
     { field: 'valor_fatura_cliente', headerName: 'Valor da Fatura', width: 150 },  
-    { field: 'data_contratacao_fast', headerName: 'Data de Contratação Fast', width: 180 },
+    { 
+      field: 'data_contratacao_fast', 
+      headerName: 'Data de Contratação Fast', 
+      width: 180,
+      renderCell: (params: any) => {
+        if (!params.value) return '';
+        try {
+          const date = new Date(params.value);
+          if (isNaN(date.getTime())) return params.value;
+          return date.toLocaleDateString('pt-BR');
+        } catch (error) {
+          return params.value;
+        }
+      }
+    },
     { field: 'consultor_financeiro', headerName: 'Consultor Financeiro', width: 200 },
     { field: 'analista', headerName: 'Analista', width: 200 },
     { field: 'consultor_comercial', headerName: 'Consultor Comercial', width: 200 },
@@ -216,6 +241,22 @@ const Cliente = () => {
                   <Typography variant="caption">DDD Telefone 2:</Typography>
                   <input value={editData.ddd_telefone_2 || ''} onChange={e => handleEditChange('ddd_telefone_2', e.target.value)} placeholder="DDD Telefone 2" style={{width: '100%', padding: '8px'}} />
                 </Box>
+                <Box>
+                  <Typography variant="caption">Representante Legal 1:</Typography>
+                  <input value={editData.representante_legal_1 || ''} onChange={e => handleEditChange('representante_legal_1', e.target.value)} placeholder="Representante Legal 1" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">CPF Representante Legal 1:</Typography>
+                  <input value={editData.cpf_representante_legal_1 || ''} onChange={e => handleEditChange('cpf_representante_legal_1', e.target.value)} placeholder="000.000.000-00" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Representante Legal 2:</Typography>
+                  <input value={editData.representante_legal_2 || ''} onChange={e => handleEditChange('representante_legal_2', e.target.value)} placeholder="Representante Legal 2" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">CPF Representante Legal 2:</Typography>
+                  <input value={editData.cpf_representante_legal_2 || ''} onChange={e => handleEditChange('cpf_representante_legal_2', e.target.value)} placeholder="000.000.000-00" style={{width: '100%', padding: '8px'}} />
+                </Box>
               </Box>
 
               {/* Dados da Empresa */}
@@ -240,6 +281,10 @@ const Cliente = () => {
                 <Box>
                   <Typography variant="caption">Natureza Jurídica:</Typography>
                   <input value={editData.natureza_juridica || ''} onChange={e => handleEditChange('natureza_juridica', e.target.value)} placeholder="Natureza Jurídica" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Capital Social:</Typography>
+                  <input type="number" step="0.01" value={editData.capital_social || ''} onChange={e => handleEditChange('capital_social', e.target.value)} placeholder="Capital Social" style={{width: '100%', padding: '8px'}} />
                 </Box>
                 <Box>
                   <Typography variant="caption">Opção pelo Simples:</Typography>
@@ -328,6 +373,7 @@ const Cliente = () => {
                     <option value="google ADS">Google ADS</option>
                     <option value="instagram orgânico">Instagram Orgânico</option>
                     <option value="instagram tráfego pago">Instagram Tráfego Pago</option>
+                    <option value="TikTok">TikTok</option>
                     <option value="prospecção comercial">Prospecção Comercial</option>
                     <option value="indicação consultor financeiro">Indicação Consultor Financeiro</option>
                     <option value="indicação cliente">Indicação Cliente</option>
@@ -335,6 +381,18 @@ const Cliente = () => {
                     <option value="indicação parceiro">Indicação Parceiro</option>
                     <option value="evento">Evento</option>
                   </select>
+                </Box>
+                <Box>
+                  <Typography variant="caption">Indicação do Lead:</Typography>
+                  <input value={editData.indicacao_lead || ''} onChange={e => handleEditChange('indicacao_lead', e.target.value)} placeholder="Indicação do Lead" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Comissão Indicação (%):</Typography>
+                  <input type="number" step="0.01" min="0" max="100" value={editData.comissao_indicacao || ''} onChange={e => handleEditChange('comissao_indicacao', e.target.value)} placeholder="Comissão Indicação (%)" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
+                  <Typography variant="caption">Comissão Fechamento (%):</Typography>
+                  <input type="number" step="0.01" min="0" max="100" value={editData.comissao_fechamento || ''} onChange={e => handleEditChange('comissao_fechamento', e.target.value)} placeholder="Comissão Fechamento (%)" style={{width: '100%', padding: '8px'}} />
                 </Box>
               </Box>
 
@@ -430,7 +488,12 @@ const Cliente = () => {
             <Typography><strong>Complemento:</strong> {row.complemento}</Typography>
             <Typography><strong>DDD Telefone 1:</strong> {row.ddd_telefone_1}</Typography>
             <Typography><strong>DDD Telefone 2:</strong> {row.ddd_telefone_2}</Typography>
+            <Typography><strong>Representante Legal 1:</strong> {row.representante_legal_1}</Typography>
+            <Typography><strong>CPF Representante Legal 1:</strong> {row.cpf_representante_legal_1}</Typography>
+            <Typography><strong>Representante Legal 2:</strong> {row.representante_legal_2}</Typography>
+            <Typography><strong>CPF Representante Legal 2:</strong> {row.cpf_representante_legal_2}</Typography>
             <Typography><strong>Natureza Jurídica:</strong> {row.natureza_juridica}</Typography>
+            <Typography><strong>Capital Social:</strong> {row.capital_social}</Typography>
             <Typography><strong>Opção pelo Simples:</strong> {row.opcao_pelo_simples ? 'Sim' : 'Não'}</Typography>
             <Typography><strong>Descrição CNAE Fiscal:</strong> {row.cnae_fiscal_descricao}</Typography>
             <Typography><strong>Data da Situação Cadastral:</strong> {row.data_situacao_cadastral ? new Date(row.data_situacao_cadastral).toLocaleDateString('pt-BR') : ''}</Typography>
@@ -464,13 +527,16 @@ const Cliente = () => {
             <Typography><strong>Vencimento Fatura 1:</strong> {row.vencimento_fatura_1}</Typography>
             <Typography><strong>Vencimento Fatura 2:</strong> {row.vencimento_fatura_2}</Typography>
             <Typography><strong>Observação Fatura:</strong> {row.observacao_fatura}</Typography>
+            <Typography><strong>Indicação do Lead:</strong> {row.indicacao_lead}</Typography>
+            <Typography><strong>Comissão Indicação:</strong> {row.comissao_indicacao}%</Typography>
+            <Typography><strong>Comissão Fechamento:</strong> {row.comissao_fechamento}%</Typography>
             
             <Button variant="outlined" sx={{ mt: 2 }} onClick={() => handleEditClick(row)}>Editar</Button>
           </>
         )}
       </Box>
     );
-  }, [editRowId, editData, loading, handleSaveEdit]);
+  }, [editRowId, editData, loading, handleSaveEdit, handleEditChange]);
 
   const getDetailPanelHeight = React.useCallback(() => 600, []);
 

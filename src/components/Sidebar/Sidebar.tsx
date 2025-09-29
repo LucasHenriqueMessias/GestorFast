@@ -188,6 +188,7 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                             <ul className="gestao-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Biblioteca'}>Biblioteca</li>
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Eventos'}>Eventos</li>
+                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Eventos/ListaPresenca'}>Lista de Presença</li>
                                 <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Ferramentas'}>Ferramentas Desenvolvidas</li>
                                 {/* <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/SalaDeReuniao'} >Sala de Reunião</li> */}
                                 <li className="dropdown-menu-item">

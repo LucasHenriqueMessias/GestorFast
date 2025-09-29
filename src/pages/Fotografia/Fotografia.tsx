@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox, Autocomplete } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox, Autocomplete, MenuItem } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { getAccessToken, getUsername } from '../../utils/storage';
 
@@ -23,7 +23,7 @@ interface FotografiaData {
   inadimplencia: number;
   estrutura: string;
   cultura_empresarial: string;
-  pro_labore: number;
+  pro_labore: string;
   fotografia_inicial: boolean; // Added property
 }
 
@@ -50,7 +50,7 @@ const Fotografia = () => {
     inadimplencia: 0,
     estrutura: '',
     cultura_empresarial: '',
-    pro_labore: 0,
+  pro_labore: '',
     fotografia_inicial: false,
   });
 
@@ -140,22 +140,33 @@ const Fotografia = () => {
       inadimplencia: 0,
       estrutura: '',
       cultura_empresarial: '',
-      pro_labore: 0,
+  pro_labore: '',
       fotografia_inicial: false,
     });
   };
   const handleSubmitFotografia = async () => {
     try {
       const token = getAccessToken();
-      
+      // Converter pro_labore (string com dígitos) para double (ex: 1113,58)
+      const proLaboreDigits = (typeof newFotografia.pro_labore === 'string' ? newFotografia.pro_labore : '').replace(/\D/g, '');
+      let proLaboreNumber = 0;
+      if (proLaboreDigits.length > 0) {
+        proLaboreNumber = parseInt(proLaboreDigits, 10) / 100;
+      }
+      // Converter faturamento (string com dígitos) para double (ex: 1113,58)
+      const faturamentoDigits = (typeof newFotografia.faturamento === 'string' ? newFotografia.faturamento : '').replace(/\D/g, '');
+      let faturamentoNumber = 0;
+      if (faturamentoDigits.length > 0) {
+        faturamentoNumber = parseInt(faturamentoDigits, 10) / 100;
+      }
+      const payload = { ...newFotografia, pro_labore: proLaboreNumber, faturamento: faturamentoNumber };
       if (isEditing) {
         // Atualizar registro existente
-        const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente/${newFotografia.id}`, newFotografia, {
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente/${newFotografia.id}`, payload, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        
         // Atualizar a linha na tabela
         setRows(rows.map(row => 
           row.id === newFotografia.id 
@@ -164,14 +175,13 @@ const Fotografia = () => {
         ));
       } else {
         // Criar novo registro
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente`, newFotografia, {
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente`, payload, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
         setRows([...rows, { ...response.data, data_criacao: new Date(response.data.data_criacao).toLocaleDateString() }]);
       }
-      
       setShowForm(false);
       setIsEditing(false);
       setNewFotografia({
@@ -192,7 +202,7 @@ const Fotografia = () => {
         inadimplencia: 0,
         estrutura: '',
         cultura_empresarial: '',
-        pro_labore: 0,
+        pro_labore: '',
         fotografia_inicial: false,
       });
     } catch (error) {
@@ -202,6 +212,17 @@ const Fotografia = () => {
 
   const handleEditFotografia = async (row: any) => {
     await fetchClientes();
+    // Converter faturamento e pro_labore para string de dígitos para edição mascarada
+    const formatToDigits = (val: any) => {
+      if (typeof val === 'number') {
+        return Math.round(val * 100).toString();
+      }
+      if (typeof val === 'string' && val.match(/^[0-9,.]+$/)) {
+        // Se vier como string já formatada (ex: "1.234,56"), remove não dígitos
+        return val.replace(/\D/g, '');
+      }
+      return '';
+    };
     setNewFotografia({
       id: row.id,
       usuario: row.usuario,
@@ -210,7 +231,7 @@ const Fotografia = () => {
       ferramentas: row.ferramentas,
       antecipacao_recebiveis: row.antecipacao_recebiveis,
       pagamento_impostos_mes: row.pagamento_impostos_mes,
-      faturamento: row.faturamento,
+      faturamento: formatToDigits(row.faturamento),
       novas_fontes_receita: row.novas_fontes_receita,
       numero_funcionarios: row.numero_funcionarios,
       numero_clientes: row.numero_clientes,
@@ -220,7 +241,7 @@ const Fotografia = () => {
       inadimplencia: row.inadimplencia,
       estrutura: row.estrutura,
       cultura_empresarial: row.cultura_empresarial,
-      pro_labore: row.pro_labore,
+      pro_labore: formatToDigits(row.pro_labore),
       fotografia_inicial: row.fotografia_inicial,
     });
     setIsEditing(true);
@@ -233,19 +254,19 @@ const Fotografia = () => {
     { field: 'cliente', headerName: 'Cliente', width: 150 },
     { field: 'data_criacao', headerName: 'Data Criação', width: 150 },
     { field: 'ferramentas', headerName: 'Ferramentas', width: 150 },
-    { field: 'antecipacao_recebiveis', headerName: 'Antecipação Recebíveis', width: 200 },
+  { field: 'antecipacao_recebiveis', headerName: 'Antecipação Recebíveis', width: 200 },
     { field: 'pagamento_impostos_mes', headerName: 'Pagamento Impostos Mês', width: 200 },
     { field: 'faturamento', headerName: 'Faturamento', width: 150 },
-    { field: 'novas_fontes_receita', headerName: 'Novas Fontes Receita', width: 200 },
+  { field: 'novas_fontes_receita', headerName: 'Fontes de Renda', width: 200 },
     { field: 'numero_funcionarios', headerName: 'Número Funcionários', width: 150 },
     { field: 'numero_clientes', headerName: 'Número Clientes', width: 150 },
-    { field: 'margem_lucro', headerName: 'Margem Lucro', width: 150 },
-    { field: 'parcelas_mensais', headerName: 'Parcelas Mensais', width: 150 },
+  { field: 'margem_lucro', headerName: 'Margem de Lucro (%)', width: 150 },
+  { field: 'parcelas_mensais', headerName: 'Valor de Endividamento', width: 150 },
     { field: 'juros_mensais_pagos', headerName: 'Juros Mensais Pagos', width: 150 },
     { field: 'inadimplencia', headerName: 'Inadimplência', width: 150 },
     { field: 'estrutura', headerName: 'Estrutura', width: 150 },
     { field: 'cultura_empresarial', headerName: 'Cultura Empresarial', width: 200 },
-    { field: 'pro_labore', headerName: 'Pro Labore', width: 150 },
+  { field: 'pro_labore', headerName: 'Pro Labore (R$)', width: 150 },
     {
       field: 'actions',
       headerName: 'Ações',
@@ -331,13 +352,16 @@ const Fotografia = () => {
             onChange={(e) => setNewFotografia({ ...newFotografia, ferramentas: e.target.value })}
           />
           <TextField
+            select
             margin="dense"
             label="Antecipação Recebíveis"
-            type="number"
             fullWidth
             value={newFotografia.antecipacao_recebiveis}
             onChange={(e) => setNewFotografia({ ...newFotografia, antecipacao_recebiveis: e.target.value })}
-          />
+          >
+            <MenuItem value="Sim">Sim</MenuItem>
+            <MenuItem value="Não">Não</MenuItem>
+          </TextField>
           <TextField
             margin="dense"
             label="Pagamento Impostos Mês"
@@ -346,17 +370,49 @@ const Fotografia = () => {
             value={newFotografia.pagamento_impostos_mes}
             onChange={(e) => setNewFotografia({ ...newFotografia, pagamento_impostos_mes: e.target.value })}
           />
+          {/* Campo Faturamento com formatação calculadora */}
           <TextField
             margin="dense"
             label="Faturamento"
-            type="number"
             fullWidth
-            value={newFotografia.faturamento}
-            onChange={(e) => setNewFotografia({ ...newFotografia, faturamento: e.target.value })}
+            value={(() => {
+              let digits = (typeof newFotografia.faturamento === 'string' ? newFotografia.faturamento : '').replace(/\D/g, '');
+              if (!digits) return 'R$ 0,00';
+              let intVal = parseInt(digits, 10);
+              let cents = intVal % 100;
+              let reais = Math.floor(intVal / 100);
+              return `R$ ${reais.toLocaleString('pt-BR')},${cents.toString().padStart(2, '0')}`;
+            })()}
+            inputProps={{
+              style: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+              maxLength: 15
+            }}
+            onChange={() => {}}
+            onKeyDown={e => {
+              if (e.ctrlKey || e.metaKey || e.altKey) return;
+              if (e.key === 'Backspace') {
+                const prev = typeof newFotografia.faturamento === 'string' ? newFotografia.faturamento : '';
+                const newDigits = prev.slice(0, -1);
+                setNewFotografia({ ...newFotografia, faturamento: newDigits });
+                e.preventDefault();
+                return;
+              }
+              if (/^[0-9]$/.test(e.key)) {
+                const prev = typeof newFotografia.faturamento === 'string' ? newFotografia.faturamento : '';
+                if (prev.length < 13) {
+                  setNewFotografia({ ...newFotografia, faturamento: prev + e.key });
+                }
+                e.preventDefault();
+                return;
+              }
+              e.preventDefault();
+            }}
           />
           <TextField
             margin="dense"
-            label="Novas Fontes Receita"
+            label="Fontes de Renda"
             type="text"
             fullWidth
             value={newFotografia.novas_fontes_receita}
@@ -380,7 +436,7 @@ const Fotografia = () => {
           />
           <TextField
             margin="dense"
-            label="Margem Lucro"
+            label="Margem de Lucro (%)"
             type="number"
             fullWidth
             value={newFotografia.margem_lucro}
@@ -388,11 +444,11 @@ const Fotografia = () => {
           />
           <TextField
             margin="dense"
-            label="Parcelas Mensais"
+            label="Valor de Endividamento"
             type="number"
             fullWidth
             value={newFotografia.parcelas_mensais}
-            onChange={(e) => setNewFotografia({ ...newFotografia, parcelas_mensais: Number(e.target.value) })}
+            onChange={e => setNewFotografia({ ...newFotografia, parcelas_mensais: Number(e.target.value) })}
           />
           <TextField
             margin="dense"
@@ -426,13 +482,45 @@ const Fotografia = () => {
             value={newFotografia.cultura_empresarial}
             onChange={(e) => setNewFotografia({ ...newFotografia, cultura_empresarial: e.target.value })}
           />
+          {/* Campo Pro Labore com formatação calculadora */}
           <TextField
             margin="dense"
-            label="Pro Labore"
-            type="number"
+            label="Pro Labore (R$)"
             fullWidth
-            value={newFotografia.pro_labore}
-            onChange={(e) => setNewFotografia({ ...newFotografia, pro_labore: Number(e.target.value) })}
+            value={(() => {
+              let digits = (typeof newFotografia.pro_labore === 'string' ? newFotografia.pro_labore : '').replace(/\D/g, '');
+              if (!digits) return 'R$ 0,00';
+              let intVal = parseInt(digits, 10);
+              let cents = intVal % 100;
+              let reais = Math.floor(intVal / 100);
+              return `R$ ${reais.toLocaleString('pt-BR')},${cents.toString().padStart(2, '0')}`;
+            })()}
+            inputProps={{
+              style: { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+              maxLength: 15
+            }}
+            onChange={() => {}}
+            onKeyDown={e => {
+              if (e.ctrlKey || e.metaKey || e.altKey) return;
+              if (e.key === 'Backspace') {
+                const prev = typeof newFotografia.pro_labore === 'string' ? newFotografia.pro_labore : '';
+                const newDigits = prev.slice(0, -1);
+                setNewFotografia({ ...newFotografia, pro_labore: newDigits });
+                e.preventDefault();
+                return;
+              }
+              if (/^[0-9]$/.test(e.key)) {
+                const prev = typeof newFotografia.pro_labore === 'string' ? newFotografia.pro_labore : '';
+                if (prev.length < 13) {
+                  setNewFotografia({ ...newFotografia, pro_labore: prev + e.key });
+                }
+                e.preventDefault();
+                return;
+              }
+              e.preventDefault();
+            }}
           />
         </DialogContent>
         <DialogActions>
