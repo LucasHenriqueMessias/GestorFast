@@ -41,6 +41,7 @@ const ListaPresenca = () => {
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>('');
   const [searchName, setSearchName] = useState<string>('');
 
+
   const displayedRows = useMemo(() => {
     let data = rows as any[];
     if (selectedEventFilter) {
@@ -528,6 +529,7 @@ const ListaPresenca = () => {
           >
             Exportar Excel
           </Button>
+          {/* Relatórios da Diretoria button removed */}
           {/* Botão de marcar filtrados como presentes removido conforme solicitado */}
           <Button 
             variant="outlined" 

@@ -1,31 +1,17 @@
 import React from 'react';
-import { Container,  Button, Box } from '@mui/material';
-import { Assessment, Person, Description, Business } from '@mui/icons-material';
+import { Container, Box, Button } from '@mui/material';
+import {  Assessment, Person, Announcement } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const Relatorios = () => {
+const RelatorioDiretoria = () => {
   const navigate = useNavigate();
 
-  const handleRelatorioConsultor = () => {
-    navigate('/Relatorios/Consultor');
-  };
-
-  const handleRelatorioCliente = () => {
-    navigate('/Relatorios/Cliente');
-  };
-
-  const handleRelatorioFast = () => {
-    navigate('/Relatorios/Fast');
-  };
-
-  const handleRelatorioDiretoria = () => {
-    navigate('/Relatorios/Diretoria');
-  };
+  const goGeral = () => navigate('/Relatorios/Diretoria/Faturamento/Geral');
+  const goConsultor = () => navigate('/Relatorios/Diretoria/Faturamento/Consultor');
+  const goAvisoPrevio = () => navigate('/Relatorios/Diretoria/AvisoPrevio');
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      
-      
       <Box
         sx={{
           display: 'flex',
@@ -40,53 +26,7 @@ const Relatorios = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={handleRelatorioConsultor}
-            fullWidth
-            sx={{
-              height: 150,
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              flexDirection: 'column',
-              gap: 2,
-              '&:hover': {
-                transform: 'scale(1.02)',
-                transition: 'transform 0.2s ease-in-out'
-              }
-            }}
-          >
-            <Person sx={{ fontSize: 48 }} />
-            Relatório Consultor
-          </Button>
-        </Box>
-       
-        <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleRelatorioCliente}
-            fullWidth
-            sx={{
-              height: 150,
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              flexDirection: 'column',
-              gap: 2,
-              '&:hover': {
-                transform: 'scale(1.02)',
-                transition: 'transform 0.2s ease-in-out'
-              }
-            }}
-          >
-            <Business sx={{ fontSize: 48 }} />
-            Relatório Cliente
-          </Button>
-        </Box>
-
-        <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleRelatorioFast}
+            onClick={goGeral}
             fullWidth
             sx={{
               height: 150,
@@ -101,14 +41,15 @@ const Relatorios = () => {
             }}
           >
             <Assessment sx={{ fontSize: 48 }} />
-            Relatório Fast
+            Faturamento Geral
           </Button>
         </Box>
- <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
+
+        <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
           <Button
             variant="contained"
-            color="info"
-            onClick={handleRelatorioDiretoria}
+            color="secondary"
+            onClick={goConsultor}
             fullWidth
             sx={{
               height: 150,
@@ -122,14 +63,35 @@ const Relatorios = () => {
               }
             }}
           >
-            <Description sx={{ fontSize: 48 }} />
-            Relatórios da Diretoria
+            <Person sx={{ fontSize: 48 }} />
+            Faturamento por Consultor
           </Button>
         </Box>
-        
+        <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={goAvisoPrevio}
+            fullWidth
+            sx={{
+              height: 150,
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              flexDirection: 'column',
+              gap: 2,
+              '&:hover': {
+                transform: 'scale(1.02)',
+                transition: 'transform 0.2s ease-in-out'
+              }
+            }}
+          >
+            <Announcement sx={{ fontSize: 48 }} />
+            Aviso Prévio
+          </Button>
+        </Box>
       </Box>
     </Container>
   );
-}
+};
 
-export default Relatorios
+export default RelatorioDiretoria;
