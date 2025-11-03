@@ -71,15 +71,15 @@ const RelatorioGeralFaturamento = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom fontWeight="bold">Relatório Geral de Faturamento (FAST)</Typography>
+      <Typography variant="h4" gutterBottom fontWeight="bold">Relatório Geral de Faturamento </Typography>
 
       <Box sx={{ display: 'flex', gap: 3, mb: 2, alignItems: 'center' }}>
         <Paper sx={{ p: 2, minWidth: 220 }}>
-          <Typography variant="subtitle2" color="text.secondary">Total de Clientes (FAST)</Typography>
+          <Typography variant="subtitle2" color="text.secondary">Total de Clientes</Typography>
           <Typography variant="h5" fontWeight="bold">{loading ? <CircularProgress size={20} /> : totalClientes}</Typography>
         </Paper>
         <Paper sx={{ p: 2, minWidth: 220 }}>
-          <Typography variant="subtitle2" color="text.secondary">Soma Faturamento (FAST)</Typography>
+          <Typography variant="subtitle2" color="text.secondary">Soma Faturamento</Typography>
           <Typography variant="h5" fontWeight="bold">{loading ? <CircularProgress size={20} /> : somaFaturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography>
         </Paper>
       </Box>
