@@ -263,6 +263,10 @@ const Cliente = () => {
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>Dados da Empresa</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
                 <Box>
+                  <Typography variant="caption">Razão Social:</Typography>
+                  <input value={editData.razao_social || ''} onChange={e => handleEditChange('razao_social', e.target.value)} placeholder="Razão Social" style={{width: '100%', padding: '8px'}} />
+                </Box>
+                <Box>
                   <Typography variant="caption">Porte:</Typography>
                   <input value={editData.porte || ''} onChange={e => handleEditChange('porte', e.target.value)} placeholder="Porte" style={{width: '100%', padding: '8px'}} />
                 </Box>
