@@ -91,7 +91,17 @@ const Cliente = () => {
 
   const handleEditClick = (row: any) => {
     setEditRowId(row.id);
-    setEditData({ ...row });
+    setEditData({
+      ...row,
+      // Formatar valor para máscara pt-BR ao entrar em edição
+      valor_fatura_cliente:
+        row.valor_fatura_cliente != null && row.valor_fatura_cliente !== ''
+          ? Number(row.valor_fatura_cliente).toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : ''
+    });
   };
 
   const handleEditChange = React.useCallback((field: string, value: any) => {
@@ -118,6 +128,16 @@ const Cliente = () => {
     try {
       const token = getAccessToken();
       let patchData = { ...editData };
+      // Normaliza Valor da Fatura (string pt-BR -> número)
+      if (typeof patchData.valor_fatura_cliente === 'string') {
+        const cleaned = patchData.valor_fatura_cliente.replace(/\./g, '').replace(',', '.').trim();
+        const num = cleaned === '' ? null : parseFloat(cleaned);
+        if (num == null || Number.isNaN(num)) {
+          delete (patchData as any).valor_fatura_cliente; // evita enviar NaN
+        } else {
+          (patchData as any).valor_fatura_cliente = num;
+        }
+      }
       if (patchData.cliente_fast === false) {
         patchData.data_saida_fast = new Date().toISOString();
       }
@@ -405,7 +425,24 @@ const Cliente = () => {
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
                 <Box>
                   <Typography variant="caption">Valor da Fatura:</Typography>
-                  <input value={editData.valor_fatura_cliente || ''} onChange={e => handleEditChange('valor_fatura_cliente', e.target.value)} placeholder="Valor da Fatura" style={{width: '100%', padding: '8px'}} />
+                  <input
+                    inputMode="numeric"
+                    value={editData.valor_fatura_cliente || ''}
+                    onChange={e => {
+                      const digits = (e.target.value || '').toString().replace(/\D/g, '');
+                      if (!digits) {
+                        handleEditChange('valor_fatura_cliente', '');
+                        return;
+                      }
+                      const masked = (parseInt(digits, 10) / 100).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      });
+                      handleEditChange('valor_fatura_cliente', masked);
+                    }}
+                    placeholder="0,00"
+                    style={{width: '100%', padding: '8px'}}
+                  />
                 </Box>
                 <Box>
                   <Typography variant="caption">Data do Reajuste Financeiro:</Typography>
