@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Box, Container, Typography, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, FormControlLabel, Checkbox, MenuItem, Autocomplete } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getAccessToken } from '../../utils/storage';
+import { getAccessToken, getDepartment } from '../../utils/storage';
 
 interface Checklist {
   id: number;
@@ -24,9 +24,34 @@ interface Checklist {
   faturamento?: number;
   principais_dores_cliente?: string;
   informacoes_relevantes?: string;
+  atividades_analista?: string;
 }
 
+const initialFormState: Omit<Checklist, 'id'> = {
+  empresa: '',
+  responsável: '',
+  data_fechamento_contrato: '',
+  possui_ponto_apoio: false,
+  contrato_assinado: 'Ainda Não Enviado',
+  data_onboarding: '',
+  consultor: '',
+  envio_briefing_para_consultor: false,
+  grupo_wa: false,
+  data_dossie: '',
+  feedback_dossie: '',
+  instalacao_dropbox: false,
+  plano_de_contas: false,
+  treinamento_equipe_operacional: 'A ser agendado',
+  descricao_atividades_cs: '',
+  faturamento: undefined,
+  principais_dores_cliente: '',
+  informacoes_relevantes: '',
+  atividades_analista: '',
+};
+
 const ChecklistAcompanhamento: React.FC = () => {
+  const canEditAnalista = getDepartment() === 'Analista';
+  const canEditCs = getDepartment() === 'CS';
   // Estado para lista de clientes
   const [clientes, setClientes] = useState<{ razao_social: string }[]>([]);
   // Buscar clientes para o select de empresa
@@ -50,26 +75,7 @@ const ChecklistAcompanhamento: React.FC = () => {
   const [editId, setEditId] = useState<number | null>(null);
   // Para o input tipo calculadora, armazenar string de dígitos para faturamento
   const [moneyDigits, setMoneyDigits] = useState<string>('');
-  const [form, setForm] = useState<Omit<Checklist, 'id'>>({
-    empresa: '',
-    responsável: '',
-    data_fechamento_contrato: '',
-    possui_ponto_apoio: false,
-    contrato_assinado: 'Ainda Não Enviado',
-    data_onboarding: '',
-    consultor: '',
-    envio_briefing_para_consultor: false,
-    grupo_wa: false,
-    data_dossie: '',
-    feedback_dossie: '',
-    instalacao_dropbox: false,
-    plano_de_contas: false,
-    treinamento_equipe_operacional: 'A ser agendado',
-    descricao_atividades_cs: '',
-    faturamento: undefined,
-    principais_dores_cliente: '',
-    informacoes_relevantes: '',
-  });
+  const [form, setForm] = useState<Omit<Checklist, 'id'>>(() => ({ ...initialFormState }));
   const [detailRow, setDetailRow] = useState<Checklist | null>(null);
 
   const fetchData = async () => {
@@ -96,7 +102,11 @@ const ChecklistAcompanhamento: React.FC = () => {
   const handleOpenDialog = (row?: Checklist) => {
     if (row) {
       const { id, ...rest } = row;
-      setForm(rest);
+      setForm({
+        ...initialFormState,
+        ...rest,
+        atividades_analista: rest.atividades_analista ?? '',
+      });
       setEditId(id);
       // Preencher moneyDigits a partir do valor existente
       if (rest.faturamento !== undefined && rest.faturamento !== null) {
@@ -106,26 +116,7 @@ const ChecklistAcompanhamento: React.FC = () => {
         setMoneyDigits('');
       }
     } else {
-      setForm({
-        empresa: '',
-        responsável: '',
-        data_fechamento_contrato: '',
-        possui_ponto_apoio: false,
-        contrato_assinado: 'Ainda Não Enviado',
-        data_onboarding: '',
-        consultor: '',
-        envio_briefing_para_consultor: false,
-        grupo_wa: false,
-        data_dossie: '',
-        feedback_dossie: '',
-        instalacao_dropbox: false,
-        plano_de_contas: false,
-        treinamento_equipe_operacional: 'A ser agendado',
-        descricao_atividades_cs: '',
-        faturamento: undefined,
-        principais_dores_cliente: '',
-        informacoes_relevantes: '',
-      });
+      setForm({ ...initialFormState });
       setMoneyDigits('');
       setEditId(null);
     }
@@ -181,7 +172,7 @@ const ChecklistAcompanhamento: React.FC = () => {
       if (!value) return '';
       const date = value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value);
       return isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
-    } },
+    } }
   ];
 
   return (
@@ -233,6 +224,10 @@ const ChecklistAcompanhamento: React.FC = () => {
                 <Typography variant="subtitle1"><b>Descrição das Atividades CS:</b></Typography>
                 <Box sx={{ whiteSpace: 'pre-line', border: '1px solid #eee', borderRadius: 1, p: 2, bgcolor: '#fafafa' }}>
                   {detailRow.descricao_atividades_cs || <i>Sem informações</i>}
+                </Box>
+                <Typography variant="subtitle1"><b>Atividades Analista:</b></Typography>
+                <Box sx={{ whiteSpace: 'pre-line', border: '1px solid #eee', borderRadius: 1, p: 2, bgcolor: '#fafafa' }}>
+                  {detailRow.atividades_analista || <i>Sem informações</i>}
                 </Box>
                 <Typography variant="subtitle1"><b>Faturamento:</b> {detailRow.faturamento !== undefined && detailRow.faturamento !== null
                   ? detailRow.faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -446,6 +441,22 @@ const ChecklistAcompanhamento: React.FC = () => {
             onChange={handleFormChange}
             multiline
             minRows={3}
+            disabled={!canEditCs}
+            helperText={!canEditCs ? 'Edição permitida apenas para o departamento CS.' : undefined}
+          />
+          <TextField
+            margin="dense"
+            name="atividades_analista"
+            label="Atividades Analista"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={form.atividades_analista}
+            onChange={handleFormChange}
+            multiline
+            minRows={3}
+            disabled={!canEditAnalista}
+            helperText={!canEditAnalista ? 'Edição permitida apenas para o departamento Analista.' : undefined}
           />
           <TextField
             margin="dense"

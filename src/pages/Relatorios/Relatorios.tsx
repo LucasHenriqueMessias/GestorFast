@@ -62,7 +62,7 @@ const Relatorios = () => {
         <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
           <Button
             variant="contained"
-            color="secondary"
+            color="primary"
             onClick={handleRelatorioCliente}
             fullWidth
             sx={{
@@ -85,7 +85,7 @@ const Relatorios = () => {
         <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
           <Button
             variant="contained"
-            color="success"
+            color="primary"
             onClick={handleRelatorioFast}
             fullWidth
             sx={{
@@ -107,7 +107,7 @@ const Relatorios = () => {
  <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
           <Button
             variant="contained"
-            color="info"
+            color="primary"
             onClick={handleRelatorioDiretoria}
             fullWidth
             sx={{

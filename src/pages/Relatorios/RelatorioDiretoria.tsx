@@ -48,7 +48,7 @@ const RelatorioDiretoria = () => {
         <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
           <Button
             variant="contained"
-            color="secondary"
+            color="primary"
             onClick={goConsultor}
             fullWidth
             sx={{
@@ -70,7 +70,7 @@ const RelatorioDiretoria = () => {
         <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
           <Button
             variant="contained"
-            color="warning"
+            color="primary"
             onClick={goAvisoPrevio}
             fullWidth
             sx={{
