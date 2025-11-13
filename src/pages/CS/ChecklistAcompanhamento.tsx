@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Box, Container, Typography, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, FormControlLabel, Checkbox, MenuItem, Autocomplete } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
@@ -78,6 +78,24 @@ const ChecklistAcompanhamento: React.FC = () => {
   const [form, setForm] = useState<Omit<Checklist, 'id'>>(() => ({ ...initialFormState }));
   const [detailRow, setDetailRow] = useState<Checklist | null>(null);
 
+  const empresaOptions = useMemo(() => {
+    const usedEmpresas = new Set(
+      data
+        .filter(item => editId ? item.id !== editId : true)
+        .map(item => item.empresa)
+    );
+
+    const options = clientes
+      .map(cliente => cliente.razao_social)
+      .filter(nome => nome && !usedEmpresas.has(nome));
+
+    if (editId && form.empresa && !options.includes(form.empresa)) {
+      options.push(form.empresa);
+    }
+
+    return options;
+  }, [clientes, data, editId, form.empresa]);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -132,6 +150,10 @@ const ChecklistAcompanhamento: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getAccessToken();
+    if (!form.empresa.trim()) {
+      alert('Selecione uma empresa antes de salvar o checklist.');
+      return;
+    }
     // Corrigir campos de data vazios para null
     const dateFields: (keyof typeof form)[] = [
       'data_fechamento_contrato',
@@ -264,7 +286,7 @@ const ChecklistAcompanhamento: React.FC = () => {
         <DialogContent>
           <Autocomplete
             autoFocus
-            options={clientes.map((c) => c.razao_social)}
+            options={empresaOptions}
             value={form.empresa}
             onChange={(_event, newValue) => {
               setForm((prev) => ({ ...prev, empresa: newValue || '' }));
