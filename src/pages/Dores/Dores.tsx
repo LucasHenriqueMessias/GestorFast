@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Autocomplete } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Autocomplete, MenuItem } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { getAccessToken, getUsername } from '../../utils/storage';
 
@@ -26,6 +26,34 @@ interface DoresData {
   suporte_contabil_inadequado: number;
 }
 
+const scoreOptions = [1, 2, 3] as const;
+
+const scoreFieldConfigs = [
+  { key: 'ausencia_salario', label: 'Ausência Salário', width: 150 },
+  { key: 'desconhecimento_lucratividade', label: 'Desconhecimento Lucratividade', width: 200 },
+  { key: 'precos_informal', label: 'Preços Informal', width: 150 },
+  { key: 'ausencia_projecao', label: 'Ausência Projeção', width: 150 },
+  { key: 'centralizacao_decisoes', label: 'Centralização Decisões', width: 200 },
+  { key: 'ausencia_planejamento', label: 'Ausência Planejamento', width: 200 },
+  { key: 'ausencia_estrategia', label: 'Ausência Estratégia', width: 200 },
+  { key: 'inadequacao_estrutura', label: 'Inadequação Estrutura', width: 200 },
+  { key: 'ausencia_controles', label: 'Ausência Controles', width: 200 },
+  { key: 'ausencia_processos', label: 'Ausência Processos', width: 200 },
+  { key: 'ausencia_tecnologia', label: 'Ausência Tecnologia', width: 200 },
+  { key: 'ausencia_inovacao', label: 'Ausência Inovação', width: 200 },
+  { key: 'ausencia_capital', label: 'Ausência Capital', width: 200 },
+  { key: 'utilizacao_linhas_credito', label: 'Utilização Linhas Crédito', width: 200 },
+  { key: 'suporte_contabil_inadequado', label: 'Suporte Contábil Inadequado', width: 200 },
+] as const;
+
+type ScoreFieldKey = typeof scoreFieldConfigs[number]['key'];
+
+const buildDefaultScores = () =>
+  scoreFieldConfigs.reduce((acc, { key }) => {
+    acc[key] = scoreOptions[0];
+    return acc;
+  }, {} as Record<ScoreFieldKey, number>);
+
 const Dores = () => {
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [showForm, setShowForm] = useState(false);
@@ -35,21 +63,7 @@ const Dores = () => {
     id: 0,
     cliente: '',
     consultor: '',
-    ausencia_salario: 0,
-    desconhecimento_lucratividade: 0,
-    precos_informal: 0,
-    ausencia_projecao: 0,
-    centralizacao_decisoes: 0,
-    ausencia_planejamento: 0,
-    ausencia_estrategia: 0,
-    inadequacao_estrutura: 0,
-    ausencia_controles: 0,
-    ausencia_processos: 0,
-    ausencia_tecnologia: 0,
-    ausencia_inovacao: 0,
-    ausencia_capital: 0,
-    utilizacao_linhas_credito: 0,
-    suporte_contabil_inadequado: 0,
+    ...buildDefaultScores(),
   });
 
   useEffect(() => {
@@ -109,11 +123,14 @@ const Dores = () => {
 
   const handleAddDores = async () => {
     await fetchClientes();
-    const username = getUsername(); // Obtém o nome do usuário
-  setNewDores({
-    ...newDores,
-    consultor: username ?? '',
-  });
+    const username = getUsername();
+    setIsEditing(false);
+    setNewDores({
+      id: 0,
+      cliente: '',
+      consultor: username ?? '',
+      ...buildDefaultScores(),
+    });
     setShowForm(true);
   };
   const handleCloseForm = () => {
@@ -123,21 +140,7 @@ const Dores = () => {
       id: 0,
       cliente: '',
       consultor: '',
-      ausencia_salario: 0,
-      desconhecimento_lucratividade: 0,
-      precos_informal: 0,
-      ausencia_projecao: 0,
-      centralizacao_decisoes: 0,
-      ausencia_planejamento: 0,
-      ausencia_estrategia: 0,
-      inadequacao_estrutura: 0,
-      ausencia_controles: 0,
-      ausencia_processos: 0,
-      ausencia_tecnologia: 0,
-      ausencia_inovacao: 0,
-      ausencia_capital: 0,
-      utilizacao_linhas_credito: 0,
-      suporte_contabil_inadequado: 0,
+      ...buildDefaultScores(),
     });
   };
   const handleSubmitDores = async () => {
@@ -172,48 +175,24 @@ const Dores = () => {
         id: 0,
         cliente: '',
         consultor: '',
-        ausencia_salario: 0,
-        desconhecimento_lucratividade: 0,
-        precos_informal: 0,
-        ausencia_projecao: 0,
-        centralizacao_decisoes: 0,
-        ausencia_planejamento: 0,
-        ausencia_estrategia: 0,
-        inadequacao_estrutura: 0,
-        ausencia_controles: 0,
-        ausencia_processos: 0,
-        ausencia_tecnologia: 0,
-        ausencia_inovacao: 0,
-        ausencia_capital: 0,
-        utilizacao_linhas_credito: 0,
-        suporte_contabil_inadequado: 0,
+        ...buildDefaultScores(),
       });
     } catch (error) {
       console.error('Erro ao salvar Dores:', error);
     }
   };
 
-  const handleEditDores = async (row: any) => {
+  const handleEditDores = async (row: DoresData) => {
     await fetchClientes();
+    const mappedScores = scoreFieldConfigs.reduce((acc, { key }) => {
+      acc[key] = Number(row[key] ?? scoreOptions[0]);
+      return acc;
+    }, {} as Record<ScoreFieldKey, number>);
     setNewDores({
       id: row.id,
       cliente: row.cliente,
       consultor: row.consultor,
-      ausencia_salario: row.ausencia_salario,
-      desconhecimento_lucratividade: row.desconhecimento_lucratividade,
-      precos_informal: row.precos_informal,
-      ausencia_projecao: row.ausencia_projecao,
-      centralizacao_decisoes: row.centralizacao_decisoes,
-      ausencia_planejamento: row.ausencia_planejamento,
-      ausencia_estrategia: row.ausencia_estrategia,
-      inadequacao_estrutura: row.inadequacao_estrutura,
-      ausencia_controles: row.ausencia_controles,
-      ausencia_processos: row.ausencia_processos,
-      ausencia_tecnologia: row.ausencia_tecnologia,
-      ausencia_inovacao: row.ausencia_inovacao,
-      ausencia_capital: row.ausencia_capital,
-      utilizacao_linhas_credito: row.utilizacao_linhas_credito,
-      suporte_contabil_inadequado: row.suporte_contabil_inadequado,
+      ...mappedScores,
     });
     setIsEditing(true);
     setShowForm(true);
@@ -222,21 +201,12 @@ const Dores = () => {
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'cliente', headerName: 'Cliente', width: 150 },
     { field: 'consultor', headerName: 'Consultor', width: 150 },
-    { field: 'ausencia_salario', headerName: 'Ausência Salário', width: 150 },
-    { field: 'desconhecimento_lucratividade', headerName: 'Desconhecimento Lucratividade', width: 200 },
-    { field: 'precos_informal', headerName: 'Preços Informal', width: 150 },
-    { field: 'ausencia_projecao', headerName: 'Ausência Projeção', width: 150 },
-    { field: 'centralizacao_decisoes', headerName: 'Centralização Decisões', width: 200 },
-    { field: 'ausencia_planejamento', headerName: 'Ausência Planejamento', width: 200 },
-    { field: 'ausencia_estrategia', headerName: 'Ausência Estratégia', width: 200 },
-    { field: 'inadequacao_estrutura', headerName: 'Inadequação Estrutura', width: 200 },
-    { field: 'ausencia_controles', headerName: 'Ausência Controles', width: 200 },
-    { field: 'ausencia_processos', headerName: 'Ausência Processos', width: 200 },
-    { field: 'ausencia_tecnologia', headerName: 'Ausência Tecnologia', width: 200 },
-    { field: 'ausencia_inovacao', headerName: 'Ausência Inovação', width: 200 },
-    { field: 'ausencia_capital', headerName: 'Ausência Capital', width: 200 },
-    { field: 'utilizacao_linhas_credito', headerName: 'Utilização Linhas Crédito', width: 200 },
-    { field: 'suporte_contabil_inadequado', headerName: 'Suporte Contábil Inadequado', width: 200 },
+    ...scoreFieldConfigs.map<GridColDef<DoresData>>(({ key, label, width }) => ({
+      field: key,
+      headerName: label,
+      width,
+      type: 'number',
+    })),
     {
       field: 'actions',
       headerName: 'Ações',
@@ -289,126 +259,29 @@ const Dores = () => {
               />
             )}
           />
-          <TextField
-            margin="dense"
-            label="Ausência Salário"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_salario}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_salario: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Desconhecimento Lucratividade"
-            type="number"
-            fullWidth
-            value={newDores.desconhecimento_lucratividade}
-            onChange={(e) => setNewDores({ ...newDores, desconhecimento_lucratividade: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Preços Informal"
-            type="number"
-            fullWidth
-            value={newDores.precos_informal}
-            onChange={(e) => setNewDores({ ...newDores, precos_informal: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Projeção"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_projecao}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_projecao: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Centralização Decisões"
-            type="number"
-            fullWidth
-            value={newDores.centralizacao_decisoes}
-            onChange={(e) => setNewDores({ ...newDores, centralizacao_decisoes: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Planejamento"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_planejamento}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_planejamento: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Estratégia"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_estrategia}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_estrategia: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Inadequação Estrutura"
-            type="number"
-            fullWidth
-            value={newDores.inadequacao_estrutura}
-            onChange={(e) => setNewDores({ ...newDores, inadequacao_estrutura: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Controles"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_controles}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_controles: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Processos"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_processos}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_processos: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Tecnologia"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_tecnologia}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_tecnologia: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Inovação"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_inovacao}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_inovacao: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Ausência Capital"
-            type="number"
-            fullWidth
-            value={newDores.ausencia_capital}
-            onChange={(e) => setNewDores({ ...newDores, ausencia_capital: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Utilização Linhas Crédito"
-            type="number"
-            fullWidth
-            value={newDores.utilizacao_linhas_credito}
-            onChange={(e) => setNewDores({ ...newDores, utilizacao_linhas_credito: Number(e.target.value) })}
-          />
-          <TextField
-            margin="dense"
-            label="Suporte Contábil Inadequado"
-            type="number"
-            fullWidth
-            value={newDores.suporte_contabil_inadequado}
-            onChange={(e) => setNewDores({ ...newDores, suporte_contabil_inadequado: Number(e.target.value) })}
-          />
+          {scoreFieldConfigs.map(({ key, label }) => (
+            <TextField
+              key={key}
+              select
+              margin="dense"
+              label={label}
+              fullWidth
+              value={newDores[key]}
+              onChange={(e) => {
+                const newValue = Number(e.target.value);
+                setNewDores((prev) => ({
+                  ...prev,
+                  [key]: newValue,
+                }));
+              }}
+            >
+              {scoreOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
+          ))}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseForm} color="primary">
