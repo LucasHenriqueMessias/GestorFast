@@ -28,6 +28,35 @@ interface Cliente {
   razao_social: string;
 }
 
+const formatDatePtBr = (value: unknown) => {
+  if (!value) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? '' : value.toLocaleDateString('pt-BR');
+  }
+
+  const raw = String(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  if (raw.includes('/')) {
+    return raw;
+  }
+
+  const isoLike = raw.includes('T') ? raw : `${raw}T00:00:00`;
+  const parsed = new Date(isoLike);
+
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('pt-BR');
+  }
+
+  return raw;
+};
+
 const JornadaCrescimentoOverDelivery = () => {
   const [OverDeliveryData, setOverDeliveryData] = useState<OverDeliveryData[]>([]);
   const [filteredData, setFilteredData] = useState<OverDeliveryData[]>([]);
@@ -218,8 +247,13 @@ const JornadaCrescimentoOverDelivery = () => {
   );
 
   const columns: GridColDef[] = [
-    { field: 'data_criacao', headerName: 'Data', width: 180 },
-    { field: 'id', headerName: 'ID', width: 90 },
+    {
+      field: 'data_criacao',
+      headerName: 'Data',
+      width: 180,
+      valueFormatter: ({ value }) => formatDatePtBr(value),
+      renderCell: ({ row }) => <>{formatDatePtBr((row as OverDeliveryData)?.data_criacao)}</>,
+    },
     { field: 'cliente', headerName: 'Cliente', width: 150, editable: true },
     { field: 'colaborador', headerName: 'Colaborador', width: 150, editable: false },
     { field: 'departamento', headerName: 'Departamento', width: 150, editable: false },

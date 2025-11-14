@@ -22,6 +22,36 @@ interface Cliente {
   razao_social: string;
 }
 
+const formatDatePtBr = (value: unknown) => {
+  if (!value) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? '' : value.toLocaleDateString('pt-BR');
+  }
+
+  const raw = String(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  if (raw.includes('/')) {
+    return raw;
+  }
+
+  // Handle ISO date strings (36-dayZ) or YYYY-MM-DD
+  const isoLike = raw.includes('T') ? raw : `${raw}T00:00:00`; // ensures Date parses YYYY-MM-DD
+  const parsed = new Date(isoLike);
+
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('pt-BR');
+  }
+
+  return raw;
+};
+
 const RegistroDeReunioes = () => {
   const [reuniaoData, setReuniaoData] = useState<Reuniao[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -80,7 +110,14 @@ const RegistroDeReunioes = () => {
         </span>
       ),
     },
-    { field: 'data_realizada', headerName: 'Data Realizada', width: 150, editable: true },
+    {
+      field: 'data_realizada',
+      headerName: 'Data Realizada',
+      width: 150,
+      editable: true,
+      valueFormatter: ({ value }) => formatDatePtBr(value),
+      renderCell: ({ row }) => <>{formatDatePtBr((row as Reuniao)?.data_realizada)}</>,
+    },
     { field: 'nps_reuniao', headerName: 'NPS', width: 150, type: 'number', editable: true },
     {
       field: 'actions',

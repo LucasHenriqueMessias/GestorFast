@@ -23,6 +23,35 @@ interface SocioData {
   opcao_pelo_mei: boolean;
 }
 
+const formatDatePtBr = (value: unknown) => {
+  if (!value) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? '' : value.toLocaleDateString('pt-BR');
+  }
+
+  const raw = String(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  if (raw.includes('/')) {
+    return raw;
+  }
+
+  const isoLike = raw.includes('T') ? raw : `${raw}T00:00:00`;
+  const parsed = new Date(isoLike);
+
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('pt-BR');
+  }
+
+  return raw;
+};
+
 const Socios = () => {
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [showForm, setShowForm] = useState(false);
@@ -194,15 +223,19 @@ const Socios = () => {
     { field: 'idade', headerName: 'Idade', width: 100 },
     { field: 'cnpj_cpf_do_socio', headerName: 'CNPJ/CPF do Sócio', width: 150 },
     { field: 'telefone', headerName: 'Telefone', width: 130 },
-    { 
-      field: 'data_nascimento', 
-      headerName: 'Data Nascimento', 
+    {
+      field: 'data_nascimento',
+      headerName: 'Data Nascimento',
       width: 150,
+      valueFormatter: ({ value }) => formatDatePtBr(value),
+      renderCell: ({ row }) => <>{formatDatePtBr((row as SocioData)?.data_nascimento)}</>,
     },
-    { 
-      field: 'data_entrada_sociedade', 
-      headerName: 'Data Entrada Sociedade', 
+    {
+      field: 'data_entrada_sociedade',
+      headerName: 'Data Entrada Sociedade',
       width: 180,
+      valueFormatter: ({ value }) => formatDatePtBr(value),
+      renderCell: ({ row }) => <>{formatDatePtBr((row as SocioData)?.data_entrada_sociedade)}</>,
     },
     { field: 'formacao', headerName: 'Formação', width: 150 },
     { field: 'disc', headerName: 'DISC', width: 100 },

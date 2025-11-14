@@ -9,6 +9,35 @@ interface Cliente {
   razao_social: string;
 }
 
+const formatDatePtBr = (value: unknown) => {
+  if (!value) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? '' : value.toLocaleDateString('pt-BR');
+  }
+
+  const raw = String(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  if (raw.includes('/')) {
+    return raw;
+  }
+
+  const isoLike = raw.includes('T') ? raw : `${raw}T00:00:00`;
+  const parsed = new Date(isoLike);
+
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('pt-BR');
+  }
+
+  return raw;
+};
+
 const Alertas = () => {
   const [sinalAmareloData, setSinalAmareloData] = useState([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -27,7 +56,9 @@ const Alertas = () => {
     { 
       field: 'data_criacao', 
       headerName: 'Data de Criação', 
-      width: 180 
+      width: 180,
+      valueFormatter: ({ value }) => formatDatePtBr(value),
+      renderCell: ({ row }) => <>{formatDatePtBr(row?.data_criacao)}</>,
     },
     { field: 'id', headerName: 'ID', width: 100 },
     { field: 'usuario', headerName: 'Colaborador', width: 200 },
