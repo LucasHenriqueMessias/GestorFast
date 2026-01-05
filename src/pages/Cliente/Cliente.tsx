@@ -122,8 +122,6 @@ const Cliente = () => {
   };
 
   const handleSaveEdit = React.useCallback(async () => {
-  
-    
     setLoading(true);
     try {
       const token = getAccessToken();
@@ -138,6 +136,8 @@ const Cliente = () => {
           (patchData as any).valor_fatura_cliente = num;
         }
       }
+      const previousRow = rows.find((row: any) => row.id === editRowId);
+      const isRemovingClienteFast = previousRow?.cliente_fast && patchData.cliente_fast === false;
       if (patchData.cliente_fast === false) {
         patchData.data_saida_fast = new Date().toISOString();
       }
@@ -167,6 +167,37 @@ const Cliente = () => {
         patchData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (isRemovingClienteFast) {
+        const normalizeValor = (valor: any) => {
+          if (valor == null || valor === '') {
+            return 0;
+          }
+          if (typeof valor === 'number') {
+            return valor;
+          }
+          if (typeof valor === 'string') {
+            const cleaned = valor.replace(/\./g, '').replace(',', '.').trim();
+            const parsed = parseFloat(cleaned);
+            return Number.isNaN(parsed) ? 0 : parsed;
+          }
+          return 0;
+        };
+
+        const valorAvisoPrevio = normalizeValor((patchData as any).valor_fatura_cliente ?? previousRow?.valor_fatura_cliente);
+        const avisoPrevioPayload = {
+          data_pedido_aviso_previvo: new Date().toISOString(),
+          cliente: editData.razao_social ?? previousRow?.razao_social ?? '',
+          consultor: editData.consultor_financeiro ?? previousRow?.consultor_financeiro ?? '',
+          valor_aviso_previo: valorAvisoPrevio,
+        };
+
+        // Quando remove cliente fast, registra aviso prévio para controle interno
+        await axios.post(
+          `${process.env.REACT_APP_API_URL}/tab-aviso-previo`,
+          avisoPrevioPayload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
       setRows((prevRows) => prevRows.map((row: any) => (row.id === editRowId ? { ...row, ...patchData } : row)));
       setEditRowId(null);
       setEditData({});
@@ -177,7 +208,7 @@ const Cliente = () => {
     } finally {
       setLoading(false);
     }
-  }, [editData, editRowId]);
+  }, [editData, editRowId, rows]);
 
   const columns: GridColDef[] = [
     { field: 'razao_social', headerName: 'Razão Social', width: 300 },
