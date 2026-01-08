@@ -99,7 +99,7 @@ function AppLayout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', overflowX: 'hidden' }}>
-      <Sidebar onlyIcons={!sidebarOpen} />
+      <Sidebar onlyIcons={!sidebarOpen} onExpand={() => setSidebarOpen(true)} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <Topbar onMenuClick={() => setSidebarOpen((open) => !open)} onlyIcons={!sidebarOpen} />
         <div style={{ flex: 1, minWidth: 0, width: '100%', overflow: 'auto' }}>

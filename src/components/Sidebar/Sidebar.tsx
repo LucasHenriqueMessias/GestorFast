@@ -5,7 +5,9 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import AddTaskIcon from '@mui/icons-material/AddTask';
 
-export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: boolean, children?: React.ReactNode }) {
+type TopLevelSection = 'gestao' | 'cliente' | 'ferramentas' | 'helpdesk';
+
+export default function Sidebar({ onlyIcons = false, onExpand, children }: { onlyIcons?: boolean; onExpand?: () => void; children?: React.ReactNode }) {
     const [gestaoOpen, setGestaoOpen] = useState(false);
     const [clienteOpen, setClienteOpen] = useState(false);
     const [csOpen, setCsOpen] = useState(false);
@@ -16,6 +18,45 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
 
     // Helper to hide text if onlyIcons is true
     const hideText = onlyIcons ? { display: 'none' } : {};
+
+    const resetSubsections = () => {
+        setConsultorOpen(false);
+        setComercialOpen(false);
+        setCsOpen(false);
+    };
+
+    const openTopLevelSection = (section: TopLevelSection) => {
+        setGestaoOpen(section === 'gestao');
+        setClienteOpen(section === 'cliente');
+        setFerramentasOpen(section === 'ferramentas');
+        setHelpdeskOpen(section === 'helpdesk');
+    };
+
+    const handleTopLevelToggle = (section: TopLevelSection) => {
+        if (onlyIcons) {
+            resetSubsections();
+            onExpand?.();
+            openTopLevelSection(section);
+            return;
+        }
+
+        switch (section) {
+            case 'gestao':
+                setGestaoOpen((open) => !open);
+                break;
+            case 'cliente':
+                setClienteOpen((open) => !open);
+                break;
+            case 'ferramentas':
+                setFerramentasOpen((open) => !open);
+                break;
+            case 'helpdesk':
+                setHelpdeskOpen((open) => !open);
+                break;
+            default:
+                break;
+        }
+    };
 
     return (
         <div className={onlyIcons ? "sidebar sidebar--collapsed" : "sidebar"}>
@@ -30,6 +71,7 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                         className="single-menu-item"
                         onClick={() => window.location.href = '/Relatorios'}
                         style={{ cursor: 'pointer' }}
+                        title="Relatórios"
                     >
                         <div className="grid-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -45,7 +87,8 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                         <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => setGestaoOpen((open) => !open)}
+                            onClick={() => handleTopLevelToggle('gestao')}
+                            title="Gestão"
                         >
                             <div>
                                 <BarChartIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
@@ -68,11 +111,13 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                             </div>
                         </div>
                         {!onlyIcons && gestaoOpen && (
-                            <ul className="gestao-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                            <ul className="menu-list">
                                 <li className="dropdown-menu-item">
                                     <div
-                                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                                        className="submenu-item"
                                         onClick={() => setConsultorOpen((open: boolean) => !open)}
+                                        role="button"
+                                        aria-expanded={consultorOpen}
                                     >
                                         <span>Consultor</span>
                                         <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: consultorOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
@@ -80,19 +125,25 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                                         </svg>
                                     </div>
                                     {consultorOpen && (
-                                        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                                            <li className="dropdown-menu-item" style={{ paddingLeft: 0 }}>
-                                                <a href="/RegistroDeReunioes" style={{ color: '#222', textDecoration: 'none', display: 'block', padding: '4px 0 4px 24px' }}>Registro de Reuniões</a>
-                                                <a href="/JornadaCrescimentoCore" style={{ color: '#222', textDecoration: 'none', display: 'block', padding: '4px 0 4px 24px' }}>Crescimento Core</a>
-                                                <a href="/JornadaCrescimentoOverdelivery" style={{ color: '#222', textDecoration: 'none', display: 'block', padding: '4px 0 4px 24px' }}>Crescimento OverDelivery</a>
+                                        <ul className="submenu-list">
+                                            <li>
+                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Registro de Reuniões</a>
+                                            </li>
+                                            <li>
+                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/JornadaCrescimentoCore">Crescimento Core</a>
+                                            </li>
+                                            <li>
+                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/JornadaCrescimentoOverdelivery">Crescimento OverDelivery</a>
                                             </li>
                                         </ul>
                                     )}
                                 </li>
                                 <li className="dropdown-menu-item">
                                     <div
-                                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                                        className="submenu-item"
                                         onClick={() => setComercialOpen((open: boolean) => !open)}
+                                        role="button"
+                                        aria-expanded={comercialOpen}
                                     >
                                         <span>Comercial</span>
                                         <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: comercialOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
@@ -100,21 +151,23 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                                         </svg>
                                     </div>
                                     {comercialOpen && (
-                                        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                                            <li className="dropdown-menu-item" style={{ paddingLeft: 0 }}>
-                                                <a href="/Funil" style={{ color: '#222', textDecoration: 'none', display: 'block', padding: '4px 0 4px 24px' }}>Funil</a>
+                                        <ul className="submenu-list">
+                                            <li>
+                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Funil">Funil</a>
                                             </li>
                                         </ul>
                                     )}
                                 </li>
-                                <li className="dropdown-menu-item">    <a href="/Alertas" style={{ color: '#222', textDecoration: 'none', display: 'block', }}>Alertas</a>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
                                 </li>
                             </ul>
                         )}
                         <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => setClienteOpen((open) => !open)}
+                            onClick={() => handleTopLevelToggle('cliente')}
+                            title="Cliente"
                         >
                             <div>
                                 <StoreIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
@@ -137,32 +190,56 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                             </div>
                         </div>
                         {!onlyIcons && clienteOpen && (
-                            <ul className="gestao-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Clientes'}>Clientes Fast</li>
-                                {/* <li><a className="dropdown-item" href="/cadastro-cliente">Cadastrar Cliente</a></li> */}
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Cadastro'}>Cadastro</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Highlights'}>Highlights</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Fotografia'}>Fotografia</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Dores'}>Dores</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Socios'}>Socios</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => setCsOpen((open) => !open)}>
-                                    <span>CS</span>
-                                    <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: csOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
-                                        <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
-                                    </svg>
+                            <ul className="menu-list">
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Clientes'}>Clientes Fast</div>
                                 </li>
-                                {csOpen && (
-                                    <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                                        <li className="dropdown-menu-item" style={{ paddingLeft: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/Checklist/Acompanhamento/Cliente'}>Checklist de Acompanhamento</li>
-                                        <li className="dropdown-menu-item" style={{ paddingLeft: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/Pesquisa/Satisfacao/ICR'}>Pesquisa ICR</li>
-                                    </ul>
-                                )}
+                                {/* <li><a className="dropdown-item" href="/cadastro-cliente">Cadastrar Cliente</a></li> */}
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Cadastro'}>Cadastro</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Highlights'}>Highlights</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Fotografia'}>Fotografia</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Dores'}>Dores</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Socios'}>Socios</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div
+                                        className="submenu-item"
+                                        onClick={() => setCsOpen((open) => !open)}
+                                        role="button"
+                                        aria-expanded={csOpen}
+                                    >
+                                        <span>CS</span>
+                                        <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: csOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                        </svg>
+                                    </div>
+                                    {csOpen && (
+                                        <ul className="submenu-list">
+                                            <li>
+                                                <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Checklist/Acompanhamento/Cliente'}>Checklist de Acompanhamento</div>
+                                            </li>
+                                            <li>
+                                                <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Pesquisa/Satisfacao/ICR'}>Pesquisa ICR</div>
+                                            </li>
+                                        </ul>
+                                    )}
+                                </li>
                             </ul>
                         )}
                         <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => setFerramentasOpen((open) => !open)}
+                            onClick={() => handleTopLevelToggle('ferramentas')}
+                            title="Ferramentas"
                         >
                             <div>
                                 <ConstructionIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
@@ -185,21 +262,30 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                             </div>
                         </div>
                         {!onlyIcons && ferramentasOpen && (
-                            <ul className="gestao-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Biblioteca'}>Biblioteca</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Eventos'}>Eventos</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Eventos/ListaPresenca'}>Lista de Presença</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/Ferramentas'}>Ferramentas Desenvolvidas</li>
+                            <ul className="menu-list">
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Biblioteca'}>Biblioteca</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Eventos'}>Eventos</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Eventos/ListaPresenca'}>Lista de Presença</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Ferramentas'}>Ferramentas Desenvolvidas</div>
+                                </li>
                                 {/* <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/SalaDeReuniao'} >Sala de Reunião</li> */}
                                 <li className="dropdown-menu-item">
-                                    <a href="/ConsultarCNPJ" style={{ color: '#222', textDecoration: 'none', display: 'block', }}>Consultar CNPJ</a>
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/ConsultarCNPJ">Consultar CNPJ</a>
                                 </li>
                             </ul>
                         )}
                         <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => setHelpdeskOpen((open) => !open)}
+                            onClick={() => handleTopLevelToggle('helpdesk')}
+                            title="HelpDesk"
                         >
                             <div>
                                 <AddTaskIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
@@ -222,10 +308,16 @@ export default function Sidebar({ onlyIcons = false, children }: { onlyIcons?: b
                             </div>
                         </div>
                         {!onlyIcons && helpdeskOpen && (
-                            <ul className="gestao-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/HelpDesk/NovoChamado'}>Novo Chamado</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/HelpDesk/MeusChamados'}>Meus Chamados</li>
-                                <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/HelpDesk/AtribuidosAMim'}>Atribuidos A Mim</li>
+                            <ul className="menu-list">
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/NovoChamado'}>Novo Chamado</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/MeusChamados'}>Meus Chamados</div>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/AtribuidosAMim'}>Atribuidos A Mim</div>
+                                </li>
                             </ul>
                         )}
                     </div>
