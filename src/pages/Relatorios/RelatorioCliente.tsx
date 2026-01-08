@@ -885,10 +885,107 @@ const RelatorioCliente = () => {
     };
   };
 
-  // Helper function to safely get status count
-  const getStatusCount = (status: string): number => {
-    return processReuniaoData().statusCount[status] || 0;
+  const reuniaoOverview = processReuniaoData();
+  const realizedCount = reuniaoOverview.statusCount['Realizado'] ?? 0;
+  const pendingCount = reuniaoOverview.statusCount['Pendente'] ?? 0;
+  const notApplicableCount = reuniaoOverview.statusCount['NA'] ?? 0;
+  const realizationRate = reuniaoOverview.total > 0 ? Math.round((realizedCount / reuniaoOverview.total) * 100) : 0;
+  const meetingTypeEntries = Object.entries(reuniaoOverview.tipoReuniaoCount);
+  const statusEntries = Object.entries(reuniaoOverview.statusCount);
+  const lastMeetingLabel = reuniaoOverview.lastMeetingDate !== '0' ? reuniaoOverview.lastMeetingDate : 'Sem registro';
+  const meetingStatusPalette: Record<string, { color: string; background: string; border: string; icon: string }> = {
+    Realizado: {
+      color: '#1E3A8A',
+      background: 'rgba(30, 58, 138, 0.12)',
+      border: '1px solid rgba(30, 58, 138, 0.35)',
+      icon: '✅',
+    },
+    Pendente: {
+      color: '#2563EB',
+      background: 'rgba(37, 99, 235, 0.12)',
+      border: '1px solid rgba(37, 99, 235, 0.35)',
+      icon: '🕒',
+    },
+    NA: {
+      color: '#60A5FA',
+      background: 'rgba(96, 165, 250, 0.18)',
+      border: '1px solid rgba(96, 165, 250, 0.35)',
+      icon: 'ℹ️',
+    },
   };
+  const getMeetingStatusPalette = (status: string) =>
+    meetingStatusPalette[status] ?? {
+      color: '#1E3A8A',
+      background: 'rgba(37, 99, 235, 0.12)',
+      border: '1px solid rgba(37, 99, 235, 0.35)',
+      icon: 'ⓘ',
+    };
+  const statusSummaryBadges = [
+    { label: 'Realizadas', value: realizedCount, ...meetingStatusPalette.Realizado },
+    { label: 'Pendentes', value: pendingCount, ...meetingStatusPalette.Pendente },
+    { label: 'Não Aplicáveis', value: notApplicableCount, ...meetingStatusPalette.NA },
+  ];
+  const getNpsChipStyles = (score: number) => {
+    if (score >= 4) {
+      return { backgroundColor: 'rgba(30, 58, 138, 0.16)', color: '#1E3A8A' };
+    }
+    if (score >= 3) {
+      return { backgroundColor: 'rgba(37, 99, 235, 0.16)', color: '#2563EB' };
+    }
+    return { backgroundColor: 'rgba(147, 197, 253, 0.25)', color: '#1D4ED8' };
+  };
+  const metricChipStyles = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0.75,
+    px: 2,
+    py: 1,
+    borderRadius: 999,
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+    color: '#1E3A8A',
+    fontWeight: 'bold',
+    fontSize: '0.85rem',
+  } as const;
+
+  const signalMetricChipStyles = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0.75,
+    px: 2,
+    py: 1,
+    borderRadius: 999,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    color: '#1E3A8A',
+    fontWeight: 'bold',
+    fontSize: '0.85rem',
+  } as const;
+  const signalStatusPalette: Record<string, { color: string; background: string; border: string; icon: string }> = {
+    'Sinal Verde': {
+      color: '#1E3A8A',
+      background: 'rgba(30, 58, 138, 0.12)',
+      border: '1px solid rgba(30, 58, 138, 0.35)',
+      icon: '🔷',
+    },
+    'Sinal Amarelo': {
+      color: '#2563EB',
+      background: 'rgba(37, 99, 235, 0.12)',
+      border: '1px solid rgba(37, 99, 235, 0.35)',
+      icon: '🔵',
+    },
+    'Sinal Vermelho': {
+      color: '#60A5FA',
+      background: 'rgba(96, 165, 250, 0.18)',
+      border: '1px solid rgba(96, 165, 250, 0.35)',
+      icon: '🔹',
+    },
+  };
+  const getSignalPalette = (status: string) =>
+    signalStatusPalette[status] ?? {
+      color: '#1E3A8A',
+      background: 'rgba(37, 99, 235, 0.12)',
+      border: '1px solid rgba(37, 99, 235, 0.35)',
+      icon: '🔹',
+    };
 
   // Function to process Ferramentas data
   const processFerramentasData = () => {
@@ -940,6 +1037,16 @@ const RelatorioCliente = () => {
       lastSignalDate: sortedByDataCriacao[0] ? new Date(sortedByDataCriacao[0].data_criacao).toLocaleDateString('pt-BR') : "0"
     };
   };
+
+  const sinalOverview = processSinalAmareloData();
+  const lastSignalLabel = sinalOverview.lastSignalDate !== '0' ? sinalOverview.lastSignalDate : 'Sem registro';
+  const latestSignal = sinalOverview.mostRecent;
+  const signalStatusEntries = Object.entries(sinalOverview.statusCount);
+  const signalSummaryBadges = ['Sinal Verde', 'Sinal Amarelo', 'Sinal Vermelho'].map((status) => ({
+    label: status.replace('Sinal ', ''),
+    value: sinalOverview.statusCount[status] ?? 0,
+    ...getSignalPalette(status),
+  }));
 
   // Function to process Socios data
   const processSociosData = () => {
@@ -1008,33 +1115,33 @@ const RelatorioCliente = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <Box 
+        <Box
           component="button"
-          onClick={() => navigate('/Relatorios')}
+          onClick={() => navigate(-1)}
           sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            px: 2,
-            py: 1,
-            backgroundColor: '#E91E63',
+            backgroundColor: '#1E3A8A',
             color: 'white',
             border: 'none',
             borderRadius: 2,
             cursor: 'pointer',
             fontSize: '0.9rem',
             fontWeight: 'bold',
+            px: 2,
+            py: 1,
             transition: 'all 0.3s ease',
             mr: 3,
             '&:hover': {
-              backgroundColor: '#C2185B',
-            }
+              backgroundColor: '#1D4ED8',
+            },
           }}
         >
           <ArrowBack />
           Voltar
         </Box>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#333' }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#1E3A8A' }}>
           Relatório do Cliente
         </Typography>
       </Box>
@@ -1127,22 +1234,23 @@ const RelatorioCliente = () => {
 
       {/* Show selected company information */}
       {selectedCNPJ && selectedRazaoSocial ? (
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4, 
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
             borderRadius: 3,
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+            background: 'linear-gradient(135deg, #f8fbff 0%, #e0e7ff 100%)',
+            border: '1px solid rgba(37, 99, 235, 0.2)',
           }}
         >
           <Typography 
             variant="h5" 
             component="h2" 
             gutterBottom 
-            sx={{ 
+            sx={{
               fontWeight: 'bold',
-              color: '#E91E63',
-              mb: 3
+              color: '#1E3A8A',
+              mb: 3,
             }}
           >
             Empresa Selecionada
@@ -1150,44 +1258,44 @@ const RelatorioCliente = () => {
           
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
             <Box>
-              <Typography 
-                variant="body1" 
-                sx={{ 
+              <Typography
+                variant="body1"
+                sx={{
                   fontWeight: 'bold',
-                  color: '#333',
-                  mb: 1
+                  color: '#1E3A8A',
+                  mb: 1,
                 }}
               >
                 CNPJ:
               </Typography>
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  color: '#666',
+              <Typography
+                variant="body1"
+                sx={{
+                  color: '#475569',
                   fontSize: '1.1rem',
-                  fontFamily: 'monospace'
+                  fontFamily: 'monospace',
                 }}
               >
                 {selectedCNPJ.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')}
               </Typography>
             </Box>
-            
+
             <Box>
-              <Typography 
-                variant="body1" 
-                sx={{ 
+              <Typography
+                variant="body1"
+                sx={{
                   fontWeight: 'bold',
-                  color: '#333',
-                  mb: 1
+                  color: '#1E3A8A',
+                  mb: 1,
                 }}
               >
                 Razão Social:
               </Typography>
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  color: '#666',
-                  fontSize: '1.1rem'
+              <Typography
+                variant="body1"
+                sx={{
+                  color: '#475569',
+                  fontSize: '1.1rem',
                 }}
               >
                 {selectedRazaoSocial}
@@ -1197,12 +1305,12 @@ const RelatorioCliente = () => {
 
           {/* DRE Data Table */}
           <Box sx={{ mt: 4 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#E91E63',
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1E3A8A',
                 fontWeight: 'bold',
-                mb: 2
+                mb: 2,
               }}
             >
               Highlights
@@ -1211,32 +1319,32 @@ const RelatorioCliente = () => {
             {/* DRE Summary */}
             {dreData.length > 0 && (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 3 }}>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #4CAF50' }}>
-                  <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                     {dreData.length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Total de Registros
                   </Typography>
                 </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #2196F3' }}>
-                  <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
                     R$ {dreData.reduce((sum, item) => sum + item.Valor, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Valor Total
                   </Typography>
                 </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #FF9800' }}>
-                  <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(96, 165, 250, 0.35)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
                     {new Set(dreData.map(item => item.Descricao)).size}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Tipos de Descrição
                   </Typography>
                 </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #9C27B0' }}>
-                  <Typography variant="h6" sx={{ color: '#9C27B0', fontWeight: 'bold' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(147, 197, 253, 0.45)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                     {dreData.filter(item => item.Valor > 0).length}/{dreData.length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -1259,22 +1367,22 @@ const RelatorioCliente = () => {
                   <Table stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white', minWidth: 100 }}>
+                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white', minWidth: 100 }}>
                           Data
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white', minWidth: 200 }}>
+                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white', minWidth: 200 }}>
                           Descrição
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white', minWidth: 120 }} align="right">
+                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white', minWidth: 120 }} align="right">
                           Valor (R$)
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white', minWidth: 100 }} align="right">
+                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white', minWidth: 100 }} align="right">
                           An. Vertical (%)
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white', minWidth: 100 }} align="right">
+                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white', minWidth: 100 }} align="right">
                           An. Horizontal (%)
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white', minWidth: 120 }}>
+                        <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white', minWidth: 120 }}>
                           Usuário
                         </TableCell>
                       </TableRow>
@@ -1283,14 +1391,14 @@ const RelatorioCliente = () => {
                       {dreData
                         .sort((a, b) => new Date(b.Data).getTime() - new Date(a.Data).getTime())
                         .map((row) => (
-                        <TableRow 
-                          key={row.id} 
-                          hover 
+                        <TableRow
+                          key={row.id}
+                          hover
                           sx={{
                             '&:hover': {
-                              backgroundColor: 'rgba(233, 30, 99, 0.04)'
+                              backgroundColor: 'rgba(30, 64, 175, 0.1)',
                             },
-                            backgroundColor: row.Valor > 0 ? 'rgba(76, 175, 80, 0.05)' : 'rgba(244, 67, 54, 0.05)'
+                            backgroundColor: row.Valor > 0 ? 'rgba(30, 58, 138, 0.12)' : 'rgba(191, 219, 254, 0.3)',
                           }}
                         >
                           <TableCell sx={{ fontSize: '0.875rem' }}>
@@ -1303,12 +1411,12 @@ const RelatorioCliente = () => {
                           }}>
                             {row.Descricao}
                           </TableCell>
-                          <TableCell 
-                            align="right" 
-                            sx={{ 
+                          <TableCell
+                            align="right"
+                            sx={{
                               fontSize: '0.875rem',
                               fontWeight: 'bold',
-                              color: row.Valor > 0 ? '#4CAF50' : '#F44336'
+                              color: row.Valor > 0 ? '#1E3A8A' : '#2563EB',
                             }}
                           >
                             R$ {row.Valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -1332,15 +1440,15 @@ const RelatorioCliente = () => {
                             {row.AnaliseHorizontal}%
                           </TableCell>
                           <TableCell sx={{ fontSize: '0.875rem' }}>
-                            <Box sx={{ 
+                            <Box sx={{
                               display: 'inline-block',
                               px: 2,
                               py: 0.5,
-                              backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                              backgroundColor: 'rgba(37, 99, 235, 0.12)',
                               borderRadius: 2,
                               fontSize: '0.75rem',
                               fontWeight: 'bold',
-                              color: '#E91E63'
+                              color: '#1E3A8A',
                             }}>
                               {row.Usuario}
                             </Box>
@@ -1353,15 +1461,15 @@ const RelatorioCliente = () => {
 
                 {/* Resumo Financeiro DRE */}
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2, color: '#333', fontWeight: 'bold' }}>
+                  <Typography variant="h6" sx={{ mb: 2, color: '#1E3A8A', fontWeight: 'bold' }}>
                     📊 Resumo dos Highlights
                   </Typography>
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                    <Paper sx={{ p: 3, border: '1px solid #4CAF50', borderRadius: 2 }}>
-                      <Typography variant="h6" sx={{ color: '#4CAF50', mb: 2, display: 'flex', alignItems: 'center' }}>
+                    <Paper sx={{ p: 3, border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2 }}>
+                      <Typography variant="h6" sx={{ color: '#1E3A8A', mb: 2, display: 'flex', alignItems: 'center' }}>
                         📈 Receitas Positivas
                       </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4CAF50', mb: 1 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
                         R$ {dreData
                           .filter(item => item.Valor > 0)
                           .reduce((sum, item) => sum + item.Valor, 0)
@@ -1371,11 +1479,11 @@ const RelatorioCliente = () => {
                         {dreData.filter(item => item.Valor > 0).length} registros positivos
                       </Typography>
                     </Paper>
-                    <Paper sx={{ p: 3, border: '1px solid #F44336', borderRadius: 2 }}>
-                      <Typography variant="h6" sx={{ color: '#F44336', mb: 2, display: 'flex', alignItems: 'center' }}>
+                    <Paper sx={{ p: 3, border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2 }}>
+                      <Typography variant="h6" sx={{ color: '#2563EB', mb: 2, display: 'flex', alignItems: 'center' }}>
                         📉 Despesas/Custos
                       </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#F44336', mb: 1 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#2563EB', mb: 1 }}>
                         R$ {Math.abs(dreData
                           .filter(item => item.Valor <= 0)
                           .reduce((sum, item) => sum + item.Valor, 0))
@@ -1398,27 +1506,28 @@ const RelatorioCliente = () => {
           {/* DRE Analysis by Description */}
           {dreData.length > 0 && (
             <Box sx={{ mt: 4 }}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: '#E91E63',
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#1E3A8A',
                   fontWeight: 'bold',
-                  mb: 3
+                  mb: 3,
                 }}
               >
                 Análise Detalhada por Tipo de Descrição do Highlight
               </Typography>
 
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: '#666',
+              <Typography
+                variant="body2"
+                sx={{
+                  color: '#475569',
                   mb: 4,
                   fontStyle: 'italic',
                   textAlign: 'center',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'rgba(248, 251, 255, 0.85)',
                   p: 2,
-                  borderRadius: 2
+                  borderRadius: 2,
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
                 }}
               >
                 Esta análise mostra a evolução temporal de cada tipo do Highlight, comparando os dados mais antigos com os mais recentes para identificar tendências financeiras.
@@ -1426,8 +1535,8 @@ const RelatorioCliente = () => {
 
               {/* Summary Statistics */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #4CAF50', borderRadius: 3 }}>
-                  <Typography variant="h4" sx={{ color: '#4CAF50', fontWeight: 'bold', mb: 1 }}>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(37, 99, 235, 0.35)', borderRadius: 3 }}>
+                  <Typography variant="h4" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 1 }}>
                     {Object.values(processDREByDescription()).filter(data => data.allRecords.length > 0).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
@@ -1437,8 +1546,8 @@ const RelatorioCliente = () => {
                     Tipos ativos
                   </Typography>
                 </Paper>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #FF9800', borderRadius: 3 }}>
-                  <Typography variant="h4" sx={{ color: '#FF9800', fontWeight: 'bold', mb: 1 }}>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(59, 130, 246, 0.35)', borderRadius: 3 }}>
+                  <Typography variant="h4" sx={{ color: '#2563EB', fontWeight: 'bold', mb: 1 }}>
                     {Object.values(processDREByDescription()).filter(data => data.allRecords.length === 0).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
@@ -1448,8 +1557,8 @@ const RelatorioCliente = () => {
                     Tipos vazios
                   </Typography>
                 </Paper>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #2196F3', borderRadius: 3 }}>
-                  <Typography variant="h4" sx={{ color: '#2196F3', fontWeight: 'bold', mb: 1 }}>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(96, 165, 250, 0.35)', borderRadius: 3 }}>
+                  <Typography variant="h4" sx={{ color: '#2563EB', fontWeight: 'bold', mb: 1 }}>
                     {Object.values(processDREByDescription()).length > 0 ? Math.max(...Object.values(processDREByDescription()).map(data => data.allRecords.length)) : 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
@@ -1459,8 +1568,8 @@ const RelatorioCliente = () => {
                     Maior atividade
                   </Typography>
                 </Paper>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #9C27B0', borderRadius: 3 }}>
-                  <Typography variant="h4" sx={{ color: '#9C27B0', fontWeight: 'bold', mb: 1 }}>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(147, 197, 253, 0.45)', borderRadius: 3, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                  <Typography variant="h4" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 1 }}>
                     {Object.values(processDREByDescription()).reduce((acc, data) => acc + data.allRecords.length, 0)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
@@ -1474,26 +1583,27 @@ const RelatorioCliente = () => {
 
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
                 {Object.entries(processDREByDescription()).map(([description, data]) => (
-                  <Paper 
-                    key={description} 
-                    elevation={3} 
-                    sx={{ 
-                      p: 4, 
-                      border: data.allRecords.length > 0 ? '2px solid #E91E63' : '2px solid #e0e0e0',
+                  <Paper
+                    key={description}
+                    elevation={3}
+                    sx={{
+                      p: 4,
+                      border: data.allRecords.length > 0 ? '2px solid rgba(37, 99, 235, 0.35)' : '2px solid rgba(148, 163, 184, 0.25)',
                       borderRadius: 3,
                       opacity: data.allRecords.length > 0 ? 1 : 0.6,
                       transition: 'all 0.3s ease',
+                      background: 'linear-gradient(135deg, rgba(248, 251, 255, 0.95) 0%, rgba(226, 232, 240, 0.55) 100%)',
                       '&:hover': {
                         transform: data.allRecords.length > 0 ? 'translateY(-4px)' : 'none',
-                        boxShadow: data.allRecords.length > 0 ? '0 8px 25px rgba(233, 30, 99, 0.15)' : 'none'
-                      }
+                        boxShadow: data.allRecords.length > 0 ? '0 8px 25px rgba(37, 99, 235, 0.2)' : 'none',
+                      },
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                       <Typography 
                         variant="h6" 
                         sx={{ 
-                          color: '#E91E63',
+                          color: '#1E3A8A',
                           fontWeight: 'bold',
                           textTransform: 'capitalize',
                           flex: 1
@@ -1502,15 +1612,18 @@ const RelatorioCliente = () => {
                         {description}
                       </Typography>
                       {data.allRecords.length > 0 && (
-                        <Box sx={{ 
-                          backgroundColor: '#E91E63',
-                          color: 'white',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 2,
-                          fontSize: '0.875rem',
-                          fontWeight: 'bold'
-                        }}>
+                        <Box
+                          sx={{
+                            backgroundColor: 'rgba(37, 99, 235, 0.14)',
+                            color: '#1E3A8A',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: 2,
+                            fontSize: '0.875rem',
+                            fontWeight: 'bold',
+                            border: '1px solid rgba(37, 99, 235, 0.35)',
+                          }}
+                        >
                           {data.allRecords.length} registros
                         </Box>
                       )}
@@ -1520,28 +1633,30 @@ const RelatorioCliente = () => {
                       <>
                         {/* Estatísticas Principais */}
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, mb: 4 }}>
-                          <Box sx={{ 
-                            textAlign: 'center', 
-                            p: 3,
-                            backgroundColor: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                            borderRadius: 3,
-                            border: '2px solid #E91E63',
-                            position: 'relative',
-                            overflow: 'hidden'
-                          }}>
+                          <Box
+                            sx={{
+                              textAlign: 'center',
+                              p: 3,
+                              background: 'linear-gradient(135deg, #e6efff 0%, #cbdcff 100%)',
+                              borderRadius: 3,
+                              border: '2px solid rgba(37, 99, 235, 0.35)',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}
+                          >
                             <Box sx={{
                               position: 'absolute',
                               top: 0,
                               left: 0,
                               right: 0,
                               height: 4,
-                              background: 'linear-gradient(90deg, #E91E63, #ad1457)'
+                              background: 'linear-gradient(90deg, #2563EB, #1E3A8A)'
                             }} />
                             <Typography variant="h3" sx={{ 
-                              color: '#E91E63', 
+                              color: '#1E3A8A', 
                               fontWeight: 'bold',
                               mb: 1,
-                              textShadow: '0 2px 4px rgba(233, 30, 99, 0.1)'
+                              textShadow: '0 2px 4px rgba(30, 64, 175, 0.15)'
                             }}>
                               {data.allRecords.length}
                             </Typography>
@@ -1554,30 +1669,32 @@ const RelatorioCliente = () => {
                               📊 Total de Registros
                             </Typography>
                           </Box>
-                          
-                          <Box sx={{ 
-                            textAlign: 'center', 
-                            p: 3,
-                            background: data.totalValue >= 0 
-                              ? 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)'
-                              : 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
-                            borderRadius: 3,
-                            border: data.totalValue >= 0 ? '2px solid #4caf50' : '2px solid #f44336',
-                            position: 'relative',
-                            overflow: 'hidden'
-                          }}>
+
+                          <Box
+                            sx={{
+                              textAlign: 'center',
+                              p: 3,
+                              background: data.totalValue >= 0
+                                ? 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)'
+                                : 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+                              borderRadius: 3,
+                              border: '2px solid rgba(37, 99, 235, 0.35)',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}
+                          >
                             <Box sx={{
                               position: 'absolute',
                               top: 0,
                               left: 0,
                               right: 0,
                               height: 4,
-                              background: data.totalValue >= 0 
-                                ? 'linear-gradient(90deg, #4caf50, #2e7d32)'
-                                : 'linear-gradient(90deg, #f44336, #c62828)'
+                              background: data.totalValue >= 0
+                                ? 'linear-gradient(90deg, #2563EB, #1E3A8A)'
+                                : 'linear-gradient(90deg, #1E40AF, #1E3A8A)'
                             }} />
                             <Typography variant="h4" sx={{ 
-                              color: data.totalValue >= 0 ? '#2e7d32' : '#c62828', 
+                              color: data.totalValue >= 0 ? '#1E3A8A' : '#1E40AF', 
                               fontWeight: 'bold',
                               mb: 1
                             }}>
@@ -1596,25 +1713,27 @@ const RelatorioCliente = () => {
                             </Typography>
                           </Box>
 
-                          <Box sx={{ 
-                            textAlign: 'center', 
-                            p: 3,
-                            background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
-                            borderRadius: 3,
-                            border: '2px solid #9c27b0',
-                            position: 'relative',
-                            overflow: 'hidden'
-                          }}>
+                          <Box
+                            sx={{
+                              textAlign: 'center',
+                              p: 3,
+                              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                              borderRadius: 3,
+                              border: '2px solid rgba(147, 197, 253, 0.45)',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}
+                          >
                             <Box sx={{
                               position: 'absolute',
                               top: 0,
                               left: 0,
                               right: 0,
                               height: 4,
-                              background: 'linear-gradient(90deg, #9c27b0, #7b1fa2)'
+                              background: 'linear-gradient(90deg, #3B82F6, #1E40AF)'
                             }} />
                             <Typography variant="h4" sx={{ 
-                              color: '#7b1fa2', 
+                              color: '#1E40AF', 
                               fontWeight: 'bold',
                               mb: 1
                             }}>
@@ -1635,10 +1754,10 @@ const RelatorioCliente = () => {
                         </Box>
 
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
-                          {/* Registro mais antigo */}
-                          <Box sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #4CAF50' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#4CAF50', mb: 1 }}>
-                              📅 Registro Mais Antigo
+                          {/* Primeiro registro */}
+                          <Box sx={{ p: 2, backgroundColor: 'rgba(248, 251, 255, 0.92)', borderRadius: 2, border: '1px solid rgba(37, 99, 235, 0.25)' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
+                              📅 Primeiro Registro
                             </Typography>
                             {data.oldest && (
                               <>
@@ -1658,16 +1777,18 @@ const RelatorioCliente = () => {
                             )}
                           </Box>
 
-                          {/* Registro anterior ao mais novo */}
-                          <Box sx={{ 
-                            p: 2, 
-                            backgroundColor: '#f8f9fa', 
-                            borderRadius: 2, 
-                            border: data.previousToNewest ? '1px solid #FF9800' : '1px solid #e0e0e0',
-                            opacity: data.previousToNewest ? 1 : 0.5
-                          }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#FF9800', mb: 1 }}>
-                              📊 Registro Anterior ao Mais Novo
+                          {/* Mês anterior */}
+                          <Box
+                            sx={{
+                              p: 2,
+                              backgroundColor: 'rgba(248, 251, 255, 0.92)',
+                              borderRadius: 2,
+                              border: data.previousToNewest ? '1px solid rgba(96, 165, 250, 0.45)' : '1px solid rgba(148, 163, 184, 0.25)',
+                              opacity: data.previousToNewest ? 1 : 0.6,
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2563EB', mb: 1 }}>
+                              📊 Mês Anterior
                             </Typography>
                             {data.previousToNewest ? (
                               <>
@@ -1685,16 +1806,16 @@ const RelatorioCliente = () => {
                                 </Typography>
                               </>
                             ) : (
-                              <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                              <Typography variant="body2" sx={{ color: '#64748B', fontStyle: 'italic' }}>
                                 Não há registro anterior
                               </Typography>
                             )}
                           </Box>
 
-                          {/* Registro mais novo */}
-                          <Box sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #2196F3' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2196F3', mb: 1 }}>
-                              🆕 Registro Mais Novo
+                          {/* Mês atual */}
+                          <Box sx={{ p: 2, backgroundColor: 'rgba(248, 251, 255, 0.92)', borderRadius: 2, border: '1px solid rgba(59, 130, 246, 0.35)' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1D4ED8', mb: 1 }}>
+                              🆕 Mês Atual
                             </Typography>
                             {data.newest && (
                               <>
@@ -1717,15 +1838,20 @@ const RelatorioCliente = () => {
 
                         {/* Trending indicator */}
                         {data.oldest && data.newest && data.oldest.id !== data.newest.id && (
-                          <Box sx={{ mt: 2, p: 1, backgroundColor: '#f0f0f0', borderRadius: 1 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#333' }}>
-                              📈 Evolução: {' '}
-                              <span style={{ 
-                                color: data.newest.Valor > data.oldest.Valor ? '#4CAF50' : 
-                                      data.newest.Valor < data.oldest.Valor ? '#F44336' : '#FF9800' 
-                              }}>
-                                {data.newest.Valor > data.oldest.Valor ? '↗️ Crescimento' : 
-                                 data.newest.Valor < data.oldest.Valor ? '↘️ Redução' : '➡️ Estável'}
+                          <Box sx={{ mt: 2, p: 1.5, backgroundColor: 'rgba(226, 232, 240, 0.6)', borderRadius: 1, border: '1px dashed rgba(37, 99, 235, 0.3)' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A' }}>
+                              📈 Evolução:{' '}
+                              <span
+                                style={{
+                                  color:
+                                    data.newest.Valor > data.oldest.Valor
+                                      ? '#1E40AF'
+                                      : data.newest.Valor < data.oldest.Valor
+                                      ? '#2563EB'
+                                      : '#1E3A8A',
+                                }}
+                              >
+                                {data.newest.Valor > data.oldest.Valor ? '↗️ Crescimento' : data.newest.Valor < data.oldest.Valor ? '↘️ Redução' : '➡️ Estável'}
                               </span>
                               {' '}de R$ {Math.abs(data.newest.Valor - data.oldest.Valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </Typography>
@@ -1733,7 +1859,7 @@ const RelatorioCliente = () => {
                         )}
                       </>
                     ) : (
-                      <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                      <Typography variant="body2" sx={{ color: '#64748B', fontStyle: 'italic' }}>
                         Nenhum registro encontrado para esta descrição
                       </Typography>
                     )}
@@ -1745,12 +1871,12 @@ const RelatorioCliente = () => {
 
           {/* Fotografia Data Section */}
           <Box sx={{ mt: 4 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#E91E63',
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1E3A8A',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
               }}
             >
               Dados de Fotografia do Cliente
@@ -1767,24 +1893,24 @@ const RelatorioCliente = () => {
               <>
                 {/* Summary */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #4CAF50' }}>
-                    <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {processFotografiaByDate().total}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total de Fotografias
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #2196F3' }}>
-                    <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
                       {processFotografiaByDate().firstPhotoDate}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Primeira Fotografia
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #FF9800' }}>
-                    <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(147, 197, 253, 0.45)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {processFotografiaByDate().lastPhotoDate}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -1797,8 +1923,8 @@ const RelatorioCliente = () => {
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                   {/* Fotografia Mais Antiga */}
                   {processFotografiaByDate().oldest && (
-                    <Paper elevation={3} sx={{ p: 3, border: '2px solid #4CAF50' }}>
-                      <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold', mb: 2 }}>
+                    <Paper elevation={3} sx={{ p: 3, border: '2px solid rgba(37, 99, 235, 0.35)', backgroundColor: 'rgba(248, 251, 255, 0.9)' }}>
+                      <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
                         📅 Fotografia Mais Antiga
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 2, fontStyle: 'italic' }}>
@@ -1814,7 +1940,7 @@ const RelatorioCliente = () => {
                         </Typography>
                       </Box>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1E3A8A' }}>
                         Dados Financeiros:
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 2 }}>
@@ -1832,7 +1958,7 @@ const RelatorioCliente = () => {
                         </Typography>
                       </Box>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1E3A8A' }}>
                         Dados Operacionais:
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
@@ -1854,8 +1980,8 @@ const RelatorioCliente = () => {
 
                   {/* Fotografia Mais Recente */}
                   {processFotografiaByDate().newest && (
-                    <Paper elevation={3} sx={{ p: 3, border: '2px solid #FF9800' }}>
-                      <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold', mb: 2 }}>
+                    <Paper elevation={3} sx={{ p: 3, border: '2px solid rgba(96, 165, 250, 0.45)', backgroundColor: 'rgba(248, 251, 255, 0.9)' }}>
+                      <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold', mb: 2 }}>
                         🆕 Fotografia Mais Recente
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 2, fontStyle: 'italic' }}>
@@ -1871,7 +1997,7 @@ const RelatorioCliente = () => {
                         </Typography>
                       </Box>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1E3A8A' }}>
                         Dados Financeiros:
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 2 }}>
@@ -1889,7 +2015,7 @@ const RelatorioCliente = () => {
                         </Typography>
                       </Box>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1E3A8A' }}>
                         Dados Operacionais:
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
@@ -1914,13 +2040,13 @@ const RelatorioCliente = () => {
                 {processFotografiaByDate().oldest && processFotografiaByDate().newest && 
                  processFotografiaByDate().oldest!.id !== processFotografiaByDate().newest!.id && (
                   <Box sx={{ mt: 3 }}>
-                    <Paper sx={{ p: 3, backgroundColor: '#f5f5f5' }}>
-                      <Typography variant="h6" sx={{ color: '#333', fontWeight: 'bold', mb: 2 }}>
+                    <Paper sx={{ p: 3, backgroundColor: 'rgba(248, 251, 255, 0.92)', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
+                      <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
                         📊 Evolução da Empresa
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#4CAF50' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A' }}>
                             Pro Labore:
                           </Typography>
                           <Typography variant="body2">
@@ -1930,7 +2056,7 @@ const RelatorioCliente = () => {
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2196F3' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2563EB' }}>
                             Parcelas Mensais:
                           </Typography>
                           <Typography variant="body2">
@@ -1940,7 +2066,7 @@ const RelatorioCliente = () => {
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#FF9800' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1D4ED8' }}>
                             Período:
                           </Typography>
                           <Typography variant="body2">
@@ -1962,12 +2088,12 @@ const RelatorioCliente = () => {
 
           {/* Dores Data Section */}
           <Box sx={{ mt: 4 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#E91E63',
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1E3A8A',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
               }}
             >
               Análise de Dores do Cliente
@@ -1984,24 +2110,24 @@ const RelatorioCliente = () => {
               <>
                 {/* Summary */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #F44336' }}>
-                    <Typography variant="h6" sx={{ color: '#F44336', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {processDoresByDate().total}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total de Avaliações
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #2196F3' }}>
-                    <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
                       {processDoresByDate().firstEvaluationDate}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Primeira Avaliação
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #FF9800' }}>
-                    <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(147, 197, 253, 0.45)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {processDoresByDate().lastEvaluationDate}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -2014,8 +2140,8 @@ const RelatorioCliente = () => {
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                   {/* Avaliação Mais Antiga */}
                   {processDoresByDate().oldest && (
-                    <Paper elevation={3} sx={{ p: 3, border: '2px solid #2196F3' }}>
-                      <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold', mb: 2 }}>
+                    <Paper elevation={3} sx={{ p: 3, border: '2px solid rgba(59, 130, 246, 0.35)', backgroundColor: 'rgba(248, 251, 255, 0.9)' }}>
+                      <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
                         📅 Avaliação Mais Antiga
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 2, fontStyle: 'italic' }}>
@@ -2025,45 +2151,45 @@ const RelatorioCliente = () => {
                         <strong>Consultor:</strong> {processDoresByDate().oldest!.consultor}
                       </Typography>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#1E3A8A' }}>
                         🏢 Dores Organizacionais (1-5):
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1, mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.1)' }}>
                           <Typography variant="body2">Ausência de Salário</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.ausencia_salario}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Centralização de Decisões</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.centralizacao_decisoes}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Ausência de Planejamento</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.ausencia_planejamento}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Ausência de Estratégia</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.ausencia_estrategia}</Typography>
                         </Box>
                       </Box>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#1E3A8A' }}>
                         💰 Dores Financeiras (1-5):
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.1)' }}>
                           <Typography variant="body2">Desconhec. Lucratividade</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.desconhecimento_lucratividade}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Preços Informais</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.precos_informal}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Ausência de Capital</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.ausencia_capital}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Utilização Linhas Crédito</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().oldest!.utilizacao_linhas_credito}</Typography>
                         </Box>
@@ -2073,8 +2199,8 @@ const RelatorioCliente = () => {
 
                   {/* Avaliação Mais Recente */}
                   {processDoresByDate().newest && (
-                    <Paper elevation={3} sx={{ p: 3, border: '2px solid #FF9800' }}>
-                      <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold', mb: 2 }}>
+                    <Paper elevation={3} sx={{ p: 3, border: '2px solid rgba(96, 165, 250, 0.45)', backgroundColor: 'rgba(248, 251, 255, 0.9)' }}>
+                      <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold', mb: 2 }}>
                         🆕 Avaliação Mais Recente
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 2, fontStyle: 'italic' }}>
@@ -2084,45 +2210,45 @@ const RelatorioCliente = () => {
                         <strong>Consultor:</strong> {processDoresByDate().newest!.consultor}
                       </Typography>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#1E3A8A' }}>
                         🏢 Dores Organizacionais (1-5):
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1, mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.1)' }}>
                           <Typography variant="body2">Ausência de Salário</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.ausencia_salario}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Centralização de Decisões</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.centralizacao_decisoes}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Ausência de Planejamento</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.ausencia_planejamento}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Ausência de Estratégia</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.ausencia_estrategia}</Typography>
                         </Box>
                       </Box>
 
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#333' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#1E3A8A' }}>
                         💰 Dores Financeiras (1-5):
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.1)' }}>
                           <Typography variant="body2">Desconhec. Lucratividade</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.desconhecimento_lucratividade}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Preços Informais</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.precos_informal}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Ausência de Capital</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.ausencia_capital}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, backgroundColor: 'rgba(248, 251, 255, 0.85)', borderRadius: 1, border: '1px solid rgba(37, 99, 235, 0.08)' }}>
                           <Typography variant="body2">Utilização Linhas Crédito</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{processDoresByDate().newest!.utilizacao_linhas_credito}</Typography>
                         </Box>
@@ -2140,12 +2266,12 @@ const RelatorioCliente = () => {
 
           {/* Ferramentas Data Section */}
           <Box sx={{ mt: 4 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#E91E63',
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1E3A8A',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
               }}
             >
               🔧 Ferramentas Desenvolvidas para o Cliente
@@ -2162,24 +2288,24 @@ const RelatorioCliente = () => {
               <>
                 {/* Summary */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #4CAF50' }}>
-                    <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {processFerramentasData().total}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total de Ferramentas
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #2196F3' }}>
-                    <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
                       {processFerramentasData().firstToolDate}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Primeira Ferramenta
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #FF9800' }}>
-                    <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(147, 197, 253, 0.45)', borderRadius: 2, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {processFerramentasData().lastUpdateDate}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -2193,42 +2319,44 @@ const RelatorioCliente = () => {
                   {ferramentasData
                     .sort((a, b) => new Date(b.data_alteracao).getTime() - new Date(a.data_alteracao).getTime())
                     .map((ferramenta) => (
-                    <Paper 
-                      key={ferramenta.id} 
-                      elevation={3} 
-                      sx={{ 
-                        p: 3, 
-                        border: '2px solid #4CAF50',
+                    <Paper
+                      key={ferramenta.id}
+                      elevation={3}
+                      sx={{
+                        p: 3,
+                        border: '2px solid rgba(37, 99, 235, 0.35)',
                         borderRadius: 3,
                         transition: 'all 0.3s ease',
+                        background: 'linear-gradient(135deg, rgba(248, 251, 255, 0.95) 0%, rgba(226, 232, 240, 0.6) 100%)',
                         '&:hover': {
                           transform: 'translateY(-4px)',
-                          boxShadow: '0 8px 25px rgba(76, 175, 80, 0.15)'
-                        }
+                          boxShadow: '0 8px 25px rgba(37, 99, 235, 0.2)',
+                        },
                       }}
                     >
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          color: '#4CAF50',
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: '#1E3A8A',
                           fontWeight: 'bold',
                           mb: 2,
                           display: 'flex',
-                          alignItems: 'center'
+                          alignItems: 'center',
                         }}
                       >
                         🔧 {ferramenta.nome_ferramenta}
                       </Typography>
 
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: '#666',
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: '#475569',
                           mb: 3,
                           fontStyle: 'italic',
-                          backgroundColor: '#f8f9fa',
+                          backgroundColor: 'rgba(248, 251, 255, 0.85)',
                           p: 2,
-                          borderRadius: 1
+                          borderRadius: 1,
+                          border: '1px solid rgba(148, 163, 184, 0.25)',
                         }}
                       >
                         {ferramenta.descricao}
@@ -2254,19 +2382,19 @@ const RelatorioCliente = () => {
 
                       {ferramenta.url && (
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1E3A8A' }}>
                             🌐 URL de Acesso:
                           </Typography>
-                          <Box sx={{ 
-                            p: 2, 
-                            backgroundColor: '#e8f5e8', 
+                          <Box sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(37, 99, 235, 0.08)',
                             borderRadius: 2,
-                            border: '1px solid #4CAF50'
+                            border: '1px solid rgba(37, 99, 235, 0.25)',
                           }}>
                             <Typography 
                               variant="body2" 
                               sx={{ 
-                                color: '#2e7d32',
+                                color: '#1E3A8A',
                                 fontFamily: 'monospace',
                                 wordBreak: 'break-all'
                               }}
@@ -2276,7 +2404,7 @@ const RelatorioCliente = () => {
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 style={{ 
-                                  color: '#2e7d32', 
+                                  color: '#1E3A8A', 
                                   textDecoration: 'none'
                                 }}
                               >
@@ -2289,16 +2417,17 @@ const RelatorioCliente = () => {
 
                       {ferramenta.diretorio && (
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1E3A8A' }}>
                             📁 Diretório:
                           </Typography>
                           <Typography 
                             variant="body2" 
                             sx={{ 
                               fontFamily: 'monospace',
-                              backgroundColor: '#f5f5f5',
+                              backgroundColor: 'rgba(248, 251, 255, 0.85)',
                               p: 1,
-                              borderRadius: 1
+                              borderRadius: 1,
+                              border: '1px solid rgba(148, 163, 184, 0.25)'
                             }}
                           >
                             {ferramenta.diretorio}
@@ -2308,23 +2437,22 @@ const RelatorioCliente = () => {
 
                       {ferramenta.tipo && (
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#1E3A8A' }}>
                             🏷️ Tipo:
                           </Typography>
-                          <Box sx={{ 
-                            display: 'inline-block',
-                            px: 2,
-                            py: 0.5,
-                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                            borderRadius: 2,
-                            border: '1px solid #4CAF50'
-                          }}>
+                          <Box
+                            sx={{
+                              display: 'inline-block',
+                              px: 2,
+                              py: 0.5,
+                              backgroundColor: 'rgba(59, 130, 246, 0.16)',
+                              borderRadius: 2,
+                              border: '1px solid rgba(59, 130, 246, 0.35)',
+                            }}
+                          >
                             <Typography 
                               variant="body2" 
-                              sx={{ 
-                                color: '#2e7d32',
-                                fontWeight: 'bold'
-                              }}
+                              sx={{ color: '#1E3A8A', fontWeight: 'bold' }}
                             >
                               {ferramenta.tipo}
                             </Typography>
@@ -2344,12 +2472,12 @@ const RelatorioCliente = () => {
 
           {/* Reuniões Data Section */}
           <Box sx={{ mt: 4 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#E91E63',
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1E3A8A',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
               }}
             >
               🤝 Reuniões Realizadas com o Cliente
@@ -2366,25 +2494,25 @@ const RelatorioCliente = () => {
               <>
                 {/* Summary */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #4CAF50' }}>
-                    <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
-                      {processReuniaoData().total}
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', backgroundColor: 'rgba(37, 99, 235, 0.04)' }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                      {reuniaoOverview.total}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total de Reuniões
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #2196F3' }}>
-                    <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
-                      {processReuniaoData().lastMeetingDate}
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', backgroundColor: 'rgba(37, 99, 235, 0.04)' }}>
+                    <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
+                      {lastMeetingLabel}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Última Reunião
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #FF9800' }}>
-                    <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
-                      {Object.keys(processReuniaoData().tipoReuniaoCount).length}
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', backgroundColor: 'rgba(37, 99, 235, 0.04)' }}>
+                    <Typography variant="h6" sx={{ color: '#3B82F6', fontWeight: 'bold' }}>
+                      {meetingTypeEntries.length}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Tipos de Reunião
@@ -2392,146 +2520,129 @@ const RelatorioCliente = () => {
                   </Paper>
                 </Box>
 
-                {/* Most Recent Meeting */}
-                {processReuniaoData().mostRecent && (
-                  <Paper elevation={3} sx={{ p: 3, border: '2px solid #E91E63', mb: 4 }}>
-                    <Typography variant="h6" sx={{ color: '#E91E63', fontWeight: 'bold', mb: 2 }}>
-                      🆕 Reunião Mais Recente
-                    </Typography>
-                    
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                      <Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Data Realizada:</strong> {new Date(processReuniaoData().mostRecent!.data_realizada).toLocaleDateString('pt-BR')}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Usuário:</strong> {processReuniaoData().mostRecent!.user}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Tipo de Reunião:</strong> {processReuniaoData().mostRecent!.tipo_reuniao}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Status:</strong> {processReuniaoData().mostRecent!.status}
-                        </Typography>
-                      </Box>
-                      
-                      <Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Local:</strong> {processReuniaoData().mostRecent!.local_reuniao}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>NPS da Reunião:</strong> {processReuniaoData().mostRecent!.nps_reuniao}/5
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Ata da Reunião:</strong>{' '}
-                          <Link 
-                            href={processReuniaoData().mostRecent!.Ata_reuniao} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            sx={{ color: '#E91E63' }}
-                          >
-                            Ver Ata
-                          </Link>
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Criada em:</strong> {new Date(processReuniaoData().mostRecent!.data_criacao).toLocaleDateString('pt-BR')}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Paper>
-                )}
-
                 {/* Most Recent Realized Meeting */}
-                {processReuniaoData().mostRecentRealized && (
-                  <Paper elevation={3} sx={{ p: 3, border: '2px solid #4CAF50', mb: 4 }}>
-                    <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold', mb: 2 }}>
-                      ✅ Reunião Realizada Mais Recente
+                {reuniaoOverview.mostRecentRealized && (
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      p: 3,
+                      border: '2px solid rgba(30, 58, 138, 0.35)',
+                      mb: 4,
+                      backgroundColor: 'rgba(248, 251, 255, 0.95)',
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
+                      ✅ Reunião Mais Recente
                     </Typography>
-                    
+
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                       <Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Data Realizada:</strong> {new Date(processReuniaoData().mostRecentRealized!.data_realizada).toLocaleDateString('pt-BR')}
+                        <Typography variant="body2" sx={{ mb: 1, color: '#1F2937' }}>
+                          <strong>Data Realizada:</strong> {new Date(reuniaoOverview.mostRecentRealized!.data_realizada).toLocaleDateString('pt-BR')}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Usuário:</strong> {processReuniaoData().mostRecentRealized!.user}
+                        <Typography variant="body2" sx={{ mb: 1, color: '#1F2937' }}>
+                          <strong>Usuário:</strong> {reuniaoOverview.mostRecentRealized!.user}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Tipo de Reunião:</strong> {processReuniaoData().mostRecentRealized!.tipo_reuniao}
+                        <Typography variant="body2" sx={{ mb: 1, color: '#1F2937' }}>
+                          <strong>Tipo de Reunião:</strong> {reuniaoOverview.mostRecentRealized!.tipo_reuniao}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ mb: 1, color: '#1F2937' }}>
                           <strong>Status:</strong>{' '}
-                          <Box 
-                            component="span" 
-                            sx={{ 
-                              backgroundColor: '#4CAF50', 
-                              color: 'white', 
-                              px: 1, 
-                              py: 0.5, 
-                              borderRadius: 1, 
-                              fontSize: '0.75rem', 
-                              fontWeight: 'bold' 
-                            }}
-                          >
-                            {processReuniaoData().mostRecentRealized!.status}
-                          </Box>
+                          {(() => {
+                            const palette = getMeetingStatusPalette(reuniaoOverview.mostRecentRealized!.status);
+                            return (
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                  px: 1.25,
+                                  py: 0.5,
+                                  borderRadius: 1,
+                                  backgroundColor: palette.background,
+                                  border: palette.border,
+                                  color: palette.color,
+                                  fontWeight: 'bold',
+                                  fontSize: '0.8rem',
+                                }}
+                              >
+                                <span>{palette.icon}</span>
+                                <span>{reuniaoOverview.mostRecentRealized!.status}</span>
+                              </Box>
+                            );
+                          })()}
                         </Typography>
                       </Box>
-                      
+
                       <Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Local:</strong> {processReuniaoData().mostRecentRealized!.local_reuniao}
+                        <Typography variant="body2" sx={{ mb: 1, color: '#1F2937' }}>
+                          <strong>Local:</strong> {reuniaoOverview.mostRecentRealized!.local_reuniao}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ mb: 1, color: '#1F2937' }}>
                           <strong>NPS da Reunião:</strong>{' '}
-                          <Box 
-                            component="span" 
-                            sx={{ 
-                              backgroundColor: processReuniaoData().mostRecentRealized!.nps_reuniao >= 4 ? '#4CAF50' : 
-                                             processReuniaoData().mostRecentRealized!.nps_reuniao >= 3 ? '#FF9800' : '#F44336',
-                              color: 'white', 
-                              px: 1, 
-                              py: 0.5, 
-                              borderRadius: 1, 
-                              fontSize: '0.875rem', 
-                              fontWeight: 'bold' 
-                            }}
-                          >
-                            {processReuniaoData().mostRecentRealized!.nps_reuniao}/5
-                          </Box>
+                          {(() => {
+                            const npsChip = getNpsChipStyles(reuniaoOverview.mostRecentRealized!.nps_reuniao);
+                            return (
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  px: 1.25,
+                                  py: 0.5,
+                                  borderRadius: 1,
+                                  fontWeight: 'bold',
+                                  fontSize: '0.875rem',
+                                  ...npsChip,
+                                }}
+                              >
+                                {reuniaoOverview.mostRecentRealized!.nps_reuniao}/5
+                              </Box>
+                            );
+                          })()}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ mb: 1, color: '#1F2937' }}>
                           <strong>Ata da Reunião:</strong>{' '}
-                          <Link 
-                            href={processReuniaoData().mostRecentRealized!.Ata_reuniao} 
-                            target="_blank" 
+                          <Link
+                            href={reuniaoOverview.mostRecentRealized!.Ata_reuniao}
+                            target="_blank"
                             rel="noopener noreferrer"
-                            sx={{ color: '#4CAF50', fontWeight: 'bold' }}
+                            sx={{ color: '#2563EB', fontWeight: 'bold' }}
                           >
                             📄 Ver Ata Completa
                           </Link>
                         </Typography>
-                        <Typography variant="body2">
-                          <strong>Criada em:</strong> {new Date(processReuniaoData().mostRecentRealized!.data_criacao).toLocaleDateString('pt-BR')}
+                        <Typography variant="body2" sx={{ color: '#1F2937' }}>
+                          <strong>Criada em:</strong> {new Date(reuniaoOverview.mostRecentRealized!.data_criacao).toLocaleDateString('pt-BR')}
                         </Typography>
                       </Box>
                     </Box>
 
                     {/* Additional info for realized meeting */}
-                    <Box sx={{ mt: 2, p: 2, backgroundColor: '#e8f5e8', borderRadius: 2, border: '1px solid #4CAF50' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32', mb: 1 }}>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        p: 2,
+                        backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(37, 99, 235, 0.25)',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
                         📊 Detalhes da Realização:
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                        <Typography variant="body2" sx={{ color: '#2e7d32' }}>
+                        <Typography variant="body2" sx={{ color: '#1E3A8A' }}>
                           🎯 Reunião efetivamente realizada
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#2e7d32' }}>
-                          📅 Data: {new Date(processReuniaoData().mostRecentRealized!.data_realizada).toLocaleDateString('pt-BR')}
+                        <Typography variant="body2" sx={{ color: '#1E3A8A' }}>
+                          📅 Data: {new Date(reuniaoOverview.mostRecentRealized!.data_realizada).toLocaleDateString('pt-BR')}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#2e7d32' }}>
-                          ⭐ Avaliação: {processReuniaoData().mostRecentRealized!.nps_reuniao >= 4 ? 'Excelente' : 
-                                        processReuniaoData().mostRecentRealized!.nps_reuniao >= 3 ? 'Boa' : 'Precisa melhorar'}
+                        <Typography variant="body2" sx={{ color: '#1E3A8A' }}>
+                          ⭐ Avaliação: {reuniaoOverview.mostRecentRealized!.nps_reuniao >= 4 ? 'Excelente' :
+                                        reuniaoOverview.mostRecentRealized!.nps_reuniao >= 3 ? 'Boa' : 'Precisa melhorar'}
                         </Typography>
                       </Box>
                     </Box>
@@ -2539,132 +2650,235 @@ const RelatorioCliente = () => {
                 )}
 
                 {/* No realized meetings message */}
-                {!processReuniaoData().mostRecentRealized && processReuniaoData().total > 0 && (
-                  <Paper elevation={3} sx={{ p: 3, border: '2px solid #FF9800', mb: 4, backgroundColor: '#fff8e1' }}>
-                    <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold', mb: 2 }}>
+                {!reuniaoOverview.mostRecentRealized && reuniaoOverview.total > 0 && (
+                  <Paper
+                    elevation={3}
+                    sx={{ p: 3, border: '2px solid rgba(37, 99, 235, 0.35)', mb: 4, backgroundColor: 'rgba(248, 251, 255, 0.9)' }}
+                  >
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
                       ⏳ Nenhuma Reunião Realizada
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#f57c00' }}>
+                    <Typography variant="body2" sx={{ color: '#1E3A8A' }}>
                       Todas as reuniões estão com status "Pendente" ou "Não Aplicável". Ainda não há reuniões efetivamente realizadas para este cliente.
                     </Typography>
-                    <Box sx={{ mt: 2, p: 2, backgroundColor: '#ffcc02', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#e65100' }}>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        p: 2,
+                        backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                        borderRadius: 1,
+                        border: '1px solid rgba(37, 99, 235, 0.2)',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A' }}>
                         💡 Dica: Atualize o status das reuniões para "Realizado" após sua conclusão para aparecerem nesta seção.
                       </Typography>
                     </Box>
                   </Paper>
                 )}
 
-                {/* Meeting Types Count */}
-                <Paper elevation={3} sx={{ p: 3, border: '2px solid #4CAF50' }}>
-                  <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold', mb: 3 }}>
-                    📊 Contagem por Tipo de Reunião
-                  </Typography>
-                  
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-                    {Object.entries(processReuniaoData().tipoReuniaoCount).map(([tipo, count]) => (
-                      <Box 
-                        key={tipo}
-                        sx={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'center',
-                          p: 2, 
-                          backgroundColor: '#f8f9fa', 
-                          borderRadius: 2,
-                          border: '1px solid #e0e0e0'
-                        }}
-                      >
-                        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                          {tipo}
+                {/* Meeting breakdown summary */}
+                <Paper
+                  elevation={4}
+                  sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    border: '1px solid rgba(37, 99, 235, 0.2)',
+                    background: 'linear-gradient(135deg, #f8fbff 0%, #eef2ff 100%)',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 2,
+                      mb: 3,
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                        📊 Panorama de Reuniões
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#475569' }}>
+                        Visão consolidada dos encontros por tipo, status e desempenho recente.
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                      <Box sx={metricChipStyles}>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          🗂️
                         </Typography>
-                        <Box sx={{
-                          backgroundColor: '#4CAF50',
-                          color: 'white',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 2,
-                          fontSize: '0.875rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {count} reunião{count !== 1 ? 'ões' : ''}
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                </Paper>
-
-                {/* Meeting Status Count */}
-                <Paper elevation={3} sx={{ p: 3, border: '2px solid #FF9800' }}>
-                  <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold', mb: 3 }}>
-                    📋 Contagem por Status da Reunião
-                  </Typography>
-                  
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-                    {Object.entries(processReuniaoData().statusCount).map(([status, count]) => (
-                      <Box 
-                        key={status}
-                        sx={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'center',
-                          p: 2, 
-                          backgroundColor: status === 'Realizado' ? '#e8f5e8' : 
-                                          status === 'Pendente' ? '#fff3e0' : 
-                                          status === 'NA' ? '#f3e5f5' : '#f8f9fa', 
-                          borderRadius: 2,
-                          border: status === 'Realizado' ? '1px solid #4CAF50' : 
-                                 status === 'Pendente' ? '1px solid #FF9800' : 
-                                 status === 'NA' ? '1px solid #9C27B0' : '1px solid #e0e0e0'
-                        }}
-                      >
-                        <Typography 
-                          variant="body1" 
-                          sx={{ 
-                            fontWeight: 'bold',
-                            color: status === 'Realizado' ? '#2e7d32' : 
-                                   status === 'Pendente' ? '#f57c00' : 
-                                   status === 'NA' ? '#7b1fa2' : '#333'
-                          }}
-                        >
-                          {status === 'NA' ? 'Não Aplicável' : status}
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          {reuniaoOverview.total} no total
                         </Typography>
-                        <Box sx={{
-                          backgroundColor: status === 'Realizado' ? '#4CAF50' : 
-                                          status === 'Pendente' ? '#FF9800' : 
-                                          status === 'NA' ? '#9C27B0' : '#757575',
-                          color: 'white',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 2,
-                          fontSize: '0.875rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {count} reunião{count !== 1 ? 'ões' : ''}
-                        </Box>
                       </Box>
-                    ))}
+                      <Box sx={{ ...metricChipStyles, backgroundColor: 'rgba(59, 130, 246, 0.16)', color: '#1D4ED8' }}>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          📈
+                        </Typography>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          {realizationRate}% de realização
+                        </Typography>
+                      </Box>
+                      <Box sx={{ ...metricChipStyles, backgroundColor: 'rgba(191, 219, 254, 0.35)', color: '#1E3A8A' }}>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          📅
+                        </Typography>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          Última: {lastMeetingLabel}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </Box>
 
-                  {/* Status Summary */}
-                  <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#666', mb: 1 }}>
-                      📊 Resumo de Status:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      <Typography variant="body2" sx={{ color: '#4CAF50' }}>
-                        ✅ Realizadas: {getStatusCount('Realizado')}
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                    <Box
+                      sx={{
+                        flex: '1 1 320px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(148, 163, 184, 0.2)',
+                        p: 3,
+                        backdropFilter: 'blur(6px)',
+                      }}
+                    >
+                      <Typography variant="subtitle2" sx={{ color: '#2563EB', fontWeight: 'bold', mb: 2 }}>
+                        Tipos de reunião
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#FF9800' }}>
-                        ⏳ Pendentes: {getStatusCount('Pendente')}
+                      <Box sx={{ display: 'grid', gap: 1.5 }}>
+                        {meetingTypeEntries.length > 0 ? (
+                          meetingTypeEntries.map(([tipo, count]) => (
+                            <Box
+                              key={tipo}
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                px: 2,
+                                py: 1.5,
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                                border: '1px solid rgba(37, 99, 235, 0.2)',
+                              }}
+                            >
+                              <Typography variant="body1" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                                {tipo}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                                {count} {count === 1 ? 'reunião' : 'reuniões'}
+                              </Typography>
+                            </Box>
+                          ))
+                        ) : (
+                          <Typography variant="body2" sx={{ color: '#475569' }}>
+                            Ainda não há reuniões categorizadas.
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        flex: '1 1 320px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(148, 163, 184, 0.2)',
+                        p: 3,
+                        backdropFilter: 'blur(6px)',
+                      }}
+                    >
+                      <Typography variant="subtitle2" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
+                        Status das reuniões
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#9C27B0' }}>
-                        ❌ Não Aplicáveis: {getStatusCount('NA')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#333', fontWeight: 'bold' }}>
-                        📈 Taxa de Realização: {processReuniaoData().total > 0 ? 
-                          Math.round((getStatusCount('Realizado') / processReuniaoData().total) * 100) : 0}%
-                      </Typography>
+                      <Box sx={{ display: 'grid', gap: 1.5 }}>
+                        {statusEntries.length > 0 ? (
+                          statusEntries.map(([status, count]) => {
+                            const palette = getMeetingStatusPalette(status);
+                            return (
+                              <Box
+                                key={status}
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  px: 2,
+                                  py: 1.5,
+                                  borderRadius: 2,
+                                  backgroundColor: palette.background,
+                                  border: palette.border,
+                                }}
+                              >
+                                <Typography
+                                  variant="body1"
+                                  sx={{ fontWeight: 'bold', color: palette.color, display: 'flex', alignItems: 'center', gap: 1 }}
+                                >
+                                  <span>{palette.icon}</span>
+                                  <span>{status === 'NA' ? 'Não Aplicável' : status}</span>
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', color: palette.color }}>
+                                  {count} {count === 1 ? 'reunião' : 'reuniões'}
+                                </Typography>
+                              </Box>
+                            );
+                          })
+                        ) : (
+                          <Typography variant="body2" sx={{ color: '#475569' }}>
+                            Nenhum status registrado até o momento.
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Box
+                        sx={{
+                          mt: 3,
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+                          gap: 1.5,
+                        }}
+                      >
+                        {statusSummaryBadges.map((badge) => (
+                          <Box
+                            key={badge.label}
+                            sx={{
+                              px: 2,
+                              py: 1.5,
+                              borderRadius: 2,
+                              backgroundColor: badge.background,
+                              border: badge.border,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ color: badge.color, fontWeight: 'bold' }}>
+                              {badge.icon} {badge.label}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: badge.color, fontWeight: 'bold' }}>
+                              {badge.value}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+
+                      <Box
+                        sx={{
+                          mt: 3,
+                          p: 2,
+                          borderRadius: 2,
+                          backgroundColor: 'rgba(30, 58, 138, 0.08)',
+                          border: '1px dashed rgba(30, 58, 138, 0.2)',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                          📈 Taxa de realização
+                        </Typography>
+                        <Typography variant="h4" sx={{ color: '#1E3A8A', fontWeight: 'bold', mt: 0.5 }}>
+                          {realizationRate}%
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
                 </Paper>
@@ -2678,12 +2892,12 @@ const RelatorioCliente = () => {
 
           {/* Sinal Amarelo Data Section */}
           <Box sx={{ mt: 4 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#E91E63',
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1E3A8A',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
               }}
             >
               🚦 Dados de Sinal Amarelo do Cliente
@@ -2697,169 +2911,317 @@ const RelatorioCliente = () => {
                 </Typography>
               </Box>
             ) : sinalAmareloData.length > 0 ? (
-              <>
-                {/* Summary */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #4CAF50' }}>
-                    <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
-                      {processSinalAmareloData().total}
+              <Paper
+                elevation={4}
+                sx={{
+                  p: 4,
+                  border: '1px solid rgba(37, 99, 235, 0.25)',
+                  background: 'linear-gradient(135deg, #f8fbff 0%, #eef2ff 100%)',
+                  borderRadius: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+                    gap: 2,
+                    mb: 4,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      p: 2,
+                      textAlign: 'center',
+                      borderRadius: 2,
+                      border: '1px solid rgba(37, 99, 235, 0.35)',
+                      backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                      {sinalOverview.total}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total de Registros
                     </Typography>
-                  </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #2196F3' }}>
-                    <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
-                      {processSinalAmareloData().lastSignalDate}
+                  </Box>
+                  <Box
+                    sx={{
+                      p: 2,
+                      textAlign: 'center',
+                      borderRadius: 2,
+                      border: '1px solid rgba(37, 99, 235, 0.35)',
+                      backgroundColor: 'rgba(37, 99, 235, 0.06)',
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                      {lastSignalLabel}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Último Registro
                     </Typography>
-                  </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #FF9800' }}>
-                    <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
-                      {Object.keys(processSinalAmareloData().statusCount).length}
+                  </Box>
+                  <Box
+                    sx={{
+                      p: 2,
+                      textAlign: 'center',
+                      borderRadius: 2,
+                      border: '1px solid rgba(59, 130, 246, 0.35)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ color: '#1D4ED8', fontWeight: 'bold' }}>
+                      {signalStatusEntries.length}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Tipos de Status
                     </Typography>
-                  </Paper>
+                  </Box>
                 </Box>
 
-                {/* Most Recent Signal */}
-                {processSinalAmareloData().mostRecent && (
-                  <Paper elevation={3} sx={{ p: 3, border: '2px solid #4CAF50', mb: 4 }}>
-                    <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold', mb: 3 }}>
-                      🚦 Sinal Mais Recente
-                    </Typography>
-                    
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                      <Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>ID:</strong> #{processSinalAmareloData().mostRecent!.id}
+                <Box
+                  sx={{
+                    p: 3,
+                    borderRadius: 2,
+                    border: '1px solid rgba(37, 99, 235, 0.2)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 2,
+                      mb: 3,
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                        🚦 Panorama de Sinais
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#475569' }}>
+                        Monitoramento consolidado dos alertas por status e responsáveis.
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                      <Box sx={signalMetricChipStyles}>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          📊
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Usuário:</strong> {processSinalAmareloData().mostRecent!.usuario}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Data de Criação:</strong> {new Date(processSinalAmareloData().mostRecent!.data_criacao).toLocaleDateString('pt-BR')}
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          {sinalOverview.total} registros
                         </Typography>
                       </Box>
-                      
-                      <Box>
-                        <Typography variant="body2" sx={{ mb: 2 }}>
-                          <strong>Status:</strong>
+                      <Box sx={{ ...signalMetricChipStyles, backgroundColor: 'rgba(59, 130, 246, 0.16)', color: '#1E3A8A' }}>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          🧭
                         </Typography>
-                        <Box sx={{ 
-                          display: 'inline-block',
-                          px: 3,
-                          py: 1,
-                          backgroundColor: processSinalAmareloData().mostRecent!.status === 'Sinal Verde' ? '#4CAF50' : 
-                                             processSinalAmareloData().mostRecent!.status === 'Sinal Amarelo' ? '#FF9800' : '#F44336',
-                          color: 'white',
-                          borderRadius: 2,
-                          fontWeight: 'bold',
-                          fontSize: '0.875rem'
-                        }}>
-                          {processSinalAmareloData().mostRecent!.status}
-                        </Box>
-                        
-                        <Typography variant="body2" sx={{ mt: 2 }}>
-                          <strong>Motivo do Sinal:</strong> {processSinalAmareloData().mostRecent!.motivoSinal}
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          {signalStatusEntries.length} status ativos
+                        </Typography>
+                      </Box>
+                      <Box sx={{ ...signalMetricChipStyles, backgroundColor: 'rgba(147, 197, 253, 0.2)', color: '#1D4ED8' }}>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          📅
+                        </Typography>
+                        <Typography component="span" sx={{ fontWeight: 'inherit' }}>
+                          Último: {lastSignalLabel}
                         </Typography>
                       </Box>
                     </Box>
-                  </Paper>
-                )}
+                  </Box>
 
-                {/* Status Count */}
-                <Paper elevation={3} sx={{ p: 3, border: '2px solid #4CAF50' }}>
-                  <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold', mb: 3 }}>
-                    📊 Contagem por Status
-                  </Typography>
-                  
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-                    {Object.entries(processSinalAmareloData().statusCount).map(([status, count]) => (
-                      <Box 
-                        key={status}
-                        sx={{ 
-                          p: 2, 
-                          border: '1px solid',
-                          borderColor: status === 'Sinal Verde' ? '#4CAF50' : 
-                                      status === 'Sinal Amarelo' ? '#FF9800' : '#F44336',
-                          borderRadius: 2,
-                          backgroundColor: status === 'Sinal Verde' ? 'rgba(76, 175, 80, 0.05)' : 
-                                          status === 'Sinal Amarelo' ? 'rgba(255, 152, 0, 0.05)' : 'rgba(244, 67, 54, 0.05)'
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                    <Box
+                      sx={{
+                        flex: '1 1 320px',
+                        backgroundColor: 'rgba(248, 250, 255, 0.95)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(37, 99, 235, 0.2)',
+                        p: 3,
+                        minHeight: 220,
+                      }}
+                    >
+                      <Typography variant="subtitle2" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
+                        Sinal mais recente
+                      </Typography>
+                      {latestSignal ? (
+                        <Box sx={{ display: 'grid', gap: 1.5 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body2" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                              ID: #{latestSignal.id}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#1D4ED8' }}>
+                              Registrado em {new Date(latestSignal.data_criacao).toLocaleDateString('pt-BR')}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <Typography variant="body2" sx={{ color: '#1E293B' }}>
+                              <strong>Usuário:</strong> {latestSignal.usuario}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1E293B' }}>
+                              <strong>Status:</strong>
+                            </Typography>
+                            {(() => {
+                              const palette = getSignalPalette(latestSignal.status);
+                              return (
+                                <Box
+                                  sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    px: 2,
+                                    py: 0.75,
+                                    borderRadius: 2,
+                                    backgroundColor: palette.background,
+                                    border: palette.border,
+                                    fontWeight: 'bold',
+                                    color: palette.color,
+                                  }}
+                                >
+                                  <span>{palette.icon}</span>
+                                  <span>{latestSignal.status}</span>
+                                </Box>
+                              );
+                            })()}
+                            <Typography variant="body2" sx={{ color: '#1E293B' }}>
+                              <strong>Motivo:</strong> {latestSignal.motivoSinal || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#64748B' }}>
+                          Nenhum sinal registrado recentemente.
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <Box
+                      sx={{
+                        flex: '1 1 320px',
+                        backgroundColor: 'rgba(248, 250, 255, 0.95)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(37, 99, 235, 0.2)',
+                        p: 3,
+                      }}
+                    >
+                      <Typography variant="subtitle2" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
+                        Distribuição por status
+                      </Typography>
+                      <Box sx={{ display: 'grid', gap: 1.5 }}>
+                        {signalStatusEntries.length > 0 ? (
+                          signalStatusEntries.map(([status, count]) => {
+                            const palette = getSignalPalette(status);
+                            return (
+                              <Box
+                                key={status}
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  px: 2,
+                                  py: 1.5,
+                                  borderRadius: 2,
+                                  backgroundColor: palette.background,
+                                  border: palette.border,
+                                }}
+                              >
+                                <Typography variant="body1" sx={{ color: palette.color, fontWeight: 'bold' }}>
+                                  {palette.icon} {status}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: palette.color, fontWeight: 'bold' }}>
+                                  {count}
+                                </Typography>
+                              </Box>
+                            );
+                          })
+                        ) : (
+                          <Typography variant="body2" sx={{ color: '#64748B' }}>
+                            Nenhum status cadastrado até o momento.
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Box
+                        sx={{
+                          mt: 3,
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' },
+                          gap: 1.5,
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              fontWeight: 'bold',
-                              color: status === 'Sinal Verde' ? '#4CAF50' : 
-                                     status === 'Sinal Amarelo' ? '#FF9800' : '#F44336'
+                        {signalSummaryBadges.map((badge) => (
+                          <Box
+                            key={badge.label}
+                            sx={{
+                              px: 2,
+                              py: 1.5,
+                              borderRadius: 2,
+                              backgroundColor: badge.background,
+                              border: badge.border,
+                              textAlign: 'center',
                             }}
                           >
-                            {status === 'Sinal Verde' ? '🟢' : status === 'Sinal Amarelo' ? '🟡' : '🔴'} {status}
-                          </Typography>
-                          <Typography 
-                            variant="h6" 
-                            sx={{ 
-                              fontWeight: 'bold',
-                              color: status === 'Sinal Verde' ? '#4CAF50' : 
-                                     status === 'Sinal Amarelo' ? '#FF9800' : '#F44336'
-                            }}
-                          >
-                            {count}
-                          </Typography>
-                        </Box>
+                            <Typography variant="body2" sx={{ color: badge.color, fontWeight: 'bold' }}>
+                              {badge.icon} {badge.label}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: badge.color, fontWeight: 'bold' }}>
+                              {badge.value}
+                            </Typography>
+                          </Box>
+                        ))}
                       </Box>
-                    ))}
-                  </Box>
 
-                  {/* Status Summary */}
-                  <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#666', mb: 1 }}>
-                      📊 Resumo de Sinais:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      <Typography variant="body2" sx={{ color: '#4CAF50' }}>
-                        🟢 Verde: {processSinalAmareloData().statusCount['Sinal Verde'] || 0}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#FF9800' }}>
-                        🟡 Amarelo: {processSinalAmareloData().statusCount['Sinal Amarelo'] || 0}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#F44336' }}>
-                        🔴 Vermelho: {processSinalAmareloData().statusCount['Sinal Vermelho'] || 0}
-                      </Typography>
+                      <Box
+                        sx={{
+                          mt: 3,
+                          p: 2,
+                          borderRadius: 2,
+                          backgroundColor: 'rgba(30, 58, 138, 0.08)',
+                          border: '1px dashed rgba(30, 58, 138, 0.2)',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
+                          🔎 Monitoramento contínuo
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#1E3A8A' }}>
+                          Atualize os status sempre que um acompanhamento for concluído.
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
-                </Paper>
+                </Box>
 
-                {/* All Signals Table */}
-                <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
-                  <Typography variant="h6" sx={{ color: '#E91E63', fontWeight: 'bold', mb: 3 }}>
+                <Box sx={{ mt: 4 }}>
+                  <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 2 }}>
                     📋 Histórico Completo de Sinais
                   </Typography>
-                  
-                  <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+                  <TableContainer
+                    sx={{
+                      maxHeight: 400,
+                      borderRadius: 2,
+                      border: '1px solid rgba(37, 99, 235, 0.2)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    }}
+                  >
                     <Table stickyHeader>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white' }}>
+                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white' }}>
                             ID
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white' }}>
+                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white' }}>
                             Data
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white' }}>
+                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white' }}>
                             Usuário
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white' }}>
+                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white' }}>
                             Status
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#E91E63', color: 'white' }}>
+                          <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#1E3A8A', color: 'white' }}>
                             Motivo
                           </TableCell>
                         </TableRow>
@@ -2873,10 +3235,9 @@ const RelatorioCliente = () => {
                             hover 
                             sx={{
                               '&:hover': {
-                                backgroundColor: 'rgba(233, 30, 99, 0.04)'
+                                backgroundColor: 'rgba(30, 64, 175, 0.08)'
                               },
-                              backgroundColor: sinal.status === 'Sinal Verde' ? 'rgba(76, 175, 80, 0.05)' : 
-                                              sinal.status === 'Sinal Amarelo' ? 'rgba(255, 152, 0, 0.05)' : 'rgba(244, 67, 54, 0.05)'
+                              backgroundColor: getSignalPalette(sinal.status).background,
                             }}
                           >
                             <TableCell sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
@@ -2886,33 +3247,41 @@ const RelatorioCliente = () => {
                               {new Date(sinal.data_criacao).toLocaleDateString('pt-BR')}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.875rem' }}>
-                              <Box sx={{ 
+                              <Box sx={{
                                 display: 'inline-block',
                                 px: 2,
                                 py: 0.5,
-                                backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                                backgroundColor: 'rgba(37, 99, 235, 0.12)',
                                 borderRadius: 2,
                                 fontSize: '0.75rem',
                                 fontWeight: 'bold',
-                                color: '#E91E63'
+                                color: '#1E3A8A',
                               }}>
                                 {sinal.usuario}
                               </Box>
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.875rem' }}>
-                              <Box sx={{ 
-                                display: 'inline-block',
-                                px: 2,
-                                py: 0.5,
-                                backgroundColor: sinal.status === 'Sinal Verde' ? '#4CAF50' : 
-                                                sinal.status === 'Sinal Amarelo' ? '#FF9800' : '#F44336',
-                                color: 'white',
-                                borderRadius: 2,
-                                fontSize: '0.75rem',
-                                fontWeight: 'bold'
-                              }}>
-                                {sinal.status === 'Sinal Verde' ? '🟢' : sinal.status === 'Sinal Amarelo' ? '🟡' : '🔴'} {sinal.status}
-                              </Box>
+                              {(() => {
+                                const palette = getSignalPalette(sinal.status);
+                                return (
+                                  <Box sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                    px: 2,
+                                    py: 0.5,
+                                    backgroundColor: palette.background,
+                                    color: palette.color,
+                                    borderRadius: 2,
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold',
+                                    border: palette.border,
+                                  }}>
+                                    <span>{palette.icon}</span>
+                                    <span>{sinal.status}</span>
+                                  </Box>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.875rem' }}>
                               {sinal.motivoSinal}
@@ -2922,8 +3291,8 @@ const RelatorioCliente = () => {
                       </TableBody>
                     </Table>
                   </TableContainer>
-                </Paper>
-              </>
+                </Box>
+              </Paper>
             ) : (
               <Alert severity="warning">
                 Nenhum dado de Sinal Amarelo encontrado para esta empresa.
@@ -2933,12 +3302,12 @@ const RelatorioCliente = () => {
 
           {/* Socios Data Section */}
           <Box sx={{ mt: 4 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#E91E63',
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1E3A8A',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
               }}
             >
               👥 Dados dos Sócios da Empresa
@@ -2955,32 +3324,32 @@ const RelatorioCliente = () => {
               <>
                 {/* Summary */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #4CAF50' }}>
-                    <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2 }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {processSociosData().total}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total de Sócios
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #2196F3' }}>
-                    <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2 }}>
+                    <Typography variant="h6" sx={{ color: '#1D4ED8', fontWeight: 'bold' }}>
                       {processSociosData().averageAge} anos
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Idade Média
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #FF9800' }}>
-                    <Typography variant="h6" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(96, 165, 250, 0.35)', borderRadius: 2 }}>
+                    <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
                       {processSociosData().meiOptedIn}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Optaram pelo MEI
                     </Typography>
                   </Paper>
-                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid #9C27B0' }}>
-                    <Typography variant="h6" sx={{ color: '#9C27B0', fontWeight: 'bold' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(147, 197, 253, 0.45)', borderRadius: 2 }}>
+                    <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
                       {Object.keys(processSociosData().formacoes).length}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -2992,28 +3361,29 @@ const RelatorioCliente = () => {
                 {/* Detailed Socios Cards */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 4 }}>
                   {sociosData.map((socio) => (
-                    <Paper 
-                      key={socio.id} 
-                      elevation={3} 
-                      sx={{ 
-                        p: 3, 
-                        border: '2px solid #4CAF50',
+                    <Paper
+                      key={socio.id}
+                      elevation={3}
+                      sx={{
+                        p: 3,
+                        border: '2px solid rgba(37, 99, 235, 0.35)',
                         borderRadius: 3,
                         transition: 'all 0.3s ease',
+                        background: 'linear-gradient(135deg, #f8fbff 0%, #eef2ff 100%)',
                         '&:hover': {
                           transform: 'translateY(-4px)',
-                          boxShadow: '0 8px 25px rgba(76, 175, 80, 0.15)'
-                        }
+                          boxShadow: '0 8px 25px rgba(37, 99, 235, 0.25)',
+                        },
                       }}
                     >
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          color: '#4CAF50',
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: '#1E3A8A',
                           fontWeight: 'bold',
                           mb: 2,
                           display: 'flex',
-                          alignItems: 'center'
+                          alignItems: 'center',
                         }}
                       >
                         👤 {socio.nome_socio}
@@ -3046,76 +3416,77 @@ const RelatorioCliente = () => {
                         </Typography>
                       </Box>
 
-                      {/* Perfis Comportamentais */}
                       <Box sx={{ mb: 3 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#E91E63' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 2, color: '#1E3A8A' }}>
                           📊 Análise de Perfil Comportamental:
                         </Typography>
                         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
-                          <Box sx={{ 
-                            p: 2, 
-                            backgroundColor: '#e3f2fd', 
+                          <Box sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(37, 99, 235, 0.12)',
                             borderRadius: 2,
-                            border: '1px solid #2196F3'
+                            border: '1px solid rgba(37, 99, 235, 0.35)',
                           }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1976d2', mb: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
                               🔄 Metodologia DISC:
                             </Typography>
-                            <Box sx={{ 
-                              display: 'inline-block',
+                            <Box sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
                               px: 2,
                               py: 0.5,
-                              backgroundColor: '#2196F3',
-                              color: 'white',
+                              backgroundColor: 'rgba(30, 64, 175, 0.16)',
+                              color: '#ffffff',
                               borderRadius: 2,
                               fontSize: '0.75rem',
-                              fontWeight: 'bold'
+                              fontWeight: 'bold',
+                              letterSpacing: '0.03em',
                             }}>
                               {socio.disc}
                             </Box>
                           </Box>
-                          
-                          <Box sx={{ 
-                            p: 2, 
-                            backgroundColor: '#f3e5f5', 
+                          <Box sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             borderRadius: 2,
-                            border: '1px solid #9C27B0'
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
                           }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#7b1fa2', mb: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
                               📊 Metodologia SEDIRP:
                             </Typography>
-                            <Box sx={{ 
-                              display: 'inline-block',
+                            <Box sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
                               px: 2,
                               py: 0.5,
-                              backgroundColor: '#9C27B0',
-                              color: 'white',
+                              backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                              color: '#ffffff',
                               borderRadius: 2,
                               fontSize: '0.75rem',
-                              fontWeight: 'bold'
+                              fontWeight: 'bold',
                             }}>
                               {socio.sedirp}
                             </Box>
                           </Box>
-                          
-                          <Box sx={{ 
-                            p: 2, 
-                            backgroundColor: '#e8f5e8', 
+                          <Box sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(191, 219, 254, 0.35)',
                             borderRadius: 2,
-                            border: '1px solid #4CAF50'
+                            border: '1px solid rgba(147, 197, 253, 0.45)',
                           }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32', mb: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
                               🎯 Metodologia Eneagrama:
                             </Typography>
-                            <Box sx={{ 
-                              display: 'inline-block',
+                            <Box sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
                               px: 2,
                               py: 0.5,
-                              backgroundColor: '#4CAF50',
-                              color: 'white',
+                              backgroundColor: 'rgba(30, 58, 138, 0.24)',
+                              color: '#ffffff',
                               borderRadius: 2,
                               fontSize: '0.75rem',
-                              fontWeight: 'bold'
+                              fontWeight: 'bold',
                             }}>
                               Tipo {socio.eneagrama}
                             </Box>
@@ -3131,10 +3502,10 @@ const RelatorioCliente = () => {
                           variant="body2" 
                           sx={{ 
                             fontStyle: 'italic',
-                            backgroundColor: '#f8f9fa',
+                            backgroundColor: 'rgba(248, 251, 255, 0.85)',
                             p: 2,
                             borderRadius: 1,
-                            border: '1px solid #e9ecef'
+                            border: '1px solid rgba(148, 163, 184, 0.3)'
                           }}
                         >
                           {socio.hobbies}
@@ -3146,16 +3517,16 @@ const RelatorioCliente = () => {
                           <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
                             📋 Relatório Comportamental:
                           </Typography>
-                          <Box sx={{ 
-                            p: 2, 
-                            backgroundColor: '#e8f5e8', 
+                          <Box sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(37, 99, 235, 0.08)',
                             borderRadius: 2,
-                            border: '1px solid #4CAF50'
+                            border: '1px solid rgba(37, 99, 235, 0.25)',
                           }}>
                             <Typography 
                               variant="body2" 
                               sx={{ 
-                                color: '#2e7d32',
+                                color: '#1E3A8A',
                                 fontFamily: 'monospace',
                                 wordBreak: 'break-all'
                               }}
@@ -3165,7 +3536,7 @@ const RelatorioCliente = () => {
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 style={{ 
-                                  color: '#2e7d32', 
+                                  color: '#1E3A8A', 
                                   textDecoration: 'none'
                                 }}
                               >
@@ -3180,17 +3551,20 @@ const RelatorioCliente = () => {
                         <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                           💼 Opção pelo MEI:
                         </Typography>
-                        <Box sx={{ 
-                          display: 'inline-block',
+                        <Box sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.5,
                           px: 2,
                           py: 0.5,
-                          backgroundColor: socio.opcao_pelo_mei ? '#4CAF50' : '#F44336',
-                          color: 'white',
+                          backgroundColor: socio.opcao_pelo_mei ? 'rgba(30, 58, 138, 0.85)' : 'rgba(191, 219, 254, 0.6)',
+                          color: socio.opcao_pelo_mei ? '#ffffff' : '#1E3A8A',
                           borderRadius: 2,
                           fontSize: '0.75rem',
-                          fontWeight: 'bold'
+                          fontWeight: 'bold',
+                          border: '1px solid rgba(37, 99, 235, 0.35)',
                         }}>
-                          {socio.opcao_pelo_mei ? '✅ SIM' : '❌ NÃO'}
+                          {socio.opcao_pelo_mei ? '✔ SIM' : '✖ NÃO'}
                         </Box>
                       </Box>
                     </Paper>
@@ -3206,20 +3580,20 @@ const RelatorioCliente = () => {
 
         </Paper>
       ) : (
-        <Paper 
-          elevation={1} 
-          sx={{ 
-            p: 4, 
-            textAlign: 'center', 
+        <Paper
+          elevation={1}
+          sx={{
+            p: 4,
+            textAlign: 'center',
             borderRadius: 3,
-            backgroundColor: '#fafafa',
-            border: '2px dashed #e0e0e0'
+            backgroundColor: 'rgba(248, 251, 255, 0.85)',
+            border: '2px dashed rgba(37, 99, 235, 0.25)',
           }}
         >
           <Typography 
             variant="h6" 
             sx={{ 
-              color: '#999',
+              color: '#1E3A8A',
               mb: 2
             }}
           >
@@ -3228,7 +3602,7 @@ const RelatorioCliente = () => {
           <Typography 
             variant="body2" 
             sx={{ 
-              color: '#666'
+              color: '#475569'
             }}
           >
             Escolha uma empresa da lista acima para visualizar seus dados de relatório

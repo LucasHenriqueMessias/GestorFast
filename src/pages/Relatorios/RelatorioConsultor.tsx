@@ -509,7 +509,7 @@ const RelatorioConsultor = () => {
     
     return (
       <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#FF9800' }}>
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#1E3A8A' }}>
           {title}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -531,7 +531,7 @@ const RelatorioConsultor = () => {
                   borderRadius: 4,
                   backgroundColor: '#E0E0E0',
                   '& .MuiLinearProgress-bar': {
-                    backgroundColor: '#FF9800',
+                    backgroundColor: '#1D4ED8',
                     borderRadius: 4,
                   }
                 }}
@@ -560,7 +560,7 @@ const RelatorioConsultor = () => {
     
     return (
       <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#4CAF50' }}>
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#2563EB' }}>
           {title}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -582,7 +582,7 @@ const RelatorioConsultor = () => {
                   borderRadius: 4,
                   backgroundColor: '#E0E0E0',
                   '& .MuiLinearProgress-bar': {
-                    backgroundColor: '#4CAF50',
+                    backgroundColor: '#3B82F6',
                     borderRadius: 4,
                   }
                 }}

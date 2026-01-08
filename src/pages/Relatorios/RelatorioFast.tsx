@@ -85,6 +85,13 @@ type ChartDatum = {
   color: string;
 };
 
+const formatCityState = (city: string, state?: string) => {
+  const normalizedState = (state ?? '').trim();
+  return normalizedState ? `${city}/${normalizedState}` : city;
+};
+
+const PRIMARY_METRIC_COLOR = '#2563EB';
+
 const SimpleBarChart: React.FC<{ title: string; data: ChartDatum[] }> = ({ title, data }) => {
   const maxValue = useMemo(() => {
     const highest = Math.max(...data.map((item) => item.value), 0);
@@ -197,9 +204,10 @@ const GeoClientsMap: React.FC<{ points: GeoPoint[]; height?: number | string }> 
         </Geographies>
         {points.map((point) => {
           const markerKey = `${point.city}-${point.state}`;
+          const locationLabel = `${formatCityState(point.city, point.state)} (${point.count})`;
           return (
             <Marker key={markerKey} coordinates={[point.coords.lng, point.coords.lat]}>
-              <title>{`${point.city} (${point.count})`}</title>
+              <title>{locationLabel}</title>
               <circle
                 r={Math.max(4, Math.sqrt(point.count) * 3)}
                 fill="#E91E63"
@@ -214,7 +222,7 @@ const GeoClientsMap: React.FC<{ points: GeoPoint[]; height?: number | string }> 
                   y={-14}
                   style={{ pointerEvents: 'none', fontSize: 12, fontWeight: 600, fill: '#0D47A1' }}
                 >
-                  {`${point.city} (${point.count})`}
+                  {locationLabel}
                 </text>
               ) : null}
             </Marker>
@@ -311,22 +319,22 @@ const RelatorioFast: React.FC = () => {
 
   const chamadosData = useMemo<ChartDatum[]>(() => {
     return [
-      { label: 'Ativos', value: metrics.chamados_ativos, color: '#F44336' },
-      { label: 'Finalizados', value: metrics.chamados_finalizados, color: '#4CAF50' },
+      { label: 'Ativos', value: metrics.chamados_ativos, color: PRIMARY_METRIC_COLOR },
+      { label: 'Finalizados', value: metrics.chamados_finalizados, color: PRIMARY_METRIC_COLOR },
     ];
   }, [metrics]);
 
   const prospeccaoData = useMemo<ChartDatum[]>(() => {
     return [
-      { label: 'Quente', value: metrics.prospeccao_quente, color: '#FF9800' },
-      { label: 'Fria', value: metrics.prospeccao_fria, color: '#9E9E9E' },
+      { label: 'Quente', value: metrics.prospeccao_quente, color: PRIMARY_METRIC_COLOR },
+      { label: 'Fria', value: metrics.prospeccao_fria, color: PRIMARY_METRIC_COLOR },
     ];
   }, [metrics]);
 
   const eventosData = useMemo<ChartDatum[]>(() => {
     return [
-      { label: 'Pendentes', value: metrics.eventos_pendentes, color: '#90CAF9' },
-      { label: 'Realizados', value: metrics.eventos_realizados, color: '#1976D2' },
+      { label: 'Pendentes', value: metrics.eventos_pendentes, color: PRIMARY_METRIC_COLOR },
+      { label: 'Realizados', value: metrics.eventos_realizados, color: PRIMARY_METRIC_COLOR },
     ];
   }, [metrics]);
 
@@ -348,7 +356,7 @@ const RelatorioFast: React.FC = () => {
 
     const sorted = [...markers].sort((a, b) => b.count - a.count);
     const top = sorted[0];
-    return `${top.city} (${top.count})`;
+    return `${formatCityState(top.city, top.state)} (${top.count})`;
   }, [markers]);
 
   const rankedCities = useMemo(() => {
@@ -436,7 +444,7 @@ const RelatorioFast: React.FC = () => {
                 <Stack spacing={0.75}>
                   {rankedCities.map((city) => (
                     <Typography key={`${city.city}-${city.state}`} variant="body2">
-                      {`${city.city} (${city.count})`}
+                      {`${formatCityState(city.city, city.state)} (${city.count})`}
                     </Typography>
                   ))}
                 </Stack>
@@ -532,41 +540,41 @@ const RelatorioFast: React.FC = () => {
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #FF9800' }}>
-                <Typography variant="subtitle1" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Prospecção quente
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#FF9800', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.prospeccao_quente}
                 </Typography>
               </Paper>
             </Box>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #9E9E9E' }}>
-                <Typography variant="subtitle1" sx={{ color: '#9E9E9E', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Prospecção fria
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#9E9E9E', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.prospeccao_fria}
                 </Typography>
               </Paper>
             </Box>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #4CAF50' }}>
-                <Typography variant="subtitle1" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Reuniões realizadas
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.reunioes_realizadas}
                 </Typography>
               </Paper>
             </Box>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #2196F3' }}>
-                <Typography variant="subtitle1" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Ferramentas desenvolvidas
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.ferramentas_desenvolvidas}
                 </Typography>
               </Paper>
@@ -575,41 +583,41 @@ const RelatorioFast: React.FC = () => {
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #F44336' }}>
-                <Typography variant="subtitle1" sx={{ color: '#F44336', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Chamados ativos
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#F44336', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.chamados_ativos}
                 </Typography>
               </Paper>
             </Box>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #4CAF50' }}>
-                <Typography variant="subtitle1" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Chamados finalizados
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.chamados_finalizados}
                 </Typography>
               </Paper>
             </Box>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #2196F3' }}>
-                <Typography variant="subtitle1" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Chamados total
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#2196F3', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.chamados_total}
                 </Typography>
               </Paper>
             </Box>
             <Box sx={{ flex: '1 1 220px', minWidth: 220 }}>
-              <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #FFEB3B' }}>
-                <Typography variant="subtitle1" sx={{ color: '#FFEB3B', fontWeight: 'bold' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', border: `2px solid ${PRIMARY_METRIC_COLOR}` }}>
+                <Typography variant="subtitle1" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   Clientes sinal amarelo
                 </Typography>
-                <Typography variant="h3" sx={{ color: '#FFEB3B', fontWeight: 'bold' }}>
+                <Typography variant="h3" sx={{ color: PRIMARY_METRIC_COLOR, fontWeight: 'bold' }}>
                   {metrics.clientes_sinal_amarelo}
                 </Typography>
               </Paper>
