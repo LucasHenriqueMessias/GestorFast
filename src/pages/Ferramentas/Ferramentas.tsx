@@ -36,7 +36,6 @@ const Ferramentas = () => {
         }
       });
       setFerramentasData(response.data);
-      console.log(response.data)
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     }

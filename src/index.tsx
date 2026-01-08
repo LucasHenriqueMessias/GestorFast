@@ -12,7 +12,7 @@ import Login from './pages/Login/Login';
 import RegistroDeReunioes from './pages/RegistroDeReunioes/RegistroDeReunioes';
 import Cliente from './pages/Cliente/Cliente';
 import PrivateRoute from './components/PrivateRoute';
-import { getAccessToken } from './utils/storage';
+import { getAccessToken, getLoginTimestamp, clear } from './utils/storage';
 import Cadastro from './pages/Cliente/Cadastro';
 import JornadaCrescimentoCore from './pages/Cliente/JornadaCrescimentoCore';
 import JornadaCrescimentoOverDelivery from './pages/Cliente/JornadaCrescimentoOverDelivery';
@@ -57,9 +57,24 @@ root.render(
 
 function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const token = getAccessToken();
+  let token = getAccessToken();
+  const loginTimestamp = getLoginTimestamp();
   const location = window.location.pathname;
   const isLogin = location === '/';
+  const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+  const now = Date.now();
+  const sessionExpired = !!token && (
+    loginTimestamp === null || (now - loginTimestamp >= TWELVE_HOURS_MS)
+  );
+
+  if (sessionExpired) {
+    clear();
+    token = null;
+    if (!isLogin) {
+      window.location.href = '/';
+      return null;
+    }
+  }
 
   // Se não estiver logado, só permite acesso à tela de login
   if (!token || token === 'null' || token === 'undefined' || token.trim() === '') {

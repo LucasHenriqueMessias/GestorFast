@@ -169,8 +169,6 @@ const JornadaCrescimentoOverDelivery = () => {
     try {
       const token = getAccessToken();
 
-      console.log(newRow)
-
       newRow.colaborador = getUsername() ?? '';
       newRow.departamento = getDepartment() ?? '' // Adiciona o colaborador ao novo registro com fallback para string vazia
       newRow.overdelivery = true; // Define o valor de overdelivery como true

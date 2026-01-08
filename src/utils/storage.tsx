@@ -25,6 +25,27 @@ export const removeAccessToken = (): void => {
     localStorage.removeItem('access_token');
 };
 
+// Function to set the login timestamp in localStorage
+export const setLoginTimestamp = (timestamp: number): void => {
+    localStorage.setItem('login_timestamp', timestamp.toString());
+};
+
+// Function to get the login timestamp from localStorage
+export const getLoginTimestamp = (): number | null => {
+    const value = localStorage.getItem('login_timestamp');
+    if (!value) {
+        return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+};
+
+// Function to remove the login timestamp from localStorage
+export const removeLoginTimestamp = (): void => {
+    localStorage.removeItem('login_timestamp');
+};
+
 // Function to set the user in localStorage
 export const setUsername = (user: string): void => {
     localStorage.setItem('user', user);
@@ -74,4 +95,5 @@ export const clear = (): void => {
     removeUser();
     removeDepartment();
     removeNivel();
+    removeLoginTimestamp();
 };

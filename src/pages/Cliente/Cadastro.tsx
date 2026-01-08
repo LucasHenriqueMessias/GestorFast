@@ -291,14 +291,13 @@ const Cadastro = () => {
         }
       });
 
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/loja`, payload, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/loja`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       alert('Cadastro realizado com sucesso!');
-      console.log('Response:', response.data);
       
       // Limpa o formulário após cadastro bem-sucedido
       handleNew();
@@ -421,7 +420,6 @@ const Cadastro = () => {
   //     );
 
   //     alert('Alerta emitido com sucesso!');
-  //     console.log('Response:', response.data);
   //   } catch (error) {
   //     console.error('Erro ao emitir alerta:', error);
   //     alert('Erro ao emitir alerta. Verifique os dados e tente novamente.');

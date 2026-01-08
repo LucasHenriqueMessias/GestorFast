@@ -80,7 +80,6 @@ const Cliente = () => {
           comissao_fechamento: item.comissao_fechamento,
         }));
         setRows(data);
-        console.log('Dados:', data);
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
       }

@@ -152,7 +152,6 @@ const NovoChamado = () => {
         Expectativa_Conclusao: formData.Expectativa_Conclusao ? new Date(formData.Expectativa_Conclusao).toISOString() : null
       };
 
-      console.log('Dados enviados:', dataToSend); // Debug log
 
       await axios.post(`${process.env.REACT_APP_API_URL}/tab-helpdesk`, dataToSend, {
         headers: {

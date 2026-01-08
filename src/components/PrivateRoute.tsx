@@ -21,7 +21,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedDepartment
   const department = getDepartment();
 
   if (!token) {
-    console.log(token)
     return <Navigate to="/login" />;
   }
 
