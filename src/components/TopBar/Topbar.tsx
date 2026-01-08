@@ -3,7 +3,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { getUsername, getNivel, getDepartment} from '../../utils/storage';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { getUsername, getNivel, getDepartment, clear } from '../../utils/storage';
 import './Topbar.css'; // Assuming you have a CSS file for styling
 
 const Topbar = ({ onMenuClick, onlyIcons = false }: { onMenuClick: () => void, onlyIcons?: boolean }) => {
@@ -12,6 +13,11 @@ const Topbar = ({ onMenuClick, onlyIcons = false }: { onMenuClick: () => void, o
   const department = getDepartment();
   const [showDetails, setShowDetails] = useState(false);
   const detailsRef = React.useRef<HTMLDivElement>(null);
+
+  const handleLogout = () => {
+    clear();
+    window.location.href = '/';
+  };
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -93,6 +99,14 @@ const Topbar = ({ onMenuClick, onlyIcons = false }: { onMenuClick: () => void, o
                 }}>
                   <div><span style={{ color: '#888', fontWeight: 500 }}>Nível:</span> {nivel}</div>
                   <div><span style={{ color: '#888', fontWeight: 500 }}>Departamento:</span> {department}</div>
+                  <button
+                    className="topbar-logout-button topbar-logout-button--dropdown"
+                    onClick={handleLogout}
+                    type="button"
+                  >
+                    <LogoutIcon fontSize="small" />
+                    <span>Sair</span>
+                  </button>
                 </div>
               )}
             </div>

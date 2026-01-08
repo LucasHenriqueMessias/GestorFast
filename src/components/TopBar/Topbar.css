@@ -27,6 +27,7 @@
 .topbar-right-menu {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .topbar-right-menu-icon {
@@ -37,6 +38,40 @@
   border-radius: 8px;
   padding: 4px 8px;
   transition: background 0.2s;
+}
+
+.topbar-logout-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--Primary-Primary-500, #5C59E8);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.topbar-logout-button:hover {
+  background: #4a47d1;
+}
+
+.topbar-logout-button:active {
+  transform: scale(0.98);
+}
+
+.topbar-logout-button--dropdown {
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+  background: #5C59E8;
+}
+
+.topbar-logout-button--dropdown:hover {
+  background: #4a47d1;
 }
 
 .topbar-right-menu-icon--collapsed {
