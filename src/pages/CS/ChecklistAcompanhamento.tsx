@@ -50,8 +50,9 @@ const initialFormState: Omit<Checklist, 'id'> = {
 };
 
 const ChecklistAcompanhamento: React.FC = () => {
-  const canEditAnalista = getDepartment() === 'Analista';
-  const canEditCs = getDepartment() === 'CS';
+  const department = getDepartment();
+  const canEditAnalista = department === 'Analista' || department === 'Diretor';
+  const canEditCs = department === 'CS' || department === 'Diretor';
   // Estado para lista de clientes
   const [clientes, setClientes] = useState<{ razao_social: string }[]>([]);
   // Buscar clientes para o select de empresa
