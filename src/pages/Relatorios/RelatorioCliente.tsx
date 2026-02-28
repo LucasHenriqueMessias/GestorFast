@@ -136,6 +136,14 @@ interface SociosData {
   opcao_pelo_mei: boolean;
 }
 
+interface LTVData {
+  razao_social: string;
+  valor_fatura_mensal: number;
+  data_contratacao: string;
+  meses_ativo: number;
+  ltv: number;
+}
+
 const RelatorioCliente = () => {
   const navigate = useNavigate();
   const [empresas, setEmpresas] = useState<EmpresaData[]>([]);
@@ -164,6 +172,9 @@ const RelatorioCliente = () => {
   const [sociosData, setSociosData] = useState<SociosData[]>([]);
   const [loadingSocios, setLoadingSocios] = useState(false);
   const [sociosError, setSociosError] = useState<string | null>(null);
+  const [ltvData, setLtvData] = useState<LTVData | null>(null);
+  const [loadingLTV, setLoadingLTV] = useState(false);
+  const [ltvError, setLtvError] = useState<string | null>(null);
 
   // Fetch empresas from CNPJ API
   useEffect(() => {
@@ -701,6 +712,57 @@ const RelatorioCliente = () => {
     fetchSociosData();
   }, [selectedRazaoSocial]);
 
+  // Fetch LTV data when razao social is selected
+  useEffect(() => {
+    if (!selectedRazaoSocial) {
+      setLtvData(null);
+      setLtvError(null);
+      return;
+    }
+
+    const fetchLTVData = async () => {
+      setLoadingLTV(true);
+      setLtvError(null);
+      try {
+        const token = getAccessToken();
+        
+        if (!token) {
+          throw new Error('Token de acesso não encontrado');
+        }
+
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/loja/LTV/${selectedRazaoSocial}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        setLtvData(response.data);
+        
+      } catch (err) {
+        console.error('Erro ao buscar dados LTV:', err);
+        
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === 401) {
+            setLtvError('Token de acesso inválido ou expirado');
+          } else if (err.response?.status === 404) {
+            setLtvError('Dados LTV não encontrados para este cliente');
+          } else {
+            setLtvError(`Erro na API LTV: ${err.response?.status}`);
+          }
+        } else {
+          setLtvError('Erro de conexão ao buscar LTV');
+        }
+        
+        setLtvData(null);
+      } finally {
+        setLoadingLTV(false);
+      }
+    };
+
+    fetchLTVData();
+  }, [selectedRazaoSocial]);
+
   const handleEmpresaChange = (event: SelectChangeEvent<string>) => {
     const selectedCnpj = event.target.value;
     const empresa = empresas.find(emp => emp.cnpj === selectedCnpj);
@@ -1202,6 +1264,13 @@ const RelatorioCliente = () => {
         </Alert>
       )}
 
+      {/* Show LTV error if exists */}
+      {ltvError && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          {ltvError}
+        </Alert>
+      )}
+
       {/* Company selection */}
       <FormControl fullWidth variant="outlined" sx={{ mb: 4 }}>
         <InputLabel id="select-empresa-label">Selecionar Empresa</InputLabel>
@@ -1303,6 +1372,59 @@ const RelatorioCliente = () => {
             </Box>
           </Box>
 
+          {/* LTV Section */}
+          <Box sx={{ mt: 4, mb: 4 }}>
+            {loadingLTV ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3 }}>
+                <CircularProgress size={24} />
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  Carregando dados LTV...
+                </Typography>
+              </Box>
+            ) : ltvData ? (
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #10B981', borderRadius: 2, background: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)' }}>
+                  <Typography variant="body2" sx={{ color: '#059669', fontWeight: 'bold', mb: 1 }}>
+                    LTV Total
+                  </Typography>
+                  <Typography variant="h5" sx={{ color: '#10B981', fontWeight: 'bold' }}>
+                    R$ {Number(ltvData.ltv).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </Typography>
+                </Paper>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #3B82F6', borderRadius: 2, background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)' }}>
+                  <Typography variant="body2" sx={{ color: '#1D4ED8', fontWeight: 'bold', mb: 1 }}>
+                    Fatura Mensal
+                  </Typography>
+                  <Typography variant="h5" sx={{ color: '#3B82F6', fontWeight: 'bold' }}>
+                    R$ {Number(ltvData.valor_fatura_mensal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </Typography>
+                </Paper>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #F59E0B', borderRadius: 2, background: 'linear-gradient(135deg, #FFFBF0 0%, #FEF3C7 100%)' }}>
+                  <Typography variant="body2" sx={{ color: '#D97706', fontWeight: 'bold', mb: 1 }}>
+                    Data de Contratação
+                  </Typography>
+                  <Typography variant="h6" sx={{ color: '#F59E0B', fontWeight: 'bold' }}>
+                    {ltvData.data_contratacao}
+                  </Typography>
+                </Paper>
+                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid #EC4899', borderRadius: 2, background: 'linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%)' }}>
+                  <Typography variant="body2" sx={{ color: '#BE185D', fontWeight: 'bold', mb: 1 }}>
+                    Meses Ativo
+                  </Typography>
+                  <Typography variant="h5" sx={{ color: '#EC4899', fontWeight: 'bold' }}>
+                    {ltvData.meses_ativo} 📅
+                  </Typography>
+                </Paper>
+              </Box>
+            ) : (
+              ltvError && (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  {ltvError}
+                </Alert>
+              )
+            )}
+          </Box>
+
           {/* DRE Data Table */}
           <Box sx={{ mt: 4 }}>
             <Typography
@@ -1317,42 +1439,6 @@ const RelatorioCliente = () => {
             </Typography>
 
             {/* DRE Summary */}
-            {dreData.length > 0 && (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 3 }}>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
-                    {dreData.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total de Registros
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
-                    R$ {dreData.reduce((sum, item) => sum + item.Valor, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Valor Total
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(96, 165, 250, 0.35)', borderRadius: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
-                    {new Set(dreData.map(item => item.Descricao)).size}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Tipos de Descrição
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', border: '1px solid rgba(147, 197, 253, 0.45)', borderRadius: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#1E3A8A', fontWeight: 'bold' }}>
-                    {dreData.filter(item => item.Valor > 0).length}/{dreData.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Receitas/Total
-                  </Typography>
-                </Paper>
-              </Box>
-            )}
 
             {loadingDRE ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
@@ -1459,42 +1545,6 @@ const RelatorioCliente = () => {
                   </Table>
                 </TableContainer>
 
-                {/* Resumo Financeiro DRE */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2, color: '#1E3A8A', fontWeight: 'bold' }}>
-                    📊 Resumo dos Highlights
-                  </Typography>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                    <Paper sx={{ p: 3, border: '1px solid rgba(37, 99, 235, 0.35)', borderRadius: 2 }}>
-                      <Typography variant="h6" sx={{ color: '#1E3A8A', mb: 2, display: 'flex', alignItems: 'center' }}>
-                        📈 Receitas Positivas
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
-                        R$ {dreData
-                          .filter(item => item.Valor > 0)
-                          .reduce((sum, item) => sum + item.Valor, 0)
-                          .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {dreData.filter(item => item.Valor > 0).length} registros positivos
-                      </Typography>
-                    </Paper>
-                    <Paper sx={{ p: 3, border: '1px solid rgba(59, 130, 246, 0.35)', borderRadius: 2 }}>
-                      <Typography variant="h6" sx={{ color: '#2563EB', mb: 2, display: 'flex', alignItems: 'center' }}>
-                        📉 Despesas/Custos
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#2563EB', mb: 1 }}>
-                        R$ {Math.abs(dreData
-                          .filter(item => item.Valor <= 0)
-                          .reduce((sum, item) => sum + item.Valor, 0))
-                          .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {dreData.filter(item => item.Valor <= 0).length} registros negativos
-                      </Typography>
-                    </Paper>
-                  </Box>
-                </Box>
               </>
             ) : (
               <Alert severity="warning">
@@ -1516,70 +1566,6 @@ const RelatorioCliente = () => {
               >
                 Análise Detalhada por Tipo de Descrição do Highlight
               </Typography>
-
-              <Typography
-                variant="body2"
-                sx={{
-                  color: '#475569',
-                  mb: 4,
-                  fontStyle: 'italic',
-                  textAlign: 'center',
-                  backgroundColor: 'rgba(248, 251, 255, 0.85)',
-                  p: 2,
-                  borderRadius: 2,
-                  border: '1px solid rgba(148, 163, 184, 0.25)',
-                }}
-              >
-                Esta análise mostra a evolução temporal de cada tipo do Highlight, comparando os dados mais antigos com os mais recentes para identificar tendências financeiras.
-              </Typography>
-
-              {/* Summary Statistics */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(37, 99, 235, 0.35)', borderRadius: 3 }}>
-                  <Typography variant="h4" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 1 }}>
-                    {Object.values(processDREByDescription()).filter(data => data.allRecords.length > 0).length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
-                    Descrições com Dados
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                    Tipos ativos
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(59, 130, 246, 0.35)', borderRadius: 3 }}>
-                  <Typography variant="h4" sx={{ color: '#2563EB', fontWeight: 'bold', mb: 1 }}>
-                    {Object.values(processDREByDescription()).filter(data => data.allRecords.length === 0).length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
-                    Descrições sem Dados
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                    Tipos vazios
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(96, 165, 250, 0.35)', borderRadius: 3 }}>
-                  <Typography variant="h4" sx={{ color: '#2563EB', fontWeight: 'bold', mb: 1 }}>
-                    {Object.values(processDREByDescription()).length > 0 ? Math.max(...Object.values(processDREByDescription()).map(data => data.allRecords.length)) : 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
-                    Máx. Registros por Tipo
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                    Maior atividade
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 3, textAlign: 'center', border: '2px solid rgba(147, 197, 253, 0.45)', borderRadius: 3, backgroundColor: 'rgba(248, 251, 255, 0.85)' }}>
-                  <Typography variant="h4" sx={{ color: '#1E3A8A', fontWeight: 'bold', mb: 1 }}>
-                    {Object.values(processDREByDescription()).reduce((acc, data) => acc + data.allRecords.length, 0)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
-                    Total Geral
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                    Todos os registros
-                  </Typography>
-                </Paper>
-              </Box>
 
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
                 {Object.entries(processDREByDescription()).map(([description, data]) => (
@@ -1631,128 +1617,7 @@ const RelatorioCliente = () => {
 
                     {data.allRecords.length > 0 ? (
                       <>
-                        {/* Estatísticas Principais */}
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, mb: 4 }}>
-                          <Box
-                            sx={{
-                              textAlign: 'center',
-                              p: 3,
-                              background: 'linear-gradient(135deg, #e6efff 0%, #cbdcff 100%)',
-                              borderRadius: 3,
-                              border: '2px solid rgba(37, 99, 235, 0.35)',
-                              position: 'relative',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              height: 4,
-                              background: 'linear-gradient(90deg, #2563EB, #1E3A8A)'
-                            }} />
-                            <Typography variant="h3" sx={{ 
-                              color: '#1E3A8A', 
-                              fontWeight: 'bold',
-                              mb: 1,
-                              textShadow: '0 2px 4px rgba(30, 64, 175, 0.15)'
-                            }}>
-                              {data.allRecords.length}
-                            </Typography>
-                            <Typography variant="body1" sx={{ 
-                              color: '#495057', 
-                              fontWeight: 600,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px'
-                            }}>
-                              📊 Total de Registros
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              textAlign: 'center',
-                              p: 3,
-                              background: data.totalValue >= 0
-                                ? 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)'
-                                : 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
-                              borderRadius: 3,
-                              border: '2px solid rgba(37, 99, 235, 0.35)',
-                              position: 'relative',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              height: 4,
-                              background: data.totalValue >= 0
-                                ? 'linear-gradient(90deg, #2563EB, #1E3A8A)'
-                                : 'linear-gradient(90deg, #1E40AF, #1E3A8A)'
-                            }} />
-                            <Typography variant="h4" sx={{ 
-                              color: data.totalValue >= 0 ? '#1E3A8A' : '#1E40AF', 
-                              fontWeight: 'bold',
-                              mb: 1
-                            }}>
-                              {data.totalValue.toLocaleString('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL'
-                              })}
-                            </Typography>
-                            <Typography variant="body1" sx={{ 
-                              color: '#495057', 
-                              fontWeight: 600,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px'
-                            }}>
-                              💰 Valor Total
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              textAlign: 'center',
-                              p: 3,
-                              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-                              borderRadius: 3,
-                              border: '2px solid rgba(147, 197, 253, 0.45)',
-                              position: 'relative',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              height: 4,
-                              background: 'linear-gradient(90deg, #3B82F6, #1E40AF)'
-                            }} />
-                            <Typography variant="h4" sx={{ 
-                              color: '#1E40AF', 
-                              fontWeight: 'bold',
-                              mb: 1
-                            }}>
-                              {(data.totalValue / data.allRecords.length).toLocaleString('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL'
-                              })}
-                            </Typography>
-                            <Typography variant="body1" sx={{ 
-                              color: '#495057', 
-                              fontWeight: 600,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px'
-                            }}>
-                              📊 Média por Registro
-                            </Typography>
-                          </Box>
-                        </Box>
-
+                        {/* Detalhes de Registros */}
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
                           {/* Primeiro registro */}
                           <Box sx={{ p: 2, backgroundColor: 'rgba(248, 251, 255, 0.92)', borderRadius: 2, border: '1px solid rgba(37, 99, 235, 0.25)' }}>

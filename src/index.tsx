@@ -40,6 +40,10 @@ import RelatorioDiretoria from './pages/Relatorios/RelatorioDiretoria';
 import RelatorioGeralFaturamento from './pages/Relatorios/RelatorioGeralFaturamento';
 import RelatorioGeralFaturamentoConsultor from './pages/Relatorios/RelatorioGeralFaturamentoConsultor';
 import RelatorioAvisoPrevio from './pages/Relatorios/RelatorioAvisoPrevio';
+import SignUp from './pages/SignUp/SignUp';
+import Parceiros from './pages/Parceiros/Parceiros';
+import Insights from './pages/Insights/Insights';
+import Nps from './pages/NPS/Nps';
 
 LicenseInfo.setLicenseKey('78ba75aca6b5ae150567b5de31e72a61Tz0xMTM2NDIsRT0xNzgwMDEyNzk5MDAwLFM9cHJvLExNPXN1YnNjcmlwdGlvbixQVj1RMy0yMDI0LEtWPTI=');
 
@@ -106,7 +110,7 @@ function AppLayout() {
     );
   }
   // Se rota não for reconhecida, redireciona para login SEM sidebar/topbar
-  if (!['/Clientes','/Relatorios','/HelpDesk/AtribuidosAMim' , '/HelpDesk/MeusChamados', '/HelpDesk/NovoChamado' ,  '/Relatorios/Cliente', '/Relatorios/Consultor', '/Relatorios/Fast' , '/Ferramentas' , '/RegistroDeReunioes', '/Eventos' ,'/Biblioteca' , '/Socios',  '/Funil', '/Fotografia' , '/Highlights' , '/home', '/Alertas', '/Cadastro', '/Dores' , '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery', '/ConsultarCNPJ', '/Checklist/Acompanhamento/Cliente', '/Pesquisa/Satisfacao/ICR', '/Eventos/ListaPresenca', '/Relatorios/Diretoria', '/Relatorios/Diretoria/Faturamento/Consultor', '/Relatorios/Diretoria/Faturamento/Geral', '/Relatorios/Diretoria/AvisoPrevio'].includes(location) && !isLogin) {
+  if (!['/Clientes','/Relatorios','/HelpDesk/AtribuidosAMim' , '/HelpDesk/MeusChamados', '/HelpDesk/NovoChamado' ,  '/Relatorios/Cliente', '/Relatorios/Consultor', '/Relatorios/Fast' , '/Ferramentas' , '/RegistroDeReunioes', '/Eventos' ,'/Biblioteca' , '/Socios',  '/Funil', '/Fotografia' , '/Highlights' , '/home', '/Alertas', '/Cadastro', '/Dores' , '/JornadaCrescimentoCore', '/JornadaCrescimentoOverdelivery', '/ConsultarCNPJ', '/Checklist/Acompanhamento/Cliente', '/Pesquisa/Satisfacao/ICR', '/Eventos/ListaPresenca', '/Relatorios/Diretoria', '/Relatorios/Diretoria/Faturamento/Consultor', '/Relatorios/Diretoria/Faturamento/Geral', '/Relatorios/Diretoria/AvisoPrevio', '/Cadastro/Usuario', '/Parcerias', '/Analista/Insights', '/NPS'].includes(location) && !isLogin) {
     return (
       <Navigate to="/" replace />
     );
@@ -151,6 +155,10 @@ function AppLayout() {
             <Route path="/Relatorios/Diretoria/Faturamento/Geral" element={<PrivateRoute allowedDepartments={["Diretor", "Developer"]}><RelatorioGeralFaturamento/></PrivateRoute>} />
             <Route path="/Relatorios/Diretoria/Faturamento/Consultor" element={<PrivateRoute allowedDepartments={["Diretor", "Developer"]}><RelatorioGeralFaturamentoConsultor/></PrivateRoute>} />
             <Route path="/Relatorios/Diretoria/AvisoPrevio" element={<PrivateRoute allowedDepartments={["Diretor", "Developer"]}><RelatorioAvisoPrevio/></PrivateRoute>} />
+            <Route path="Cadastro/Usuario" element={<PrivateRoute allowedDepartments={["Developer", "Diretor", "Gestor", "Consultor"]}><SignUp /></PrivateRoute>} />
+            <Route path="/Parcerias" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><Parceiros /></PrivateRoute>} />
+            <Route path="/Analista/Insights" element={<PrivateRoute allowedDepartments={["Analista", "Developer", "Diretor", "Gestor", "Consultor"]}><Insights /></PrivateRoute>} />  
+            <Route path="/NPS/" element={<PrivateRoute allowedDepartments={["Analista", "Developer", "Diretor", "Gestor", "Consultor"]}><Nps/></PrivateRoute >} />
           </Routes>
         </div>
       </div>

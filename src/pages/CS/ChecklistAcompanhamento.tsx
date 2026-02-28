@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Box, Container, Typography, CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, FormControlLabel, Checkbox, MenuItem, Autocomplete } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { getAccessToken, getDepartment } from '../../utils/storage';
+import { ArrowBack } from '@mui/icons-material';
 
 interface Checklist {
   id: number;
@@ -74,6 +75,7 @@ const ChecklistAcompanhamento: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [selectedCompanySearch, setSelectedCompanySearch] = useState<string | null>(null);
   // Para o input tipo calculadora, armazenar string de dígitos para faturamento
   const [moneyDigits, setMoneyDigits] = useState<string>('');
   const [form, setForm] = useState<Omit<Checklist, 'id'>>(() => ({ ...initialFormState }));
@@ -105,7 +107,10 @@ const ChecklistAcompanhamento: React.FC = () => {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/tab-checklist-cliente-cs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setData(response.data);
+      const sortedData = response.data.sort((a: Checklist, b: Checklist) => 
+        a.empresa.localeCompare(b.empresa, 'pt-BR')
+      );
+      setData(sortedData);
     } catch (err: any) {
       setError('Erro ao buscar dados do checklist.');
     } finally {
@@ -200,10 +205,59 @@ const ChecklistAcompanhamento: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>Checklist de Acompanhamento de Cliente</Typography>
-      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => window.history.back()}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <Typography variant="h4" sx={{ m: 0 }}>Checklist de Acompanhamento de Cliente</Typography>
+      </Box>
+      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ mb: 2, mr: 2 }}>
         Adicionar Checklist
       </Button>
+      <Autocomplete
+        freeSolo
+        options={data.map((item) => item.empresa)}
+        value={selectedCompanySearch}
+        onChange={(event, newValue) => {
+          setSelectedCompanySearch(newValue);
+          if (newValue) {
+            const selectedRow = data.find((item) => item.empresa === newValue);
+            if (selectedRow) {
+              setDetailRow(selectedRow);
+            }
+          }
+        }}
+        onInputChange={(event, newInputValue) => {
+          setSelectedCompanySearch(newInputValue);
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Pesquisar por Empresa"
+            variant="outlined"
+            sx={{ mb: 2, maxWidth: 400 }}
+          />
+        )}
+      />
       <>
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">

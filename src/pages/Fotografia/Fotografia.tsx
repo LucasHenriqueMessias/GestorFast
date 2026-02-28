@@ -11,10 +11,13 @@ import {
   FormControlLabel,
   Checkbox,
   Autocomplete,
-  MenuItem
+  MenuItem,
+  Box
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import { getAccessToken, getUsername } from '../../utils/storage';
+import { ArrowBack } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 
 interface FotografiaRow {
   id: number;
@@ -145,6 +148,7 @@ const createEmptyForm = (usuario = ''): FotografiaForm => ({
 });
 
 const Fotografia = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<FotografiaRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -155,7 +159,22 @@ const Fotografia = () => {
     const fetchData = async () => {
       try {
         const token = getAccessToken();
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/tab-fotografia-cliente`, {
+        const department = getDepartment();
+        const username = getUsername();
+
+        let endpoint = `${process.env.REACT_APP_API_URL}/tab-fotografia-cliente`;
+
+        if (department === 'Consultor') {
+          if (!username) {
+            setRows([]);
+            return;
+          }
+          endpoint = `${process.env.REACT_APP_API_URL}/tab-fotografia-cliente/consultor/${username}`;
+        } else if (department === 'Diretor' || department === 'Developer') {
+          endpoint = `${process.env.REACT_APP_API_URL}/tab-fotografia-cliente`;
+        }
+
+        const response = await axios.get(endpoint, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -375,8 +394,31 @@ const Fotografia = () => {
   ];
 
   return (
-    <div style={{ height: 600, width: '100%' }}>
-      <h1>Fotografia Cliente</h1>
+    <div style={{ width: '100%', padding: '16px' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => navigate(-1)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <h1 style={{ margin: 0 }}>Fotografia Cliente</h1>
+      </Box>
       <Button
         variant="contained"
         color="primary"
@@ -568,7 +610,9 @@ const Fotografia = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <DataGrid rows={rows} columns={columns} autoPageSize />
+      <Box sx={{ height: 600, width: '100%' }}>
+        <DataGrid rows={rows} columns={columns} autoPageSize />
+      </Box>
     </div>
   );
 };

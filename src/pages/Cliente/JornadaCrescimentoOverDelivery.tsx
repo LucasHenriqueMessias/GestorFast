@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DataGrid, GridColDef, GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
-import { Container, Typography, TextField, Button, Dialog, DialogActions, DialogContent, DialogTitle, Autocomplete } from '@mui/material';
+import { Container, Typography, TextField, Button, Dialog, DialogActions, DialogContent, DialogTitle, Autocomplete, Box } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 import MenuItem from '@mui/material/MenuItem';
 import EditIcon from '@mui/icons-material/Edit';
+import { ArrowBack } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 interface OverDeliveryData {
   id: number;
@@ -97,7 +99,22 @@ const JornadaCrescimentoOverDelivery = () => {
   const fetchData = useCallback(async () => {
     try {
       const token = getAccessToken();
-      const response = await axios.get(`${apiUrl}/tab-roi/overdelivery`, {
+      const department = getDepartment();
+      const username = getUsername();
+
+      let endpoint = `${apiUrl}/tab-roi/overdelivery`;
+
+      if (department === 'Consultor') {
+        if (!username) {
+          setOverDeliveryData([]);
+          return;
+        }
+        endpoint = `${apiUrl}/tab-roi/overdelivery/consultor/${username}`;
+      } else if (department === 'Diretor' || department === 'Developer') {
+        endpoint = `${apiUrl}/tab-roi/overdelivery`;
+      }
+
+      const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -275,11 +292,37 @@ const JornadaCrescimentoOverDelivery = () => {
     },
   ];
 
+  const navigate = useNavigate();
+
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Jornada de Crescimento OverDelivery
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => navigate(-1)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <Typography variant="h4" gutterBottom sx={{ m: 0 }}>
+          Jornada de Crescimento OverDelivery
+        </Typography>
+      </Box>
       <TextField
         margin="normal"
         label="Filtrar por Usuário"
