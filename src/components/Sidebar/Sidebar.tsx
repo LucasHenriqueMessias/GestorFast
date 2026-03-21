@@ -192,7 +192,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                         )}
                                     </li>
                                 )}
-                                {canSeeAll && (
+                                {(canSeeAll || isComercial) && (
                                     <li className="dropdown-menu-item">
                                         <div
                                             className="submenu-item"
