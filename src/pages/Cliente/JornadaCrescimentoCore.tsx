@@ -5,6 +5,8 @@ import axios from 'axios';
 import { getAccessToken, getUsername, getDepartment } from '../../utils/storage';
 import MenuItem from '@mui/material/MenuItem';
 import EditIcon from '@mui/icons-material/Edit';
+import { ArrowBack } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 interface coreData {
   id: number;
@@ -125,7 +127,22 @@ const JornadaCrescimentoCore = () => {
   const fetchData = useCallback(async () => {
     try {
       const token = getAccessToken();
-      const response = await axios.get(`${apiUrl}/tab-roi/core`, {
+      const department = getDepartment();
+      const username = getUsername();
+
+      let endpoint = `${apiUrl}/tab-roi/core`;
+
+      if (department === 'Consultor') {
+        if (!username) {
+          setcoreData([]);
+          return;
+        }
+        endpoint = `${apiUrl}/tab-roi/core/colaborador/${username}`;
+      } else if (department === 'Diretor' || department === 'Developer') {
+        endpoint = `${apiUrl}/tab-roi/core`;
+      }
+
+      const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -248,12 +265,38 @@ const JornadaCrescimentoCore = () => {
     setRowModesModel(newModel);
   };
 
+  const navigate = useNavigate();
+
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Jornada de Crescimento Core
-      </Typography>
-      <br />
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => navigate(-1)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <Typography variant="h4" gutterBottom sx={{ m: 0 }}>
+          Jornada de Crescimento Core
+        </Typography>
+      </Box>
+
       <TextField
         margin="normal"
         label="Filtrar por Colaborador"

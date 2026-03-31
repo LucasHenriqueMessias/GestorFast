@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, IconButton, Select, MenuItem, SelectChangeEvent, Autocomplete } from '@mui/material';
+import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, IconButton, Select, MenuItem, SelectChangeEvent, Autocomplete, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import { ArrowBack } from '@mui/icons-material';
 import axios from 'axios';
-import { getAccessToken, getUsername } from '../../utils/storage';
+import { useNavigate } from 'react-router-dom';
+import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 
 interface Cliente {
   razao_social: string;
@@ -39,6 +41,7 @@ const formatDatePtBr = (value: unknown) => {
 };
 
 const Alertas = () => {
+  const navigate = useNavigate();
   const [sinalAmareloData, setSinalAmareloData] = useState([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [open, setOpen] = useState(false);
@@ -87,7 +90,22 @@ const Alertas = () => {
   const fetchData = async () => {
     try {
       const token = getAccessToken();
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/tab-sinal-amarelo`, {
+      const department = getDepartment();
+      const username = getUsername();
+
+      let endpoint = `${process.env.REACT_APP_API_URL}/tab-sinal-amarelo`;
+
+      if (department === 'Consultor') {
+        if (!username) {
+          setSinalAmareloData([]);
+          return;
+        }
+        endpoint = `${process.env.REACT_APP_API_URL}/tab-sinal-amarelo/consultor/${username}`;
+      } else if (department === 'Diretor' || department === 'Developer' || department === 'Gestor' || department === 'CS' || department === 'Analista' ) {
+        endpoint = `${process.env.REACT_APP_API_URL}/tab-sinal-amarelo`;
+      }
+
+      const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -179,9 +197,33 @@ const Alertas = () => {
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Alertas
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => navigate(-1)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <Typography variant="h4" gutterBottom sx={{ m: 0 }}>
+          Alertas
+        </Typography>
+      </Box>
       <Button variant="contained" color="primary" onClick={handleClickOpen}>
         Adicionar Registro
       </Button>

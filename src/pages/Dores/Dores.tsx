@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Autocomplete, MenuItem } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Autocomplete, MenuItem, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import { getAccessToken, getUsername } from '../../utils/storage';
+import { ArrowBack } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 
 interface DoresData {
   id: number;
@@ -55,6 +57,7 @@ const buildDefaultScores = () =>
   }, {} as Record<ScoreFieldKey, number>);
 
 const Dores = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -70,7 +73,22 @@ const Dores = () => {
     const fetchData = async () => {
       try {
         const token = getAccessToken();
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/tab-dores-cliente`, {
+        const department = getDepartment();
+        const username = getUsername();
+
+        let endpoint = `${process.env.REACT_APP_API_URL}/tab-dores-cliente`;
+
+        if (department === 'Consultor') {
+          if (!username) {
+            setRows([]);
+            return;
+          }
+          endpoint = `${process.env.REACT_APP_API_URL}/tab-dores-cliente/consultor/${username}`;
+        } else if (department === 'Diretor' || department === 'Developer') {
+          endpoint = `${process.env.REACT_APP_API_URL}/tab-dores-cliente`;
+        }
+
+        const response = await axios.get(endpoint, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -224,11 +242,35 @@ const Dores = () => {
   ];
 
   return (
-    <div style={{ height: 600, width: '100%' }}>
-      <h1>Dores Cliente</h1>
+    <div style={{ width: '100%', padding: '16px' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => navigate(-1)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <h1 style={{ margin: 0 }}>Dores Cliente</h1>
+      </Box>
       <Button variant="contained" color="primary" onClick={handleAddDores} style={{ marginBottom: '16px' }}>
         Cadastrar Dores
-      </Button>      <Dialog open={showForm} onClose={handleCloseForm}>
+      </Button>
+      <Dialog open={showForm} onClose={handleCloseForm}>
         <DialogTitle>{isEditing ? 'Editar Dores' : 'Cadastro de Dores'}</DialogTitle>
         <DialogContent>
           <TextField
@@ -291,11 +333,13 @@ const Dores = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <DataGrid rows={rows} columns={columns} autoPageSize onCellClick={(params) => {
-        if (params.field !== '__check__' && params.field !== 'id') {
-          handleEditDores(params.row);
-        }
-      }} />
+      <Box sx={{ height: 600, width: '100%' }}>
+        <DataGrid rows={rows} columns={columns} autoPageSize onCellClick={(params) => {
+          if (params.field !== '__check__' && params.field !== 'id') {
+            handleEditDores(params.row);
+          }
+        }} />
+      </Box>
     </div>
   );
 };

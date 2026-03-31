@@ -22,6 +22,10 @@ const Relatorios = () => {
     navigate('/Relatorios/Diretoria');
   };
 
+  const handleRelatorioCS = () => {
+    navigate('/Relatorios/CS');
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       
@@ -102,6 +106,29 @@ const Relatorios = () => {
           >
             <Assessment sx={{ fontSize: 48 }} />
             Relatório Fast
+          </Button>
+        </Box>
+
+        <Box sx={{ width: { xs: '100%', sm: '300px' } }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleRelatorioCS}
+            fullWidth
+            sx={{
+              height: 150,
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              flexDirection: 'column',
+              gap: 2,
+              '&:hover': {
+                transform: 'scale(1.02)',
+                transition: 'transform 0.2s ease-in-out'
+              }
+            }}
+          >
+            <Assessment sx={{ fontSize: 48 }} />
+            Sucesso do Cliente
           </Button>
         </Box>
  <Box sx={{ width: { xs: '100%', sm: '300px' } }}>

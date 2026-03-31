@@ -4,7 +4,9 @@ import axios from 'axios';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, MenuItem, Autocomplete, Typography, IconButton, Stack, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getAccessToken, getUsername } from '../../utils/storage';
+import { ArrowBack } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 
 interface HighlightsRow {
   id: number;
@@ -150,7 +152,22 @@ const Highlights = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/tab-dre`, {
+        const department = getDepartment();
+        const username = getUsername();
+
+        let endpoint = `${process.env.REACT_APP_API_URL}/tab-dre`;
+
+        if (department === 'Consultor') {
+          if (!username) {
+            setRows([]);
+            return;
+          }
+          endpoint = `${process.env.REACT_APP_API_URL}/tab-dre/consultor/${username}`;
+        } else if (department === 'Diretor' || department === 'Developer') {
+          endpoint = `${process.env.REACT_APP_API_URL}/tab-dre`;
+        }
+
+        const response = await axios.get(endpoint, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -446,9 +463,35 @@ const Highlights = () => {
     },
   ];
 
+  const navigate = useNavigate();
+
   return (
     <div>
-      <h1>Highlights</h1>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => navigate(-1)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <h1 style={{ margin: 0 }}>Highlights</h1>
+      </Box>
       <Button variant="contained" color="primary" onClick={handleAddHighlights} sx={{ mb: 3 }}>
         Cadastrar Highlights
       </Button>

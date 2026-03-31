@@ -22,6 +22,7 @@ import {
   Camera, 
   CalendarToday,
   TrendingUp,
+  TrendingDown,
   AccessTime
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -46,6 +47,8 @@ interface ConsultorData {
   "RP": number;
   "RAE": number;
   "RA": number;
+  "churn": number;
+  "ltv": number;
   "DRE": {
     "receita bruta": number;
     "dedução de receita bruta": number;
@@ -94,6 +97,28 @@ interface ConsultorUser {
   nome?: string;
 }
 
+interface Reuniao {
+  id: number;
+  user: string;
+  cliente: string;
+  status: string;
+  tipo_reuniao: string;
+  local_reuniao: string;
+  Ata_reuniao: string;
+  data_realizada: string;
+  data_criacao: string;
+  nps_reuniao: number;
+}
+
+interface AlertaReuniao {
+  tipo: string;
+  totalRealizado: number;
+  totalEsperado: number;
+  faltando: number;
+  periodicidade: string;
+  clientesComContagem: { cliente: string; realizado: number; esperado: number }[];
+}
+
 const RelatorioConsultor = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<ConsultorData | null>(null);
@@ -103,6 +128,7 @@ const RelatorioConsultor = () => {
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [loadingConsultors, setLoadingConsultors] = useState(false);
   const [hasDataLoaded, setHasDataLoaded] = useState(false);
+  const [alertas, setAlertas] = useState<AlertaReuniao[]>([]);
 
   // Fetch consultors from department API
   useEffect(() => {
@@ -168,6 +194,19 @@ const RelatorioConsultor = () => {
 
         setData(response.data);
         setHasDataLoaded(true);
+
+        // Buscar reuniões para calcular alertas
+        try {
+          const reunioesResponse = await axios.get(`${process.env.REACT_APP_API_URL}/tab-reuniao/consultor/${selectedUser}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          calcularAlertas(reunioesResponse.data);
+        } catch (reunioesErr) {
+          console.error('Erro ao buscar reuniões:', reunioesErr);
+        }
       } catch (err) {
         console.error('Erro ao buscar dados:', err);
         
@@ -190,6 +229,8 @@ const RelatorioConsultor = () => {
           "RP": 2,
           "RAE": 1,
           "RA": 2,
+          "churn": 0,
+          "ltv": 87609.67,
           "DRE": {
             "receita bruta": 1500,
             "dedução de receita bruta": 0,
@@ -307,6 +348,149 @@ const RelatorioConsultor = () => {
       </Container>
     );
   }
+
+  // Função para calcular alertas de reuniões faltantes
+  const calcularAlertas = (reunioesData: Reuniao[]) => {
+    if (reunioesData.length === 0) {
+      setAlertas([]);
+      return;
+    }
+
+    // Ordenar por data_realizada para encontrar a primeira
+    const reunioesOrdenadas = [...reunioesData].sort(
+      (a, b) => new Date(a.data_realizada).getTime() - new Date(b.data_realizada).getTime()
+    );
+
+    const dataPrimeira = new Date(reunioesOrdenadas[0].data_realizada);
+    const dataAtual = new Date();
+    const diasDecorridos = Math.floor((dataAtual.getTime() - dataPrimeira.getTime()) / (24 * 60 * 60 * 1000));
+
+    // Obter lista de clientes únicos
+    const clientesUnicos = Array.from(new Set(reunioesData.map(r => r.cliente)));
+
+    // Função auxiliar para contar reuniões por cliente em um período
+    const contarReunioesClientePorTipo = (tipo: string, diasParaVerificar: number): { cliente: string; realizado: number; esperado: number }[] => {
+      const dataLimite = new Date(dataPrimeira.getTime() + diasParaVerificar * 24 * 60 * 60 * 1000);
+      const clienteInfo: { cliente: string; realizado: number; esperado: number }[] = [];
+
+      clientesUnicos.forEach(cliente => {
+        const reunioesClienteTipo = reunioesData.filter(r => 
+          r.cliente === cliente && 
+          r.tipo_reuniao === tipo &&
+          new Date(r.data_realizada) <= dataLimite
+        );
+
+        // Calcular quantos desse tipo o cliente deveria ter baseado no período
+        let esperadoCliente = 0;
+        if (tipo === 'RD') {
+          esperadoCliente = 1; // RD é apenas uma vez
+        } else if (tipo === 'RE') {
+          esperadoCliente = Math.ceil(diasParaVerificar / 30);
+        } else if (tipo === 'RC' || tipo === 'RI' || tipo === 'RAE') {
+          esperadoCliente = Math.ceil(diasParaVerificar / 90);
+        }
+
+        // Adicionar todos os clientes, não apenas os que faltam
+        clienteInfo.push({
+          cliente,
+          realizado: reunioesClienteTipo.length,
+          esperado: esperadoCliente
+        });
+      });
+
+      return clienteInfo;
+    };
+
+    // Calcular esperado e faltante para cada tipo
+    const novasAlertas: AlertaReuniao[] = [];
+
+    // RD - Reunião Dossiê (1 no total, apenas uma vez)
+    const clientesRDInfo = contarReunioesClientePorTipo('RD', diasDecorridos);
+    const rdEsperado = clientesRDInfo.reduce((sum, c) => sum + c.esperado, 0);
+    const rdRealizado = clientesRDInfo.reduce((sum, c) => sum + c.realizado, 0);
+    const rdFaltando = Math.max(0, rdEsperado - rdRealizado);
+    const clientesRDComFalta = clientesRDInfo.filter(c => c.realizado < c.esperado);
+    if (rdFaltando > 0) {
+      novasAlertas.push({
+        tipo: 'RD',
+        totalRealizado: rdRealizado,
+        totalEsperado: rdEsperado,
+        faltando: rdFaltando,
+        periodicidade: 'Uma única vez (entrada)',
+        clientesComContagem: clientesRDComFalta
+      });
+    }
+
+    // RE - Reunião Excelência (1 por mês)
+    const clientesREInfo = contarReunioesClientePorTipo('RE', diasDecorridos);
+    const reEsperado = clientesREInfo.reduce((sum, c) => sum + c.esperado, 0);
+    const reRealizado = clientesREInfo.reduce((sum, c) => sum + c.realizado, 0);
+    const reFaltando = Math.max(0, reEsperado - reRealizado);
+    const clientesREComFalta = clientesREInfo.filter(c => c.realizado < c.esperado);
+    if (reFaltando > 0) {
+      novasAlertas.push({
+        tipo: 'RE',
+        totalRealizado: reRealizado,
+        totalEsperado: reEsperado,
+        faltando: reFaltando,
+        periodicidade: 'Mensal',
+        clientesComContagem: clientesREComFalta
+      });
+    }
+
+    // RC - Reunião Conselho (1 a cada 3 meses)
+    const clientesRCInfo = contarReunioesClientePorTipo('RC', diasDecorridos);
+    const rcEsperado = clientesRCInfo.reduce((sum, c) => sum + c.esperado, 0);
+    const rcRealizado = clientesRCInfo.reduce((sum, c) => sum + c.realizado, 0);
+    const rcFaltando = Math.max(0, rcEsperado - rcRealizado);
+    const clientesRCComFalta = clientesRCInfo.filter(c => c.realizado < c.esperado);
+    if (rcFaltando > 0) {
+      novasAlertas.push({
+        tipo: 'RC',
+        totalRealizado: rcRealizado,
+        totalEsperado: rcEsperado,
+        faltando: rcFaltando,
+        periodicidade: 'Trimestral',
+        clientesComContagem: clientesRCComFalta
+      });
+    }
+
+    // RI - Reunião ILHA (1 a cada 3 meses)
+    const clientesRIInfo = contarReunioesClientePorTipo('RI', diasDecorridos);
+    const riEsperado = clientesRIInfo.reduce((sum, c) => sum + c.esperado, 0);
+    const riRealizado = clientesRIInfo.reduce((sum, c) => sum + c.realizado, 0);
+    const riFaltando = Math.max(0, riEsperado - riRealizado);
+    const clientesRIComFalta = clientesRIInfo.filter(c => c.realizado < c.esperado);
+    if (riFaltando > 0) {
+      novasAlertas.push({
+        tipo: 'RI',
+        totalRealizado: riRealizado,
+        totalEsperado: riEsperado,
+        faltando: riFaltando,
+        periodicidade: 'Trimestral',
+        clientesComContagem: clientesRIComFalta
+      });
+    }
+
+    // RAE - Reunião Alinhamento Expectativas (1 a cada 3 meses)
+    const clientesRAEInfo = contarReunioesClientePorTipo('RAE', diasDecorridos);
+    const raeEsperado = clientesRAEInfo.reduce((sum, c) => sum + c.esperado, 0);
+    const raeRealizado = clientesRAEInfo.reduce((sum, c) => sum + c.realizado, 0);
+    const raeFaltando = Math.max(0, raeEsperado - raeRealizado);
+    const clientesRAEComFalta = clientesRAEInfo.filter(c => c.realizado < c.esperado);
+    if (raeFaltando > 0) {
+      novasAlertas.push({
+        tipo: 'RAE',
+        totalRealizado: raeRealizado,
+        totalEsperado: raeEsperado,
+        faltando: raeFaltando,
+        periodicidade: 'Trimestral',
+        clientesComContagem: clientesRAEComFalta
+      });
+    }
+
+    setAlertas(novasAlertas);
+  };
 
   // Show error if not related to simulation
   if (error && !error.includes('simulados')) {
@@ -835,6 +1019,47 @@ const RelatorioConsultor = () => {
       {/* Show report only when user is selected and data is loaded */}
       {selectedUser && hasDataLoaded && data && (
         <>
+          {/* Alertas de Reuniões Faltantes */}
+          {alertas.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#d32f2f' }}>
+                ⚠️ Reuniões Faltantes
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 2 }}>
+                {alertas.map((alerta) => (
+                  <Alert key={alerta.tipo} severity="warning" icon={null} sx={{ borderLeft: '4px solid #f57c00' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      {alerta.tipo} - Faltam: {alerta.faltando} | Meta: {alerta.totalEsperado} | Realizado: {alerta.totalRealizado}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1.5, color: 'text.secondary', fontSize: '0.9rem' }}>
+                      Periodicidade: {alerta.periodicidade}
+                    </Typography>
+                    {alerta.clientesComContagem.length > 0 && (
+                      <Box sx={{ mt: 1.5, p: 1, backgroundColor: '#fff3e0', borderRadius: 1 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#e65100', display: 'block', mb: 0.8 }}>
+                          Clientes Faltantes:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          {alerta.clientesComContagem.map((info, idx) => (
+                            <Typography 
+                              key={idx} 
+                              variant="caption" 
+                              sx={{ 
+                                color: '#e65100'
+                              }}
+                            >
+                              {info.cliente} ({info.realizado} de {info.esperado} reuniões)
+                            </Typography>
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                  </Alert>
+                ))}
+              </Box>
+            </Box>
+          )}
+
           {/* Metrics overview */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
             <MetricCard 
@@ -868,6 +1093,18 @@ const RelatorioConsultor = () => {
               title="Tempo na Fast" 
               value={data["tempo de Fast"]} 
               icon={<AccessTime />} 
+            />
+            <MetricCard 
+              title="Churn" 
+              value={`${Number(data["churn"]).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`} 
+              icon={<TrendingDown />} 
+              color="#FF9800"
+            />
+            <MetricCard 
+              title="LTV" 
+              value={data["churn"] === 0 ? "∞" : `R$ ${Number(data["ltv"]).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+              icon={<TrendingUp />} 
+              color="#2196F3"
             />
           </Box>
 

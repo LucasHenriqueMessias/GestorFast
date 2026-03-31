@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid, GridColDef, GridEventListener,  GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
-import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent, FormControl, InputLabel, Autocomplete } from '@mui/material';
+import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent, FormControl, InputLabel, Autocomplete, Box } from '@mui/material';
 import axios from 'axios';
-import { getAccessToken, getUsername } from '../../utils/storage';
+import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 import EditIcon from '@mui/icons-material/Edit';
+import { ArrowBack } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 
 interface Reuniao {
@@ -41,18 +43,24 @@ const formatDatePtBr = (value: unknown) => {
     return raw;
   }
 
-  // Handle ISO date strings (36-dayZ) or YYYY-MM-DD
-  const isoLike = raw.includes('T') ? raw : `${raw}T00:00:00`; // ensures Date parses YYYY-MM-DD
-  const parsed = new Date(isoLike);
+  // Avoid timezone shift by formatting the date-only portion directly.
+  const datePart = raw.split('T')[0];
+  const ymdMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymdMatch) {
+    const [, year, month, day] = ymdMatch;
+    return `${day}/${month}/${year}`;
+  }
 
+  const parsed = new Date(raw);
   if (!Number.isNaN(parsed.getTime())) {
-    return parsed.toLocaleDateString('pt-BR');
+    return parsed.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
   return raw;
 };
 
 const RegistroDeReunioes = () => {
+  const navigate = useNavigate();
   const [reuniaoData, setReuniaoData] = useState<Reuniao[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [open, setOpen] = useState(false);
@@ -137,7 +145,22 @@ const RegistroDeReunioes = () => {
   const fetchData = async () => {
     try {
       const token = getAccessToken();
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/tab-reuniao`, {
+      const department = getDepartment();
+      const username = getUsername();
+
+      let endpoint = `${process.env.REACT_APP_API_URL}/tab-reuniao`;
+
+      if (department === 'Consultor' || department === 'CS' || department === 'Analista') {
+        if (!username) {
+          setReuniaoData([]);
+          return;
+        }
+        endpoint = `${process.env.REACT_APP_API_URL}/tab-reuniao/consultor/${username}`;
+      } else if (department === 'Diretor' || department === 'Developer' || department === 'Gestor' ) {
+        endpoint = `${process.env.REACT_APP_API_URL}/tab-reuniao`;
+      }
+
+      const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -258,9 +281,32 @@ const RegistroDeReunioes = () => {
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Registros de Reuniões
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Button
+          onClick={() => navigate(-1)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#1E3A8A',
+            color: 'white',
+            borderRadius: 2,
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            px: 2,
+            py: 1,
+            '&:hover': {
+              backgroundColor: '#1D4ED8',
+            },
+          }}
+        >
+          <ArrowBack />
+          Voltar
+        </Button>
+        <Typography variant="h4" sx={{ margin: 0 }}>
+          Registros de Reuniões
+        </Typography>
+      </Box>
       <Button variant="contained" color="primary" onClick={handleClickOpen}>
         Adicionar Registro
       </Button>

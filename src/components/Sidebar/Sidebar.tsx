@@ -2,31 +2,60 @@ import React, { useState } from 'react';
 import './Sidebar.css';
 import StoreIcon from '@mui/icons-material/Store';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import AddTaskIcon from '@mui/icons-material/AddTask';
+import { getDepartment } from '../../utils/storage';
 
-type TopLevelSection = 'gestao' | 'cliente' | 'ferramentas' | 'helpdesk';
+type TopLevelSection = 'dashboard' | 'gestao' | 'aprendizagem' | 'cliente' | 'ferramentas' | 'helpdesk';
 
 export default function Sidebar({ onlyIcons = false, onExpand, children }: { onlyIcons?: boolean; onExpand?: () => void; children?: React.ReactNode }) {
+    const [dashboardOpen, setDashboardOpen] = useState(false);
     const [gestaoOpen, setGestaoOpen] = useState(false);
+    const [aprendizagemOpen, setAprendizagemOpen] = useState(false);
     const [clienteOpen, setClienteOpen] = useState(false);
     const [csOpen, setCsOpen] = useState(false);
     const [ferramentasOpen, setFerramentasOpen] = useState(false);
     const [helpdeskOpen, setHelpdeskOpen] = useState(false);
-    const [consultorOpen, setConsultorOpen] = useState(false);
     const [comercialOpen, setComercialOpen] = useState(false);
+    const [consultoresFinanceirosOpen, setConsultoresFinanceirosOpen] = useState(false);
+    const [registrosFinanceirosOpen, setRegistrosFinanceirosOpen] = useState(false);
+    const [analistasOpen, setAnalistasOpen] = useState(false);
+    const [registrosAnalistasOpen, setRegistrosAnalistasOpen] = useState(false);
+    const [registrosCsOpen, setRegistrosCsOpen] = useState(false);
+    const [diretoriaOpen, setDiretoriaOpen] = useState(false);
+    const [clientesSubmenuOpen, setClientesSubmenuOpen] = useState(false);
+
+    // Get user department
+    const department = getDepartment();
+
+    // Helper to check if user can see all items
+    const canSeeAll = department === 'Developer' || department === 'Diretor' || department === 'Gestor';
+    const isConsultor = department === 'Consultor';
+    const isAnalista = department === 'Analista';
+    const isComercial = department === 'Comercial';
+    const isDiretor = department === 'Diretor';
 
     // Helper to hide text if onlyIcons is true
     const hideText = onlyIcons ? { display: 'none' } : {};
 
     const resetSubsections = () => {
-        setConsultorOpen(false);
         setComercialOpen(false);
         setCsOpen(false);
+        setConsultoresFinanceirosOpen(false);
+        setRegistrosFinanceirosOpen(false);
+        setAnalistasOpen(false);
+        setRegistrosAnalistasOpen(false);
+        setRegistrosCsOpen(false);
+        setDiretoriaOpen(false);
+        setClientesSubmenuOpen(false);
     };
 
     const openTopLevelSection = (section: TopLevelSection) => {
+        setDashboardOpen(section === 'dashboard');
         setGestaoOpen(section === 'gestao');
+        setAprendizagemOpen(section === 'aprendizagem');
         setClienteOpen(section === 'cliente');
         setFerramentasOpen(section === 'ferramentas');
         setHelpdeskOpen(section === 'helpdesk');
@@ -41,11 +70,17 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
         }
 
         switch (section) {
+            case 'dashboard':
+                setDashboardOpen((open) => !open);
+                break;
             case 'gestao':
                 setGestaoOpen((open) => !open);
                 break;
             case 'cliente':
                 setClienteOpen((open) => !open);
+                break;
+            case 'aprendizagem':
+                setAprendizagemOpen((open) => !open);
                 break;
             case 'ferramentas':
                 setFerramentasOpen((open) => !open);
@@ -67,23 +102,67 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
             </div>
             <div className="menu">
                 <div className="main-menu">
-                    <button
-                        className="single-menu-item"
-                        onClick={() => window.location.href = '/Relatorios'}
-                        style={{ cursor: 'pointer' }}
-                        title="Relatórios"
-                    >
-                        <div className="grid-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M3 5.5C3 4.11929 4.11929 3 5.5 3H8.5C9.88071 3 11 4.11929 11 5.5V8.5C11 9.88071 9.88071 11 8.5 11H5.5C4.11929 11 3 9.88071 3 8.5V5.5ZM5.5 5H8.5C8.77614 5 9 5.22386 9 5.5V8.5C9 8.77614 8.77614 9 8.5 9H5.5C5.22386 9 5 8.77614 5 8.5V5.5C5 5.22386 5.22386 5 5.5 5Z" fill="white" />
-                                <path fillRule="evenodd" clipRule="evenodd" d="M13 5.5C13 4.11929 14.1193 3 15.5 3H18.5C19.8807 3 21 4.11929 21 5.5V8.5C21 9.88071 19.8807 11 18.5 11H15.5C14.1193 11 13 9.88071 13 8.5V5.5ZM15.5 5H18.5C18.7761 5 19 5.22386 19 5.5V8.5C19 8.77614 18.7761 9 18.5 9H15.5C15.2239 9 15 8.77614 15 8.5V5.5C15 5.22386 15.2239 5 15.5 5Z" fill="white" />
-                                <path fillRule="evenodd" clipRule="evenodd" d="M15.5 13C14.1193 13 13 14.1193 13 15.5V18.5C13 19.8807 14.1193 21 15.5 21H18.5C19.8807 21 21 19.8807 21 18.5V15.5C21 14.1193 19.8807 13 18.5 13H15.5ZM18.5 15H15.5C15.2239 15 15 15.2239 15 15.5V18.5C15 18.7761 15.2239 19 15.5 19H18.5C18.7761 19 19 18.7761 19 18.5V15.5C19 15.2239 18.7761 15 18.5 15Z" fill="white" />
-                                <path fillRule="evenodd" clipRule="evenodd" d="M3 15.5C3 14.1193 4.11929 13 5.5 13H8.5C9.88071 13 11 14.1193 11 15.5V18.5C11 19.8807 9.88071 21 8.5 21H5.5C4.11929 21 3 19.8807 3 18.5V15.5ZM5.5 15H8.5C8.77614 15 9 15.2239 9 15.5V18.5C9 18.7761 8.77614 19 8.5 19H5.5C5.22386 19 5 18.7761 5 18.5V15.5C5 15.2239 5.22386 15 5.5 15Z" fill="white" />
-                            </svg>
-                        </div>
-                        <div className="button-text" style={{ ...hideText }}>Relatórios</div>
-                    </button>
                     <div className="dropdown-menu">
+                        <div
+                            className="top-dropdown-menu-item"
+                            style={{ borderRadius: '8px', cursor: 'pointer' }}
+                            onClick={() => handleTopLevelToggle('dashboard')}
+                            title="Dashboard"
+                        >
+                            <div>
+                                <DashboardIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
+                            </div>
+                            <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> Dashboard </div>
+                            <div style={{ marginLeft: 'auto', ...hideText }}>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 22 22"
+                                    fill="none"
+                                    style={{
+                                        transition: 'transform 0.2s',
+                                        transform: dashboardOpen ? 'rotate(0deg)' : 'rotate(180deg)'
+                                    }}
+                                >
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
+                                </svg>
+                            </div>
+                        </div>
+                        {!onlyIcons && dashboardOpen && (
+                            <ul className="menu-list">
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Consultor">Consultores</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Cliente">Clientes</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Fast">Fast</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/CS">Sucesso do Cliente</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Comercial">Comercial</a>
+                                </li>
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Diretoria/Faturamento/Geral">Faturamento Geral</a>
+                                    </li>
+                                )}
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Diretoria/Faturamento/Consultor">Faturamento por Consultor</a>
+                                    </li>
+                                )}
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Diretoria/AvisoPrevio">Aviso Prévio</a>
+                                    </li>
+                                )}
+                            </ul>
+                        )}
                         <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
@@ -103,7 +182,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                     fill="none"
                                     style={{
                                         transition: 'transform 0.2s',
-                                        transform: gestaoOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                        transform: gestaoOpen ? 'rotate(0deg)' : 'rotate(180deg)'
                                     }}
                                 >
                                     <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
@@ -112,213 +191,435 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                         </div>
                         {!onlyIcons && gestaoOpen && (
                             <ul className="menu-list">
-                                <li className="dropdown-menu-item">
-                                    <div
-                                        className="submenu-item"
-                                        onClick={() => setConsultorOpen((open: boolean) => !open)}
-                                        role="button"
-                                        aria-expanded={consultorOpen}
-                                    >
-                                        <span>Consultor</span>
-                                        <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: consultorOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
-                                        </svg>
-                                    </div>
-                                    {consultorOpen && (
-                                        <ul className="submenu-list">
-                                            <li>
-                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Registro de Reuniões</a>
-                                            </li>
-                                            <li>
-                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/JornadaCrescimentoCore">Crescimento Core</a>
-                                            </li>
-                                            <li>
-                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/JornadaCrescimentoOverdelivery">Crescimento OverDelivery</a>
-                                            </li>
-                                        </ul>
-                                    )}
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div
-                                        className="submenu-item"
-                                        onClick={() => setComercialOpen((open: boolean) => !open)}
-                                        role="button"
-                                        aria-expanded={comercialOpen}
-                                    >
-                                        <span>Comercial</span>
-                                        <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: comercialOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
-                                        </svg>
-                                    </div>
-                                    {comercialOpen && (
-                                        <ul className="submenu-list">
-                                            <li>
-                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Funil">Funil</a>
-                                            </li>
-                                        </ul>
-                                    )}
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
-                                </li>
+                                {(canSeeAll || isConsultor) && (
+                                    <li className="dropdown-menu-item">
+                                        <div
+                                            className="submenu-item"
+                                            onClick={() => setConsultoresFinanceirosOpen((open: boolean) => !open)}
+                                            role="button"
+                                            aria-expanded={consultoresFinanceirosOpen}
+                                        >
+                                            <span>Consultores Financeiros</span>
+                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: consultoresFinanceirosOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                            </svg>
+                                        </div>
+                                        {consultoresFinanceirosOpen && (
+                                            <ul className="submenu-list">
+                                                <li>
+                                                    <div
+                                                        className="submenu-item"
+                                                        onClick={() => setRegistrosFinanceirosOpen((open: boolean) => !open)}
+                                                        role="button"
+                                                        aria-expanded={registrosFinanceirosOpen}
+                                                    >
+                                                        <span>Registros</span>
+                                                        <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: registrosFinanceirosOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                                        </svg>
+                                                    </div>
+                                                    {registrosFinanceirosOpen && (
+                                                        <ul className="submenu-list">
+                                                            <li>
+                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Dores">Dores</a>
+                                                            </li>
+                                                            <li>
+                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Fotografia">Fotografia</a>
+                                                            </li>
+                                                            {!isDiretor && (
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
+                                                                </li>
+                                                            )}
+                                                            <li>
+                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/JornadaCrescimentoCore">Atividades Core</a>
+                                                            </li>
+                                                            <li>
+                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/JornadaCrescimentoOverdelivery">Overdelivery</a>
+                                                            </li>
+                                                            <li>
+                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Highlights">Highlights</a>
+                                                            </li>
+                                                            {!isDiretor && (
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
+                                                                </li>
+                                                            )}
+                                                        </ul>
+                                                    )}
+                                                </li>
+                                            </ul>
+                                        )}
+                                    </li>
+                                )}
+                                {(canSeeAll || isComercial) && (
+                                    <li className="dropdown-menu-item">
+                                        <div
+                                            className="submenu-item"
+                                            onClick={() => setComercialOpen((open: boolean) => !open)}
+                                            role="button"
+                                            aria-expanded={comercialOpen}
+                                        >
+                                            <span>Consultores Comerciais</span>
+                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: comercialOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                            </svg>
+                                        </div>
+                                        {comercialOpen && (
+                                            <ul className="submenu-list">
+                                                <li>
+                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Funil">Funil</a>
+                                                </li>
+                                            </ul>
+                                        )}
+                                    </li>
+                                )}
+                                {(canSeeAll || isAnalista || isConsultor) && (
+                                    <li className="dropdown-menu-item">
+                                        <div
+                                            className="submenu-item"
+                                            onClick={() => setAnalistasOpen((open: boolean) => !open)}
+                                            role="button"
+                                            aria-expanded={analistasOpen}
+                                        >
+                                            <span>Analistas</span>
+                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: analistasOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                            </svg>
+                                        </div>
+                                        {analistasOpen && (
+                                            <ul className="submenu-list">
+                                                <li>
+                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Analista/Insights">Insights</a>
+                                                </li>
+                                                {((canSeeAll && !isDiretor) || isAnalista) && (
+                                                    <li>
+                                                        <div
+                                                            className="submenu-item"
+                                                            onClick={() => setRegistrosAnalistasOpen((open: boolean) => !open)}
+                                                            role="button"
+                                                            aria-expanded={registrosAnalistasOpen}
+                                                        >
+                                                            <span>Registros</span>
+                                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: registrosAnalistasOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                                            </svg>
+                                                        </div>
+                                                        {registrosAnalistasOpen && (
+                                                            <ul className="submenu-list">
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
+                                                                    </li>
+                                                                )}
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
+                                                                    </li>
+                                                                )}
+                                                            </ul>
+                                                        )}
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        )}
+                                    </li>
+                                )}
+                                {(canSeeAll || isConsultor || isComercial) && (
+                                    <li className="dropdown-menu-item">
+                                        <div
+                                            className="submenu-item"
+                                            onClick={() => setCsOpen((open: boolean) => !open)}
+                                            role="button"
+                                            aria-expanded={csOpen}
+                                        >
+                                            <span>CS</span>
+                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: csOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                            </svg>
+                                        </div>
+                                        {csOpen && (
+                                            <ul className="submenu-list">
+                                                <li>
+                                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Checklist/Acompanhamento/Cliente'}>Checklist de Acompanhamento</div>
+                                                </li>
+                                                {canSeeAll && (
+                                                    <li>
+                                                        <div
+                                                            className="submenu-item"
+                                                            onClick={() => setRegistrosCsOpen((open: boolean) => !open)}
+                                                            role="button"
+                                                            aria-expanded={registrosCsOpen}
+                                                        >
+                                                            <span>Registros</span>
+                                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: registrosCsOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                                            </svg>
+                                                        </div>
+                                                        {registrosCsOpen && (
+                                                            <ul className="submenu-list">
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
+                                                                    </li>
+                                                                )}
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
+                                                                    </li>
+                                                                )}
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Insights">Insights</a>
+                                                                </li>
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/NPS">NPS</a>
+                                                                </li>
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Pesquisa/Satisfacao/ICR">ICR</a>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        )}
+                                    </li>
+                                )}
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <div
+                                            className="submenu-item"
+                                            onClick={() => setDiretoriaOpen((open: boolean) => !open)}
+                                            role="button"
+                                            aria-expanded={diretoriaOpen}
+                                        >
+                                            <span>Diretoria</span>
+                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: diretoriaOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                            </svg>
+                                        </div>
+                                        {diretoriaOpen && (
+                                            <ul className="submenu-list">
+                                                <li>
+                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Registro de Reuniões</a>
+                                                </li>
+                                                <li>
+                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas de Clientes</a>
+                                                </li>
+                                            </ul>
+                                        )}
+                                    </li>
+                                )}
                             </ul>
                         )}
-                        <div
-                            className="top-dropdown-menu-item"
-                            style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => handleTopLevelToggle('cliente')}
-                            title="Cliente"
-                        >
-                            <div>
-                                <StoreIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
-                            </div>
-                            <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> Cliente </div>
-                            <div style={{ marginLeft: 'auto', ...hideText }}>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="22"
-                                    height="22"
-                                    viewBox="0 0 22 22"
-                                    fill="none"
-                                    style={{
-                                        transition: 'transform 0.2s',
-                                        transform: clienteOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-                                    }}
+                        {(canSeeAll || isComercial || isConsultor) && (
+                            <>
+                                <div
+                                    className="top-dropdown-menu-item"
+                                    style={{ borderRadius: '8px', cursor: 'pointer' }}
+                                    onClick={() => handleTopLevelToggle('cliente')}
+                                    title="Cadastro"
                                 >
-                                    <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
-                                </svg>
-                            </div>
-                        </div>
-                        {!onlyIcons && clienteOpen && (
-                            <ul className="menu-list">
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Clientes'}>Clientes Fast</div>
-                                </li>
-                                {/* <li><a className="dropdown-item" href="/cadastro-cliente">Cadastrar Cliente</a></li> */}
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Cadastro'}>Cadastro</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Highlights'}>Highlights</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Fotografia'}>Fotografia</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Dores'}>Dores</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Socios'}>Socios</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div
-                                        className="submenu-item"
-                                        onClick={() => setCsOpen((open) => !open)}
-                                        role="button"
-                                        aria-expanded={csOpen}
-                                    >
-                                        <span>CS</span>
-                                        <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: csOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                    <div>
+                                        <StoreIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
+                                    </div>
+                                    <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> Cadastro </div>
+                                    <div style={{ marginLeft: 'auto', ...hideText }}>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="22"
+                                            height="22"
+                                            viewBox="0 0 22 22"
+                                            fill="none"
+                                            style={{
+                                                transition: 'transform 0.2s',
+                                                transform: clienteOpen ? 'rotate(0deg)' : 'rotate(180deg)'
+                                            }}
+                                        >
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
                                         </svg>
                                     </div>
-                                    {csOpen && (
-                                        <ul className="submenu-list">
-                                            <li>
-                                                <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Checklist/Acompanhamento/Cliente'}>Checklist de Acompanhamento</div>
-                                            </li>
-                                            <li>
-                                                <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Pesquisa/Satisfacao/ICR'}>Pesquisa ICR</div>
-                                            </li>
-                                        </ul>
-                                    )}
-                                </li>
-                            </ul>
+                                </div>
+                                {!onlyIcons && clienteOpen && (
+                                    <ul className="menu-list">
+                                        <li className="dropdown-menu-item">
+                                            <div
+                                                className="submenu-item"
+                                                onClick={() => setClientesSubmenuOpen((open: boolean) => !open)}
+                                                role="button"
+                                                aria-expanded={clientesSubmenuOpen}
+                                            >
+                                                <span>Clientes</span>
+                                                <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: clientesSubmenuOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                    <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                                </svg>
+                                            </div>
+                                            {clientesSubmenuOpen && (
+                                                <ul className="submenu-list">
+                                                    <li>
+                                                        <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Clientes'}>Clientes</div>
+                                                    </li>
+                                                    {!isConsultor && (
+                                                        <li>
+                                                            <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Cadastro'}>Empresa</div>
+                                                        </li>
+                                                    )}
+                                                    <li>
+                                                        <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Socios'}>Sócios</div>
+                                                    </li>
+                                                    <li>
+                                                        <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/PontosApoio'}>Pontos de apoio</div>
+                                                    </li>
+                                                </ul>
+                                            )}
+                                        </li>
+                                        {(canSeeAll || isConsultor || isComercial) && (
+                                            <>
+                                                <li className="dropdown-menu-item">
+                                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Parcerias'}>Parceiros</div>
+                                                </li>
+                                            </>
+                                        )}
+                                        {canSeeAll && (
+                                            <>
+                                                <li className="dropdown-menu-item">
+                                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Cadastro/Usuario'}>Prestadores de serviço</div>
+                                                </li>
+                                            </>
+                                        )}
+                                    </ul>
+                                )}
+                            </>
                         )}
-                        <div
-                            className="top-dropdown-menu-item"
-                            style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => handleTopLevelToggle('ferramentas')}
-                            title="Ferramentas"
-                        >
-                            <div>
-                                <ConstructionIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
-                            </div>
-                            <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> Ferramentas </div>
-                            <div style={{ marginLeft: 'auto', ...hideText }}>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="22"
-                                    height="22"
-                                    viewBox="0 0 22 22"
-                                    fill="none"
-                                    style={{
-                                        transition: 'transform 0.2s',
-                                        transform: ferramentasOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-                                    }}
+                        {(
+                            <>
+                                <div
+                                    className="top-dropdown-menu-item"
+                                    style={{ borderRadius: '8px', cursor: 'pointer' }}
+                                    onClick={() => handleTopLevelToggle('aprendizagem')}
+                                    title="Aprendizagem Contínua"
                                 >
-                                    <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
-                                </svg>
-                            </div>
-                        </div>
-                        {!onlyIcons && ferramentasOpen && (
-                            <ul className="menu-list">
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Biblioteca'}>Biblioteca</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Eventos'}>Eventos</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Eventos/ListaPresenca'}>Lista de Presença</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Ferramentas'}>Ferramentas Desenvolvidas</div>
-                                </li>
-                                {/* <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/SalaDeReuniao'} >Sala de Reunião</li> */}
-                                <li className="dropdown-menu-item">
-                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/ConsultarCNPJ">Consultar CNPJ</a>
-                                </li>
-                            </ul>
+                                    <div>
+                                        <AutoStoriesIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
+                                    </div>
+                                    <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> Aprendizagem Contínua </div>
+                                    <div style={{ marginLeft: 'auto', ...hideText }}>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="22"
+                                            height="22"
+                                            viewBox="0 0 22 22"
+                                            fill="none"
+                                            style={{
+                                                transition: 'transform 0.2s',
+                                                transform: aprendizagemOpen ? 'rotate(0deg)' : 'rotate(180deg)'
+                                            }}
+                                        >
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                {!onlyIcons && aprendizagemOpen && (
+                                    <ul className="menu-list">
+                                        <li className="dropdown-menu-item">
+                                            <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Biblioteca">Biblioteca FAST</a>
+                                        </li>
+                                        <li className="dropdown-menu-item">
+                                            <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Cursos">Cursos FAST</a>
+                                        </li>
+                                        <li className="dropdown-menu-item">
+                                            <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Eventos">Agenda de Eventos</a>
+                                        </li>
+                                    </ul>
+                                )}
+                            </>
                         )}
-                        <div
-                            className="top-dropdown-menu-item"
-                            style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => handleTopLevelToggle('helpdesk')}
-                            title="HelpDesk"
-                        >
-                            <div>
-                                <AddTaskIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
-                            </div>
-                            <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> HelpDesk </div>
-                            <div style={{ marginLeft: 'auto', ...hideText }}>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="22"
-                                    height="22"
-                                    viewBox="0 0 22 22"
-                                    fill="none"
-                                    style={{
-                                        transition: 'transform 0.2s',
-                                        transform: helpdeskOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-                                    }}
+                        {(
+                            <>
+                                <div
+                                    className="top-dropdown-menu-item"
+                                    style={{ borderRadius: '8px', cursor: 'pointer' }}
+                                    onClick={() => handleTopLevelToggle('ferramentas')}
+                                    title="Ferramentas"
                                 >
-                                    <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
-                                </svg>
-                            </div>
-                        </div>
-                        {!onlyIcons && helpdeskOpen && (
-                            <ul className="menu-list">
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/NovoChamado'}>Novo Chamado</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/MeusChamados'}>Meus Chamados</div>
-                                </li>
-                                <li className="dropdown-menu-item">
-                                    <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/AtribuidosAMim'}>Atribuidos A Mim</div>
-                                </li>
-                            </ul>
+                                    <div>
+                                        <ConstructionIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
+                                    </div>
+                                    <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> Ferramentas </div>
+                                    <div style={{ marginLeft: 'auto', ...hideText }}>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="22"
+                                            height="22"
+                                            viewBox="0 0 22 22"
+                                            fill="none"
+                                            style={{
+                                                transition: 'transform 0.2s',
+                                                transform: ferramentasOpen ? 'rotate(0deg)' : 'rotate(180deg)'
+                                            }}
+                                        >
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                {!onlyIcons && ferramentasOpen && (
+                                    <ul className="menu-list">
+                                        <li className="dropdown-menu-item">
+                                            <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Eventos/ListaPresenca'}>Lista de Presença</div>
+                                        </li>
+                                        <li className="dropdown-menu-item">
+                                            <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Ferramentas'}>Ferramentas Desenvolvidas</div>
+                                        </li>
+                                        {/* <li className="dropdown-menu-item" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/SalaDeReuniao'} >Sala de Reunião</li> */}
+                                        <li className="dropdown-menu-item">
+                                            <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/ConsultarCNPJ">Consultar CNPJ</a>
+                                        </li>
+                                    </ul>
+                                )}
+                            </>
+                        )}
+                        {(
+                            <>
+                                <div
+                                    className="top-dropdown-menu-item"
+                                    style={{ borderRadius: '8px', cursor: 'pointer' }}
+                                    onClick={() => handleTopLevelToggle('helpdesk')}
+                                    title="HelpDesk"
+                                >
+                                    <div>
+                                        <AddTaskIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
+                                    </div>
+                                    <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> HelpDesk </div>
+                                    <div style={{ marginLeft: 'auto', ...hideText }}>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="22"
+                                            height="22"
+                                            viewBox="0 0 22 22"
+                                            fill="none"
+                                            style={{
+                                                transition: 'transform 0.2s',
+                                                transform: helpdeskOpen ? 'rotate(0deg)' : 'rotate(180deg)'
+                                            }}
+                                        >
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                {!onlyIcons && helpdeskOpen && (
+                                    <ul className="menu-list">
+                                        <li className="dropdown-menu-item">
+                                            <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/NovoChamado'}>Novo Chamado</div>
+                                        </li>
+                                        <li className="dropdown-menu-item">
+                                            <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/MeusChamados'}>Meus Chamados</div>
+                                        </li>
+                                        <li className="dropdown-menu-item">
+                                            <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/HelpDesk/AtribuidosAMim'}>Atribuidos A Mim</div>
+                                        </li>
+                                    </ul>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
