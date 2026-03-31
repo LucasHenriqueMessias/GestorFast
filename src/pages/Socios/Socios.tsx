@@ -5,6 +5,10 @@ import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, I
 import { Edit as EditIcon } from '@mui/icons-material';
 import { getAccessToken } from '../../utils/storage';
 
+interface SociosProps {
+  showOnlyPontoDeApoio?: boolean;
+}
+
 interface SocioData {
   id: number;
   razao_social: string;
@@ -21,6 +25,7 @@ interface SocioData {
   hobbies: string;
   relatorio_prospeccao: string;
   opcao_pelo_mei: boolean;
+  ponto_de_apoio: boolean;
 }
 
 const formatDatePtBr = (value: unknown) => {
@@ -52,7 +57,8 @@ const formatDatePtBr = (value: unknown) => {
   return raw;
 };
 
-const Socios = () => {
+const Socios = ({ showOnlyPontoDeApoio = false }: SociosProps) => {
+  const fixedPontoDeApoio = showOnlyPontoDeApoio;
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -73,8 +79,8 @@ const Socios = () => {
     hobbies: '',
     relatorio_prospeccao: '',
     opcao_pelo_mei: false,
+    ponto_de_apoio: fixedPontoDeApoio,
   });
-  const [editSocio, setEditSocio] = useState<SocioData | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,16 +108,17 @@ const Socios = () => {
             hobbies: item.hobbies,
             relatorio_prospeccao: item.relatorio_prospeccao,
             opcao_pelo_mei: item.opcao_pelo_mei,
+            ponto_de_apoio: Boolean(item.ponto_de_apoio),
           };
         });
-        setRows(data);
+        setRows(data.filter((item: SocioData) => Boolean(item.ponto_de_apoio) === fixedPontoDeApoio));
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
       }
     };
 
     fetchData();
-  }, []);
+  }, [fixedPontoDeApoio]);
 
   const fetchClientes = async () => {
     try {
@@ -133,6 +140,24 @@ const Socios = () => {
   const handleAddSocio = async () => {
     await fetchClientes();
     setIsEditing(false);
+    setNewSocio({
+      id: 0,
+      razao_social: '',
+      nome_socio: '',
+      idade: 0,
+      cnpj_cpf_do_socio: '',
+      telefone: '',
+      data_nascimento: new Date().toISOString(),
+      data_entrada_sociedade: new Date().toISOString(),
+      formacao: '',
+      disc: '',
+      sedirp: '',
+      eneagrama: '',
+      hobbies: '',
+      relatorio_prospeccao: '',
+      opcao_pelo_mei: false,
+      ponto_de_apoio: fixedPontoDeApoio,
+    });
     setShowForm(true);
   };
 
@@ -141,6 +166,7 @@ const Socios = () => {
     setIsEditing(true);
     setNewSocio({
       ...socio,
+      ponto_de_apoio: fixedPontoDeApoio,
     });
     setShowForm(true);
   };
@@ -164,6 +190,7 @@ const Socios = () => {
       hobbies: '',
       relatorio_prospeccao: '',
       opcao_pelo_mei: false,
+      ponto_de_apoio: fixedPontoDeApoio,
     });
   };
 
@@ -176,11 +203,13 @@ const Socios = () => {
     try {
       if (isEditing) {
         // Update existing socio
-        const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-socios/${newSocio.id}`, newSocio, config);
+        const payload = { ...newSocio, ponto_de_apoio: fixedPontoDeApoio };
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL}/tab-socios/${newSocio.id}`, payload, config);
         setRows(rows.map(row => row.id === newSocio.id ? { ...response.data } : row));
       } else {
         // Create new socio
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-socios`, newSocio, config);
+        const payload = { ...newSocio, ponto_de_apoio: fixedPontoDeApoio };
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/tab-socios`, payload, config);
         setRows([...rows, { id: response.data.id, ...response.data }]);
       }
       
@@ -202,26 +231,40 @@ const Socios = () => {
         hobbies: '',
         relatorio_prospeccao: '',
         opcao_pelo_mei: false,
+        ponto_de_apoio: fixedPontoDeApoio,
       });
+
+      const refreshResponse = await axios.get(`${process.env.REACT_APP_API_URL}/tab-socios`, config);
+      const refreshData = refreshResponse.data.map((item: any) => ({
+        id: item.id,
+        razao_social: item.razao_social,
+        nome_socio: item.nome_socio,
+        idade: item.idade,
+        cnpj_cpf_do_socio: item.cnpj_cpf_do_socio,
+        telefone: item.telefone,
+        data_nascimento: item.data_nascimento,
+        data_entrada_sociedade: item.data_entrada_sociedade,
+        formacao: item.formacao,
+        disc: item.disc,
+        sedirp: item.sedirp,
+        eneagrama: item.eneagrama,
+        hobbies: item.hobbies,
+        relatorio_prospeccao: item.relatorio_prospeccao,
+        opcao_pelo_mei: item.opcao_pelo_mei,
+        ponto_de_apoio: Boolean(item.ponto_de_apoio),
+      }));
+      setRows(refreshData.filter((item: SocioData) => Boolean(item.ponto_de_apoio) === fixedPontoDeApoio));
     } catch (error) {
       console.error('Erro ao salvar Sócio:', error);
-    }
-  };
-
-  const handleSaveEditSocio = () => {
-    if (editSocio) {
-      const updatedQsa = rows.map((socio) => (socio.id === editSocio.id ? editSocio : socio));
-      setRows(updatedQsa);
-      setEditSocio(null);
     }
   };
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'razao_social', headerName: 'Razão Social', width: 200 },
-    { field: 'nome_socio', headerName: 'Nome Sócio', width: 150 },
+    { field: 'nome_socio', headerName: showOnlyPontoDeApoio ? 'Nome' : 'Nome Sócio', width: 150 },
     { field: 'idade', headerName: 'Idade', width: 100 },
-    { field: 'cnpj_cpf_do_socio', headerName: 'CNPJ/CPF do Sócio', width: 150 },
+    { field: 'cnpj_cpf_do_socio', headerName: showOnlyPontoDeApoio ? 'CPF' : 'CNPJ/CPF do Sócio', width: 150 },
     { field: 'telefone', headerName: 'Telefone', width: 130 },
     {
       field: 'data_nascimento',
@@ -230,13 +273,15 @@ const Socios = () => {
       valueFormatter: ({ value }) => formatDatePtBr(value),
       renderCell: ({ row }) => <>{formatDatePtBr((row as SocioData)?.data_nascimento)}</>,
     },
-    {
-      field: 'data_entrada_sociedade',
-      headerName: 'Data Entrada Sociedade',
-      width: 180,
-      valueFormatter: ({ value }) => formatDatePtBr(value),
-      renderCell: ({ row }) => <>{formatDatePtBr((row as SocioData)?.data_entrada_sociedade)}</>,
-    },
+    ...(showOnlyPontoDeApoio
+      ? []
+      : [{
+          field: 'data_entrada_sociedade',
+          headerName: 'Data Entrada Sociedade',
+          width: 180,
+          valueFormatter: ({ value }: { value: unknown }) => formatDatePtBr(value),
+          renderCell: ({ row }: { row: SocioData }) => <>{formatDatePtBr(row?.data_entrada_sociedade)}</>,
+        }]),
     { field: 'formacao', headerName: 'Formação', width: 150 },
     { field: 'disc', headerName: 'DISC', width: 100 },
     { field: 'sedirp', headerName: 'SEDIRP', width: 100 },
@@ -270,7 +315,7 @@ const Socios = () => {
         );
       }
     },
-    { field: 'opcao_pelo_mei', headerName: 'Opção pelo MEI', width: 130, type: 'boolean' },
+    ...(showOnlyPontoDeApoio ? [] : [{ field: 'opcao_pelo_mei', headerName: 'Opção pelo MEI', width: 130, type: 'boolean' as const }]),
     {
       field: 'actions',
       headerName: 'Ações',
@@ -285,12 +330,16 @@ const Socios = () => {
   ];
   return (
     <div style={{ height: 600, width: '100%' }}>
-      <h1>Sócios</h1>
+      <h1>{showOnlyPontoDeApoio ? 'Ponto de Apoio' : 'Sócios'}</h1>
       <Button variant="contained" color="primary" onClick={handleAddSocio} style={{ marginBottom: '16px' }}>
-        Cadastrar Sócio
+        {showOnlyPontoDeApoio ? 'Cadastrar Ponto de Apoio' : 'Cadastrar Sócio'}
       </Button>
       <Dialog open={showForm} onClose={handleCloseForm}>
-        <DialogTitle>{isEditing ? 'Editar Sócio' : 'Cadastro de Sócio'}</DialogTitle>
+        <DialogTitle>
+          {isEditing
+            ? (showOnlyPontoDeApoio ? 'Editar Ponto de Apoio' : 'Editar Sócio')
+            : (showOnlyPontoDeApoio ? 'Cadastro de Ponto de Apoio' : 'Cadastro de Sócio')}
+        </DialogTitle>
         <DialogContent>
           <Autocomplete
             options={clientes}
@@ -313,7 +362,7 @@ const Socios = () => {
           />
           <TextField
             margin="dense"
-            label="Nome Sócio"
+            label={showOnlyPontoDeApoio ? 'Nome' : 'Nome Sócio'}
             type="text"
             fullWidth
             value={newSocio.nome_socio}
@@ -329,7 +378,7 @@ const Socios = () => {
           />
           <TextField
             margin="dense"
-            label="CNPJ/CPF do Sócio"
+            label={showOnlyPontoDeApoio ? 'CPF' : 'CNPJ/CPF do Sócio'}
             type="text"
             fullWidth
             value={newSocio.cnpj_cpf_do_socio}
@@ -353,15 +402,17 @@ const Socios = () => {
             value={newSocio.data_nascimento ? newSocio.data_nascimento.split('T')[0] : ''}
             onChange={(e) => setNewSocio({ ...newSocio, data_nascimento: e.target.value ? new Date(e.target.value).toISOString() : '' })}
           />
-          <TextField
-            margin="dense"
-            label="Data Entrada Sociedade"
-            type="date"
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            value={newSocio.data_entrada_sociedade ? newSocio.data_entrada_sociedade.split('T')[0] : ''}
-            onChange={(e) => setNewSocio({ ...newSocio, data_entrada_sociedade: e.target.value ? new Date(e.target.value).toISOString() : '' })}
-          />
+          {!showOnlyPontoDeApoio && (
+            <TextField
+              margin="dense"
+              label="Data Entrada Sociedade"
+              type="date"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              value={newSocio.data_entrada_sociedade ? newSocio.data_entrada_sociedade.split('T')[0] : ''}
+              onChange={(e) => setNewSocio({ ...newSocio, data_entrada_sociedade: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+            />
+          )}
           <TextField
             margin="dense"
             label="Formação"
@@ -410,12 +461,16 @@ const Socios = () => {
             value={newSocio.relatorio_prospeccao}
             onChange={(e) => setNewSocio({ ...newSocio, relatorio_prospeccao: e.target.value })}
           />
-          <label>Opção pelo MEI</label>
-          <input
-            type="checkbox"
-            checked={newSocio.opcao_pelo_mei}
-            onChange={(e) => setNewSocio({ ...newSocio, opcao_pelo_mei: e.target.checked })}
-          />
+          {!showOnlyPontoDeApoio && (
+            <>
+              <label>Opção pelo MEI</label>
+              <input
+                type="checkbox"
+                checked={newSocio.opcao_pelo_mei}
+                onChange={(e) => setNewSocio({ ...newSocio, opcao_pelo_mei: e.target.checked })}
+              />
+            </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseForm} color="primary">
@@ -430,10 +485,6 @@ const Socios = () => {
         rows={rows}
         columns={columns}
         autoPageSize={true}
-        processRowUpdate={(newRow) => {
-          handleSaveEditSocio();
-          return newRow;
-        }}
         getRowId={(row) => row.id}
 
       />

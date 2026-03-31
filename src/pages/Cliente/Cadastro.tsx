@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios'; // Import axios
 import SearchIcon from '@mui/icons-material/Search'; // Import the SearchIcon
 import './Cadastro.css'; // Import the CSS file for styling
-import { getAccessToken } from '../../utils/storage'; // Import the function to get the access token
+import { getAccessToken, getDepartment } from '../../utils/storage'; // Import the function to get the access token
 
 function formatCNPJ(value: string) {
   value = value.replace(/\D/g, '');
@@ -26,6 +26,8 @@ const Cadastro = () => {
   // const [showWarningForm, setShowWarningForm] = useState(false);
   const [allData, setAllData] = useState<ClienteData[]>([]); // Use the defined type for allData
   const [searchTerm, setSearchTerm] = useState(''); // State for search input
+  const department = getDepartment();
+  const canRegisterClient = ['Developer', 'Gestor', 'Diretor', 'Comercial'].includes(department || '');
 
 
 
@@ -100,7 +102,7 @@ const Cadastro = () => {
     data_inicio_parceria: null,
     padrinho_parceria: '',
     avaliacao_parceria: '',
-    cliente_fast: false,
+    cliente_fast: true,
     id_contrato: 0,
     id_icone: 0,
     comercial: '',
@@ -244,9 +246,8 @@ const Cadastro = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação: pelo menos uma das opções deve estar selecionada
-    if (!formData.cliente_fast && !formData.parceiro && !formData.prospeccao) {
-      alert('É obrigatório selecionar pelo menos uma das opções: Cliente Fast, Parceiro Fast ou Funil.');
+    if (!canRegisterClient) {
+      alert('Você não tem permissão para cadastrar novos clientes. Apenas Developer, Gestor, Diretor e Comercial podem realizar esta ação.');
       return;
     }
     
@@ -269,6 +270,7 @@ const Cadastro = () => {
       
       const payload = {
         ...formData,
+        cliente_fast: true,
         // Remove caracteres especiais do CNPJ antes de enviar para a API
         cnpj: formData.cnpj.replace(/\D/g, ''),
         valor_fatura_cliente: valorFaturaNumber,
@@ -382,7 +384,7 @@ const Cadastro = () => {
       data_inicio_parceria: null,
       padrinho_parceria: '',
       avaliacao_parceria: '',
-      cliente_fast: false,
+      cliente_fast: true,
       id_contrato: 0,
       id_icone: 0,
       comercial: '',
@@ -518,125 +520,6 @@ const Cadastro = () => {
 
 
       <div className="form-row">
-        <label className="checkbox-label">
-          <input type="checkbox" name="cliente_fast" checked={formData.cliente_fast} onChange={handleChange} />
-           Cliente Fast
-        </label>
-        <br/>
-<div className="form-group">
-  <label className="checkbox-label">
-    <input type="checkbox" name="parceiro" checked={formData.parceiro} onChange={handleChange} />
-    Parceiro Fast
-  </label>
-</div>
-{formData.parceiro && (
-  <>
-    <div className="form-group">
-      <label>Data Início Parceria:</label>
-      <input
-        type="date"
-        name="data_inicio_parceria"
-        value={formData.data_inicio_parceria || ''} // Converte null para string vazia
-        onChange={handleChange}
-      />
-    </div>
-
-    <div className="form-group">
-      <label>Padrinho Parceria:</label>
-      <input type="text" name="padrinho_parceria" value={formData.padrinho_parceria} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Justificativa Parceria:</label>
-      <input type="text" name="justificativa_parceria" value={formData.justificativa_parceria} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Status Parceria:</label>
-      <input type="text" name="status_parceria" value={formData.status_parceria} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Resultados Parceria:</label>
-      <input type="text" name="resultados_parceria" value={formData.resultados_parceria} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Avaliação Parceria:</label>
-      <input type="text" name="avaliacao_parceria" value={formData.avaliacao_parceria} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Descrição Avaliação Parceria:</label>
-      <input type="text" name="descricao_avaliacao_parceria" value={formData.descricao_avaliacao_parceria} onChange={handleChange} />
-    </div>
-  </>
-)}
-
-
-
-
-
-
-<div className="form-group">
-  <label className="checkbox-label">
-    <input type="checkbox" name="prospeccao" checked={formData.prospeccao} onChange={handleChange} />
-    Funil
-  </label>
-</div>
-{formData.prospeccao && (
-  <>
-    <div className="form-group">
-      <label>Responsável Prospecção:</label>
-      <input type="text" name="responsavel_prospeccao" value={formData.responsavel_prospeccao} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Data da Previsão de Fechamento:</label>
-      <input
-        type="date"
-        name="data_previsao_fechamento"
-        value={formData.data_previsao_fechamento || ''} // Converte null para string vazia
-        onChange={handleChange}
-      />
-    </div>
-    <div className="form-group">
-      <label>Data de Retorno:</label>
-      <input
-        type="date"
-        name="data_retorno"
-        value={formData.data_retorno || ''}
-        onChange={handleChange}
-      />
-    </div>
-
-    <div className="form-group">
-            <select
-              name="temperatura"
-              value={formData.temperatura}
-              onChange={handleChange}
-              className="select-input"
-            >
-              <option value="" disabled>Temperatura do Lead</option>
-              <option value="Quente">Quente</option>
-              <option value="Frio">Frio</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <select
-              name="status_prospeccao"
-              value={formData.status_prospeccao}
-              onChange={handleChange}
-              className="select-input"
-            >
-              <option value="" disabled>Status do Lead</option>
-              <option value="sem perfil">Sem Perfil</option>
-              <option value="proposta enviada">Proposta Enviada</option>
-              <option value="em negociação">Em Negociação</option>
-              <option value="contrato fechado">Contrato Fechado</option>
-              <option value="não houve interesse">Não Houve Interesse</option>
-              <option value="não é o momento">Não é o momento</option>
-              <option value="Lead">Lead</option>
-
-            </select>
-          </div>
-  </>
-)}
 
 
 {/* <div className="form-group">
@@ -1065,9 +948,14 @@ const Cadastro = () => {
       </div> */}
 
       <div className="form-row">
-        <button type="submit" className="submit-button">
+        <button type="submit" className="submit-button" disabled={!canRegisterClient}>
           Cadastrar
         </button>
+        {!canRegisterClient && (
+          <p style={{ color: 'red', marginTop: '10px', fontSize: '14px' }}>
+            Apenas Developer, Gestor, Diretor e Comercial podem cadastrar novos clientes.
+          </p>
+        )}
       </div>
     </form>
   );

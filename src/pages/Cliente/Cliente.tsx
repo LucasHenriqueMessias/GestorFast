@@ -1,7 +1,7 @@
 import { DataGridPro, GridColDef, GridRowsProp } from '@mui/x-data-grid-pro';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { getAccessToken } from '../../utils/storage';
+import { getAccessToken, getDepartment } from '../../utils/storage';
 import { Button, Container, Typography, Box } from '@mui/material';
 
 
@@ -10,6 +10,8 @@ const Cliente = () => {
   const [editRowId, setEditRowId] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [loading, setLoading] = useState(false);
+  const department = getDepartment();
+  const canEditClient = ['Developer', 'Gestor', 'Diretor', 'Comercial'].includes(department || '');
 
 
   useEffect(() => {
@@ -88,7 +90,11 @@ const Cliente = () => {
     fetchData();
   }, []);
 
-  const handleEditClick = (row: any) => {
+  const handleEditClick = React.useCallback((row: any) => {
+    if (!canEditClient) {
+      alert('Você não tem permissão para editar clientes. Apenas Developer, Gestor, Diretor e Comercial podem realizar esta ação.');
+      return;
+    }
     setEditRowId(row.id);
     setEditData({
       ...row,
@@ -101,7 +107,7 @@ const Cliente = () => {
             })
           : ''
     });
-  };
+  }, [canEditClient]);
 
   const handleEditChange = React.useCallback((field: string, value: any) => {
     // Special handling for cliente_fast field when setting to false
@@ -602,12 +608,12 @@ const Cliente = () => {
             <Typography><strong>Comissão Indicação:</strong> {row.comissao_indicacao}%</Typography>
             <Typography><strong>Comissão Fechamento:</strong> {row.comissao_fechamento}%</Typography>
             
-            <Button variant="outlined" sx={{ mt: 2 }} onClick={() => handleEditClick(row)}>Editar</Button>
+            {canEditClient && <Button variant="outlined" sx={{ mt: 2 }} onClick={() => handleEditClick(row)}>Editar</Button>}
           </>
         )}
       </Box>
     );
-  }, [editRowId, editData, loading, handleSaveEdit, handleEditChange]);
+  }, [editRowId, editData, loading, handleSaveEdit, handleEditChange, canEditClient, handleEditClick]);
 
   const getDetailPanelHeight = React.useCallback(() => 600, []);
 

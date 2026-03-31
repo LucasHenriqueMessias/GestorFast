@@ -43,12 +43,17 @@ const formatDatePtBr = (value: unknown) => {
     return raw;
   }
 
-  // Handle ISO date strings (36-dayZ) or YYYY-MM-DD
-  const isoLike = raw.includes('T') ? raw : `${raw}T00:00:00`; // ensures Date parses YYYY-MM-DD
-  const parsed = new Date(isoLike);
+  // Avoid timezone shift by formatting the date-only portion directly.
+  const datePart = raw.split('T')[0];
+  const ymdMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymdMatch) {
+    const [, year, month, day] = ymdMatch;
+    return `${day}/${month}/${year}`;
+  }
 
+  const parsed = new Date(raw);
   if (!Number.isNaN(parsed.getTime())) {
-    return parsed.toLocaleDateString('pt-BR');
+    return parsed.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
   return raw;

@@ -441,6 +441,7 @@ const SignUp = () => {
 
   const departments = [
     'Consultor',
+    'CS',
     'Analista',
     'Developer',
     'Comercial',

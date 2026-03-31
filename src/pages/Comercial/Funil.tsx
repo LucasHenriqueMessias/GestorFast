@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -70,7 +70,6 @@ const Funil = () => {
     colaborador: colaboradorUsuario,
   });
   const [selectedId, setSelectedId] = useState('');
-  const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -109,21 +108,18 @@ const Funil = () => {
     setSnackbar({ open: true, message, severity: 'success' });
   };
 
-  const loadAll = async () => {
-    setLoading(true);
+  const loadAll = useCallback(async () => {
     try {
       const response = await axios.get(`${apiBaseUrl}/tab-funil-vendas`, authConfig());
       setRows(Array.isArray(response.data) ? response.data : []);
     } catch {
       showError('Erro ao carregar tab-funil-vendas.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [apiBaseUrl, authConfig]);
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [loadAll]);
 
   const handleFieldChange = (field: keyof TabFunilVendaPayload, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -226,9 +222,6 @@ const Funil = () => {
           <Typography variant="h4" fontWeight={700} gutterBottom>
             Funil de Vendas
           </Typography>
-          <Typography variant="body1">
-            Tela integrada aos endpoints de tab-funil-vendas com Bearer token.
-          </Typography>
         </Box>
 
         <Paper sx={{ p: 2 }}>
@@ -248,12 +241,14 @@ const Funil = () => {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} mb={2}>
               <TextField
                 fullWidth
+                type="number"
                 label="Contato"
                 value={form.contato}
                 onChange={(e) => handleFieldChange('contato', e.target.value)}
               />
               <TextField
                 fullWidth
+                type="number"
                 label="Qualificações"
                 value={form.qualificacoes}
                 onChange={(e) => handleFieldChange('qualificacoes', e.target.value)}
@@ -263,18 +258,21 @@ const Funil = () => {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} mb={2}>
               <TextField
                 fullWidth
+                type="number"
                 label="Visitas"
                 value={form.visitas}
                 onChange={(e) => handleFieldChange('visitas', e.target.value)}
               />
               <TextField
                 fullWidth
+                type="number"
                 label="Propostas"
                 value={form.propostas}
                 onChange={(e) => handleFieldChange('propostas', e.target.value)}
               />
               <TextField
                 fullWidth
+                type="number"
                 label="Contratos"
                 value={form.contratos}
                 onChange={(e) => handleFieldChange('contratos', e.target.value)}
@@ -292,18 +290,21 @@ const Funil = () => {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} mb={2}>
               <TextField
                 fullWidth
+                type="number"
                 label="Não fechados"
                 value={form.naoFechados}
                 onChange={(e) => handleFieldChange('naoFechados', e.target.value)}
               />
               <TextField
                 fullWidth
+                type="number"
                 label="Sem perfil"
                 value={form.semPerfil}
                 onChange={(e) => handleFieldChange('semPerfil', e.target.value)}
               />
               <TextField
                 fullWidth
+                type="number"
                 label="Nutrição"
                 value={form.nutricao}
                 onChange={(e) => handleFieldChange('nutricao', e.target.value)}

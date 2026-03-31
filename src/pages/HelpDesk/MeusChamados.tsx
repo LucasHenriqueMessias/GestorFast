@@ -74,6 +74,38 @@ interface ClienteData {
   razao_social: string;
 }
 
+const padDatePart = (value: number) => String(value).padStart(2, '0');
+
+const toDateOnlyString = (value: Date | string | null | undefined): string | null => {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    const plainDateMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (plainDateMatch) return plainDateMatch[0];
+
+    const isoDateMatch = value.match(/^(\d{4}-\d{2}-\d{2})T/);
+    if (isoDateMatch) return isoDateMatch[1];
+
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return `${parsed.getFullYear()}-${padDatePart(parsed.getMonth() + 1)}-${padDatePart(parsed.getDate())}`;
+    }
+
+    return null;
+  }
+
+  if (Number.isNaN(value.getTime())) return null;
+  return `${value.getFullYear()}-${padDatePart(value.getMonth() + 1)}-${padDatePart(value.getDate())}`;
+};
+
+const formatDatePtBr = (value: Date | string | null | undefined) => {
+  const dateOnly = toDateOnlyString(value);
+  if (!dateOnly) return '-';
+
+  const [year, month, day] = dateOnly.split('-');
+  return `${day}/${month}/${year}`;
+};
+
 const MeusChamados = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -174,10 +206,7 @@ const MeusChamados = () => {
     }
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
+  const formatDate = (date: Date | string | null) => formatDatePtBr(date);
 
   const toggleExpanded = (id: string) => {
     const newExpandedRows = new Set(expandedRows);
@@ -200,7 +229,7 @@ const MeusChamados = () => {
       Titulo: chamado.Titulo,
       Descricao: chamado.Descricao,
       Cliente: chamado.Cliente || '',
-      Expectativa_Conclusao: chamado.Expectativa_Conclusao ? new Date(chamado.Expectativa_Conclusao).toISOString().split('T')[0] : ''
+      Expectativa_Conclusao: toDateOnlyString(chamado.Expectativa_Conclusao) || ''
     });
     setDetailOpen(true);
     setEditMode(true);
@@ -293,7 +322,7 @@ const MeusChamados = () => {
       Titulo: chamado.Titulo,
       Descricao: chamado.Descricao,
       Cliente: chamado.Cliente || '',
-      Expectativa_Conclusao: chamado.Expectativa_Conclusao ? new Date(chamado.Expectativa_Conclusao).toISOString().split('T')[0] : ''
+      Expectativa_Conclusao: toDateOnlyString(chamado.Expectativa_Conclusao) || ''
     });
     setDetailOpen(true);
     setEditMode(false);
@@ -311,7 +340,7 @@ const MeusChamados = () => {
         Titulo: selectedChamado.Titulo,
         Descricao: selectedChamado.Descricao,
         Cliente: selectedChamado.Cliente || '',
-        Expectativa_Conclusao: selectedChamado.Expectativa_Conclusao ? new Date(selectedChamado.Expectativa_Conclusao).toISOString().split('T')[0] : ''
+        Expectativa_Conclusao: toDateOnlyString(selectedChamado.Expectativa_Conclusao) || ''
       });
     }
     

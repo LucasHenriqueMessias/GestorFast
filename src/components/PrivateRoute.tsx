@@ -24,7 +24,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedDepartment
     return <Navigate to="/login" />;
   }
 
-  if (!allowedDepartments.includes(department || '')) {
+  if (allowedDepartments.length > 0 && !allowedDepartments.includes(department || '')) {
     alert('Você não tem permissão para acessar essa página.');
     return <Navigate to="/home" />;
   }

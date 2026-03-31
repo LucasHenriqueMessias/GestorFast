@@ -8,9 +8,10 @@ import ConstructionIcon from '@mui/icons-material/Construction';
 import AddTaskIcon from '@mui/icons-material/AddTask';
 import { getDepartment } from '../../utils/storage';
 
-type TopLevelSection = 'gestao' | 'aprendizagem' | 'cliente' | 'ferramentas' | 'helpdesk';
+type TopLevelSection = 'dashboard' | 'gestao' | 'aprendizagem' | 'cliente' | 'ferramentas' | 'helpdesk';
 
 export default function Sidebar({ onlyIcons = false, onExpand, children }: { onlyIcons?: boolean; onExpand?: () => void; children?: React.ReactNode }) {
+    const [dashboardOpen, setDashboardOpen] = useState(false);
     const [gestaoOpen, setGestaoOpen] = useState(false);
     const [aprendizagemOpen, setAprendizagemOpen] = useState(false);
     const [clienteOpen, setClienteOpen] = useState(false);
@@ -23,6 +24,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
     const [analistasOpen, setAnalistasOpen] = useState(false);
     const [registrosAnalistasOpen, setRegistrosAnalistasOpen] = useState(false);
     const [registrosCsOpen, setRegistrosCsOpen] = useState(false);
+    const [diretoriaOpen, setDiretoriaOpen] = useState(false);
     const [clientesSubmenuOpen, setClientesSubmenuOpen] = useState(false);
 
     // Get user department
@@ -33,6 +35,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
     const isConsultor = department === 'Consultor';
     const isAnalista = department === 'Analista';
     const isComercial = department === 'Comercial';
+    const isDiretor = department === 'Diretor';
 
     // Helper to hide text if onlyIcons is true
     const hideText = onlyIcons ? { display: 'none' } : {};
@@ -45,10 +48,12 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
         setAnalistasOpen(false);
         setRegistrosAnalistasOpen(false);
         setRegistrosCsOpen(false);
+        setDiretoriaOpen(false);
         setClientesSubmenuOpen(false);
     };
 
     const openTopLevelSection = (section: TopLevelSection) => {
+        setDashboardOpen(section === 'dashboard');
         setGestaoOpen(section === 'gestao');
         setAprendizagemOpen(section === 'aprendizagem');
         setClienteOpen(section === 'cliente');
@@ -65,6 +70,9 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
         }
 
         switch (section) {
+            case 'dashboard':
+                setDashboardOpen((open) => !open);
+                break;
             case 'gestao':
                 setGestaoOpen((open) => !open);
                 break;
@@ -98,15 +106,63 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                         <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
-                            onClick={() => window.location.href = '/Relatorios'}
+                            onClick={() => handleTopLevelToggle('dashboard')}
                             title="Dashboard"
                         >
                             <div>
                                 <DashboardIcon style={{ color: '#5C59E8', width: '22px', height: '22px' }} />
                             </div>
                             <div style={{ ...hideText, flex: 1, textAlign: 'left' }}> Dashboard </div>
-                            <div style={{ marginLeft: 'auto', ...hideText }} />
+                            <div style={{ marginLeft: 'auto', ...hideText }}>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 22 22"
+                                    fill="none"
+                                    style={{
+                                        transition: 'transform 0.2s',
+                                        transform: dashboardOpen ? 'rotate(0deg)' : 'rotate(180deg)'
+                                    }}
+                                >
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8"/>
+                                </svg>
+                            </div>
                         </div>
+                        {!onlyIcons && dashboardOpen && (
+                            <ul className="menu-list">
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Consultor">Consultores</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Cliente">Clientes</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Fast">Fast</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/CS">Sucesso do Cliente</a>
+                                </li>
+                                <li className="dropdown-menu-item">
+                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Comercial">Comercial</a>
+                                </li>
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Diretoria/Faturamento/Geral">Faturamento Geral</a>
+                                    </li>
+                                )}
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Diretoria/Faturamento/Consultor">Faturamento por Consultor</a>
+                                    </li>
+                                )}
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Diretoria/AvisoPrevio">Aviso Prévio</a>
+                                    </li>
+                                )}
+                            </ul>
+                        )}
                         <div
                             className="top-dropdown-menu-item"
                             style={{ borderRadius: '8px', cursor: 'pointer' }}
@@ -170,9 +226,11 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                                             <li>
                                                                 <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Fotografia">Fotografia</a>
                                                             </li>
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
-                                                            </li>
+                                                            {!isDiretor && (
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
+                                                                </li>
+                                                            )}
                                                             <li>
                                                                 <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/JornadaCrescimentoCore">Atividades Core</a>
                                                             </li>
@@ -182,9 +240,11 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                                             <li>
                                                                 <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Highlights">Highlights</a>
                                                             </li>
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
-                                                            </li>
+                                                            {!isDiretor && (
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
+                                                                </li>
+                                                            )}
                                                         </ul>
                                                     )}
                                                 </li>
@@ -214,7 +274,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                         )}
                                     </li>
                                 )}
-                                {(canSeeAll || isAnalista) && (
+                                {(canSeeAll || isAnalista || isConsultor) && (
                                     <li className="dropdown-menu-item">
                                         <div
                                             className="submenu-item"
@@ -232,34 +292,40 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                                 <li>
                                                     <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Analista/Insights">Insights</a>
                                                 </li>
-                                                <li>
-                                                    <div
-                                                        className="submenu-item"
-                                                        onClick={() => setRegistrosAnalistasOpen((open: boolean) => !open)}
-                                                        role="button"
-                                                        aria-expanded={registrosAnalistasOpen}
-                                                    >
-                                                        <span>Registros</span>
-                                                        <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: registrosAnalistasOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
-                                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
-                                                        </svg>
-                                                    </div>
-                                                    {registrosAnalistasOpen && (
-                                                        <ul className="submenu-list">
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
-                                                            </li>
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
-                                                            </li>
-                                                        </ul>
-                                                    )}
-                                                </li>
+                                                {((canSeeAll && !isDiretor) || isAnalista) && (
+                                                    <li>
+                                                        <div
+                                                            className="submenu-item"
+                                                            onClick={() => setRegistrosAnalistasOpen((open: boolean) => !open)}
+                                                            role="button"
+                                                            aria-expanded={registrosAnalistasOpen}
+                                                        >
+                                                            <span>Registros</span>
+                                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: registrosAnalistasOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                                            </svg>
+                                                        </div>
+                                                        {registrosAnalistasOpen && (
+                                                            <ul className="submenu-list">
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
+                                                                    </li>
+                                                                )}
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
+                                                                    </li>
+                                                                )}
+                                                            </ul>
+                                                        )}
+                                                    </li>
+                                                )}
                                             </ul>
                                         )}
                                     </li>
                                 )}
-                                {canSeeAll && (
+                                {(canSeeAll || isConsultor || isComercial) && (
                                     <li className="dropdown-menu-item">
                                         <div
                                             className="submenu-item"
@@ -277,37 +343,68 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                                 <li>
                                                     <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Checklist/Acompanhamento/Cliente'}>Checklist de Acompanhamento</div>
                                                 </li>
+                                                {canSeeAll && (
+                                                    <li>
+                                                        <div
+                                                            className="submenu-item"
+                                                            onClick={() => setRegistrosCsOpen((open: boolean) => !open)}
+                                                            role="button"
+                                                            aria-expanded={registrosCsOpen}
+                                                        >
+                                                            <span>Registros</span>
+                                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: registrosCsOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                                            </svg>
+                                                        </div>
+                                                        {registrosCsOpen && (
+                                                            <ul className="submenu-list">
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
+                                                                    </li>
+                                                                )}
+                                                                {!isDiretor && (
+                                                                    <li>
+                                                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
+                                                                    </li>
+                                                                )}
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Insights">Insights</a>
+                                                                </li>
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/NPS">NPS</a>
+                                                                </li>
+                                                                <li>
+                                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Pesquisa/Satisfacao/ICR">ICR</a>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        )}
+                                    </li>
+                                )}
+                                {canSeeAll && (
+                                    <li className="dropdown-menu-item">
+                                        <div
+                                            className="submenu-item"
+                                            onClick={() => setDiretoriaOpen((open: boolean) => !open)}
+                                            role="button"
+                                            aria-expanded={diretoriaOpen}
+                                        >
+                                            <span>Diretoria</span>
+                                            <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: diretoriaOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
+                                            </svg>
+                                        </div>
+                                        {diretoriaOpen && (
+                                            <ul className="submenu-list">
                                                 <li>
-                                                    <div
-                                                        className="submenu-item"
-                                                        onClick={() => setRegistrosCsOpen((open: boolean) => !open)}
-                                                        role="button"
-                                                        aria-expanded={registrosCsOpen}
-                                                    >
-                                                        <span>Registros</span>
-                                                        <svg style={{ marginLeft: 8, transition: 'transform 0.2s', transform: registrosCsOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 22 22" fill="none">
-                                                            <path fillRule="evenodd" clipRule="evenodd" d="M17.1482 14.3982C16.7902 14.7562 16.2098 14.7562 15.8519 14.3982L11 9.54637L6.14822 14.3982C5.79024 14.7562 5.20984 14.7562 4.85186 14.3982C4.49388 14.0402 4.49388 13.4598 4.85186 13.1018L10.6759 7.27774C10.8549 7.09875 11.1451 7.09875 11.3241 7.27774L17.1482 13.1018C17.5062 13.4598 17.5062 14.0402 17.1482 14.3982Z" fill="#5C59E8" />
-                                                        </svg>
-                                                    </div>
-                                                    {registrosCsOpen && (
-                                                        <ul className="submenu-list">
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Reuniões</a>
-                                                            </li>
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas</a>
-                                                            </li>
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Insights">Insights</a>
-                                                            </li>
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/NPS">NPS</a>
-                                                            </li>
-                                                            <li>
-                                                                <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Pesquisa/Satisfacao/ICR">ICR</a>
-                                                            </li>
-                                                        </ul>
-                                                    )}
+                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/RegistroDeReunioes">Registro de Reuniões</a>
+                                                </li>
+                                                <li>
+                                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Alertas">Alertas de Clientes</a>
                                                 </li>
                                             </ul>
                                         )}
@@ -315,7 +412,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                 )}
                             </ul>
                         )}
-                        {(canSeeAll || isComercial) && (
+                        {(canSeeAll || isComercial || isConsultor) && (
                             <>
                                 <div
                                     className="top-dropdown-menu-item"
@@ -362,9 +459,11 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                                     <li>
                                                         <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Clientes'}>Clientes</div>
                                                     </li>
-                                                    <li>
-                                                        <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Cadastro'}>Empresa</div>
-                                                    </li>
+                                                    {!isConsultor && (
+                                                        <li>
+                                                            <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Cadastro'}>Empresa</div>
+                                                        </li>
+                                                    )}
                                                     <li>
                                                         <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Socios'}>Sócios</div>
                                                     </li>
@@ -374,11 +473,15 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                                 </ul>
                                             )}
                                         </li>
-                                        {canSeeAll && (
+                                        {(canSeeAll || isConsultor || isComercial) && (
                                             <>
                                                 <li className="dropdown-menu-item">
                                                     <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Parcerias'}>Parceiros</div>
                                                 </li>
+                                            </>
+                                        )}
+                                        {canSeeAll && (
+                                            <>
                                                 <li className="dropdown-menu-item">
                                                     <div className="submenu-item" style={{ justifyContent: 'flex-start' }} onClick={() => window.location.href = '/Cadastro/Usuario'}>Prestadores de serviço</div>
                                                 </li>
@@ -388,7 +491,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                 )}
                             </>
                         )}
-                        {canSeeAll && (
+                        {(
                             <>
                                 <div
                                     className="top-dropdown-menu-item"
@@ -422,7 +525,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                             <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Biblioteca">Biblioteca FAST</a>
                                         </li>
                                         <li className="dropdown-menu-item">
-                                            <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Biblioteca">Videos FAST</a>
+                                            <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Cursos">Cursos FAST</a>
                                         </li>
                                         <li className="dropdown-menu-item">
                                             <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Eventos">Agenda de Eventos</a>
@@ -431,7 +534,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                 )}
                             </>
                         )}
-                        {canSeeAll && (
+                        {(
                             <>
                                 <div
                                     className="top-dropdown-menu-item"
@@ -475,7 +578,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                 )}
                             </>
                         )}
-                        {(canSeeAll || isAnalista) && (
+                        {(
                             <>
                                 <div
                                     className="top-dropdown-menu-item"

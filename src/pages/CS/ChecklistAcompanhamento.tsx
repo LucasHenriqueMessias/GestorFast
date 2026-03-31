@@ -52,8 +52,9 @@ const initialFormState: Omit<Checklist, 'id'> = {
 
 const ChecklistAcompanhamento: React.FC = () => {
   const department = getDepartment();
-  const canEditAnalista = department === 'Analista' || department === 'Diretor';
-  const canEditCs = department === 'CS' || department === 'Diretor';
+  const canEditChecklist = ['Analista', 'Comercial', 'CS', 'Diretor', 'Gestor', 'Developer'].includes(department || '');
+  const canEditAnalista = ['Analista', 'Developer', 'Diretor'].includes(department || '');
+  const canEditCs = ['CS', 'Developer', 'Diretor'].includes(department || '');
   // Estado para lista de clientes
   const [clientes, setClientes] = useState<{ razao_social: string }[]>([]);
   // Buscar clientes para o select de empresa
@@ -124,6 +125,10 @@ const ChecklistAcompanhamento: React.FC = () => {
   }, []);
 
   const handleOpenDialog = (row?: Checklist) => {
+    if (!canEditChecklist) {
+      return;
+    }
+
     if (row) {
       const { id, ...rest } = row;
       setForm({
@@ -155,6 +160,12 @@ const ChecklistAcompanhamento: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!canEditChecklist) {
+      alert('Você não tem permissão para editar o checklist.');
+      return;
+    }
+
     const token = getAccessToken();
     if (!form.empresa.trim()) {
       alert('Selecione uma empresa antes de salvar o checklist.');
@@ -230,7 +241,7 @@ const ChecklistAcompanhamento: React.FC = () => {
         </Button>
         <Typography variant="h4" sx={{ m: 0 }}>Checklist de Acompanhamento de Cliente</Typography>
       </Box>
-      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ mb: 2, mr: 2 }}>
+      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ mb: 2, mr: 2 }} disabled={!canEditChecklist}>
         Adicionar Checklist
       </Button>
       <Autocomplete
@@ -322,7 +333,7 @@ const ChecklistAcompanhamento: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setDetailRow(null)} color="primary">Fechar</Button>
-            {detailRow && (
+            {detailRow && canEditChecklist && (
               <Button
                 color="primary"
                 variant="outlined"
@@ -519,7 +530,7 @@ const ChecklistAcompanhamento: React.FC = () => {
             multiline
             minRows={3}
             disabled={!canEditCs}
-            helperText={!canEditCs ? 'Edição permitida apenas para o departamento CS.' : undefined}
+            helperText={!canEditCs ? 'Edição permitida apenas para CS, Developer e Diretor.' : undefined}
           />
           <TextField
             margin="dense"
@@ -533,7 +544,7 @@ const ChecklistAcompanhamento: React.FC = () => {
             multiline
             minRows={3}
             disabled={!canEditAnalista}
-            helperText={!canEditAnalista ? 'Edição permitida apenas para o departamento Analista.' : undefined}
+            helperText={!canEditAnalista ? 'Edição permitida apenas para Analista, Developer e Diretor.' : undefined}
           />
           <TextField
             margin="dense"
@@ -609,7 +620,7 @@ const ChecklistAcompanhamento: React.FC = () => {
           <Button onClick={handleCloseDialog} color="primary">
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} color="primary">
+          <Button onClick={handleSubmit} color="primary" disabled={!canEditChecklist}>
             {editId ? 'Salvar Alterações' : 'Adicionar'}
           </Button>
         </DialogActions>

@@ -48,7 +48,7 @@ const Parceiros = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const department = getDepartment();
-  const canEdit = department === 'Developer' || department === 'Diretor';
+  const canEdit = ['Developer', 'Gestor', 'Diretor'].includes(department || '');
 
   const columns: GridColDef[] = [
     { 
