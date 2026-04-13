@@ -34,6 +34,7 @@ interface KPIsAnalistaProps {
   entregas: Array<{
     status: string;
     razao_social?: string;
+    data?: string;
     categoria?: string;
     complexidade?: string;
     impacto_anual_r?: number | string;
@@ -69,6 +70,20 @@ const COMPLEXITY_COLORS: Record<string, string> = {
   'Média': '#F59E0B',
   Alta: '#EF4444',
   'Sem complexidade': '#6B7280',
+};
+
+const parseDateOnly = (value?: string) => {
+  if (!value) return null;
+  const raw = String(value);
+  const datePart = raw.split('T')[0];
+  const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, y, m, d] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 };
 
 const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
@@ -321,6 +336,66 @@ const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
       acc[cliente] = (acc[cliente] || 0) + 1;
       return acc;
     }, {});
+  }, [entregas]);
+
+  const horasPeriodoData = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+
+    const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const previousYear = previousMonthDate.getFullYear();
+    const previousMonth = previousMonthDate.getMonth();
+    const previousMonthLastDay = new Date(previousYear, previousMonth + 1, 0).getDate();
+    const comparableDay = Math.min(currentDay, previousMonthLastDay);
+
+    const startCurrentMonth = new Date(currentYear, currentMonth, 1);
+    const endCurrentMonth = new Date(currentYear, currentMonth + 1, 0);
+    const startPreviousMonth = new Date(previousYear, previousMonth, 1);
+    const endPreviousMonth = new Date(previousYear, previousMonth + 1, 0);
+
+    const endComparableCurrent = new Date(currentYear, currentMonth, currentDay);
+    const endComparablePrevious = new Date(previousYear, previousMonth, comparableDay);
+
+    const inRange = (date: Date, start: Date, end: Date) => date >= start && date <= end;
+
+    let horasMesAtual = 0;
+    let horasMesPassado = 0;
+    let horasPeriodoAtual = 0;
+    let horasPeriodoPassado = 0;
+
+    entregas.forEach((entrega) => {
+      const date = parseDateOnly(entrega.data);
+      if (!date) return;
+      const horas = Number(entrega.horas_gastas) || 0;
+
+      if (inRange(date, startCurrentMonth, endCurrentMonth)) horasMesAtual += horas;
+      if (inRange(date, startPreviousMonth, endPreviousMonth)) horasMesPassado += horas;
+      if (inRange(date, startCurrentMonth, endComparableCurrent)) horasPeriodoAtual += horas;
+      if (inRange(date, startPreviousMonth, endComparablePrevious)) horasPeriodoPassado += horas;
+    });
+
+    const variacaoAbsoluta = horasPeriodoAtual - horasPeriodoPassado;
+    const variacaoPercentual = horasPeriodoPassado > 0
+      ? (variacaoAbsoluta / horasPeriodoPassado) * 100
+      : horasPeriodoAtual > 0
+        ? 100
+        : 0;
+
+    const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
+
+    return {
+      horasMesAtual,
+      horasMesPassado,
+      horasPeriodoAtual,
+      horasPeriodoPassado,
+      variacaoAbsoluta,
+      variacaoPercentual,
+      periodoAtualLabel: `${formatDate(startCurrentMonth)} a ${formatDate(endComparableCurrent)}`,
+      periodoPassadoLabel: `${formatDate(startPreviousMonth)} a ${formatDate(endComparablePrevious)}`,
+    };
   }, [entregas]);
 
   if (loading) {
@@ -729,6 +804,50 @@ const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
         )}
       </Card>
       </Box>
+
+      <Card sx={{ p: 3, mb: 3, border: '1px solid #E2E8F0', borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1.5 }}>
+          📆 Comparativo de Horas por Período
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
+          Comparação mês atual vs mês anterior e período equivalente (dia 1 até o dia atual).
+        </Typography>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
+          <Paper sx={{ p: 2, backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+            <Typography variant="caption" sx={{ color: '#64748B' }}>Horas no mês atual</Typography>
+            <Typography variant="h5" sx={{ color: '#1E3A8A', fontWeight: 800 }}>
+              {horasPeriodoData.horasMesAtual.toFixed(1)}h
+            </Typography>
+          </Paper>
+          <Paper sx={{ p: 2, backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+            <Typography variant="caption" sx={{ color: '#64748B' }}>Horas no mês passado</Typography>
+            <Typography variant="h5" sx={{ color: '#1E3A8A', fontWeight: 800 }}>
+              {horasPeriodoData.horasMesPassado.toFixed(1)}h
+            </Typography>
+          </Paper>
+        </Box>
+
+        <Paper sx={{ p: 2, backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', mb: 1.5 }}>
+          <Typography variant="body2" sx={{ color: '#1E3A8A', mb: 0.5 }}>
+            <strong>Período atual:</strong> {horasPeriodoData.periodoAtualLabel} = {horasPeriodoData.horasPeriodoAtual.toFixed(1)}h
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#1E3A8A', mb: 0.5 }}>
+            <strong>Período anterior:</strong> {horasPeriodoData.periodoPassadoLabel} = {horasPeriodoData.horasPeriodoPassado.toFixed(1)}h
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: horasPeriodoData.variacaoAbsoluta >= 0 ? '#166534' : '#991B1B',
+              fontWeight: 700,
+            }}
+          >
+            Variação período a período: {horasPeriodoData.variacaoAbsoluta >= 0 ? '+' : ''}
+            {horasPeriodoData.variacaoAbsoluta.toFixed(1)}h ({horasPeriodoData.variacaoPercentual >= 0 ? '+' : ''}
+            {horasPeriodoData.variacaoPercentual.toFixed(1)}%)
+          </Typography>
+        </Paper>
+      </Card>
 
       {/* Entregas por Cliente */}
       {Object.keys(entregasPorClienteLocal).length > 0 && (
