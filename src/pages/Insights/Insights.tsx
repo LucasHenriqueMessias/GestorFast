@@ -62,15 +62,16 @@ const Insights = () => {
       }
 
       let endpoint = `${process.env.REACT_APP_API_URL}/insights-analista`;
-      
-      // Se for analista, traz apenas suas entregas
+
+      // Analista ve somente suas entregas.
       if (department === 'Analista') {
         endpoint = `${process.env.REACT_APP_API_URL}/insights-analista?analista=${username}`;
-      }
-      
-      // Se for financeiro, traz apenas os clientes desse consultor
-      if (department === 'Financeiro') {
+      } else if (department === 'Financeiro') {
+        // Financeiro permanece restrito aos clientes vinculados ao consultor logado.
         endpoint = `${process.env.REACT_APP_API_URL}/insights-analista?consultor=${username}`;
+      } else if (department === 'Consultor') {
+        // Consultor tem filtro global de clientes (sem restricao por consultor).
+        endpoint = `${process.env.REACT_APP_API_URL}/insights-analista`;
       }
 
       const response = await axios.get(endpoint, {
