@@ -84,13 +84,24 @@ const RegistroDeReunioes = () => {
         fullWidth
         size="small"
       >
-        <MenuItem value="RD">RD</MenuItem>
-        <MenuItem value="RE">RE</MenuItem>
-        <MenuItem value="RC">RC</MenuItem>
-        <MenuItem value="RI">RI</MenuItem>
-        <MenuItem value="RP">RP</MenuItem>
-        <MenuItem value="RAE">RAE</MenuItem>
-        <MenuItem value="RA">RA</MenuItem>
+        {getDepartment() === 'Analista' ? (
+          <>
+            <MenuItem value="Reunião de Atendimento">Reunião de Atendimento</MenuItem>
+            <MenuItem value="Treinamento de Fluxo de Caixa">Treinamento de Fluxo de Caixa</MenuItem>
+            <MenuItem value="Apresentação de análise financeira">Apresentação de análise financeira</MenuItem>
+            <MenuItem value="Reunião estratégica Analista x Consultor">Reunião estratégica Analista x Consultor</MenuItem>
+          </>
+        ) : (
+          <>
+            <MenuItem value="RD">RD</MenuItem>
+            <MenuItem value="RE">RE</MenuItem>
+            <MenuItem value="RC">RC</MenuItem>
+            <MenuItem value="RI">RI</MenuItem>
+            <MenuItem value="RP">RP</MenuItem>
+            <MenuItem value="RAE">RAE</MenuItem>
+            <MenuItem value="RA">RA</MenuItem>
+          </>
+        )}
       </Select>
     );
   };
@@ -373,13 +384,24 @@ const RegistroDeReunioes = () => {
               label="Tipo de Reunião"
               disabled={!newRecord.cliente}
             >
-              <MenuItem value="RD">RD</MenuItem>
-              <MenuItem value="RE">RE</MenuItem>
-              <MenuItem value="RC">RC</MenuItem>
-              <MenuItem value="RI">RI</MenuItem>
-              <MenuItem value="RP">RP</MenuItem>
-              <MenuItem value="RAE">RAE</MenuItem>
-              <MenuItem value="RA">RA</MenuItem>
+              {getDepartment() === 'Analista' ? (
+                <>
+                  <MenuItem value="Reunião de Atendimento">Reunião de Atendimento</MenuItem>
+                  <MenuItem value="Treinamento de Fluxo de Caixa">Treinamento de Fluxo de Caixa</MenuItem>
+                  <MenuItem value="Apresentação de análise financeira">Apresentação de análise financeira</MenuItem>
+                  <MenuItem value="Reunião estratégica Analista x Consultor">Reunião estratégica Analista x Consultor</MenuItem>
+                </>
+              ) : (
+                <>
+                  <MenuItem value="RD">RD</MenuItem>
+                  <MenuItem value="RE">RE</MenuItem>
+                  <MenuItem value="RC">RC</MenuItem>
+                  <MenuItem value="RI">RI</MenuItem>
+                  <MenuItem value="RP">RP</MenuItem>
+                  <MenuItem value="RAE">RAE</MenuItem>
+                  <MenuItem value="RA">RA</MenuItem>
+                </>
+              )}
             </Select>
           </FormControl>
           <TextField

@@ -67,6 +67,11 @@ const Insights = () => {
       if (department === 'Analista') {
         endpoint = `${process.env.REACT_APP_API_URL}/insights-analista?analista=${username}`;
       }
+      
+      // Se for financeiro, traz apenas os clientes desse consultor
+      if (department === 'Financeiro') {
+        endpoint = `${process.env.REACT_APP_API_URL}/insights-analista?consultor=${username}`;
+      }
 
       const response = await axios.get(endpoint, {
         headers: {
@@ -203,6 +208,12 @@ const Insights = () => {
       {successMessage && (
         <Alert severity="success" sx={{ mb: 3, ml: { xs: 2, sm: 3 } }} onClose={() => setSuccessMessage(null)}>
           {successMessage}
+        </Alert>
+      )}
+
+      {department === 'Financeiro' && (
+        <Alert severity="info" sx={{ mb: 3, ml: { xs: 2, sm: 3 } }}>
+          📌 Você está visualizando as entregas apenas dos seus clientes.
         </Alert>
       )}
 

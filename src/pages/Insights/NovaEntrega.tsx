@@ -50,7 +50,10 @@ const categorias = [
   'Recuperação de margem',
   'Renegociação de contrato',
   'Auditoria interna',
-  'Ajuste contábil'
+  'Ajuste contábil',
+  'Análise DRE mensal/trimestral/anual',
+  'Análise Orçado x Realizado',
+  'Migração de extratos do cliente para Fluxo Fast'
 ];
 
 const tiposImpacto = [

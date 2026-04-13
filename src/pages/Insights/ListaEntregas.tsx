@@ -20,6 +20,7 @@ import {
   DialogActions,
   Button,
   Alert,
+  Autocomplete,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
@@ -65,7 +66,10 @@ const categorias = [
   'Recuperação de margem',
   'Renegociação de contrato',
   'Auditoria interna',
-  'Ajuste contábil'
+  'Ajuste contábil',
+  'Análise DRE mensal/trimestral/anual',
+  'Análise Orçado x Realizado',
+  'Migração de extratos do cliente para Fluxo Fast'
 ];
 
 const statusOptions = [
@@ -104,6 +108,10 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
   const [impactoMinimo, setImpactoMinimo] = useState('');
+  const [inputClienteValue, setInputClienteValue] = useState('');
+  const [inputAnalistaValue, setInputAnalistaValue] = useState('');
+  const [inputCategoriaValue, setInputCategoriaValue] = useState('');
+  const [inputStatusValue, setInputStatusValue] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedEntrega, setSelectedEntrega] = useState<EntregaData | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -114,7 +122,7 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
   const [success, setSuccess] = useState<string | null>(null);
 
   const department = getDepartment();
-  const canEdit = ['Analista', 'Developer', 'Diretor'].includes(department || '');
+  const canEdit = ['Analista', 'Developer', 'Diretor', 'Gestor'].includes(department || '') && department !== 'Financeiro';
 
   const clientesUnicos = useMemo(
     () => Array.from(new Set(entregas.map((e) => e.razao_social))),
@@ -239,70 +247,50 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
           🔍 Filtros Avançados
         </Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
-          <TextField
-            select
-            label="Cliente"
+          <Autocomplete
+            options={clientesUnicos}
             value={filtroCliente}
-            onChange={(e) => setFiltroCliente(e.target.value)}
-            fullWidth
+            onChange={(event, value) => setFiltroCliente(value || '')}
+            inputValue={inputClienteValue}
+            onInputChange={(event, value) => setInputClienteValue(value)}
+            renderInput={(params) => <TextField {...params} label="Cliente" size="small" />}
+            clearOnBlur
+            noOptionsText="Nenhum cliente encontrado"
             size="small"
-            variant="outlined"
-          >
-            <MenuItem value="">Todos</MenuItem>
-            {clientesUnicos.map((cliente) => (
-              <MenuItem key={cliente} value={cliente}>
-                {cliente}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Analista"
+          />
+          <Autocomplete
+            options={analistasUnicos}
             value={filtroAnalista}
-            onChange={(e) => setFiltroAnalista(e.target.value)}
-            fullWidth
+            onChange={(event, value) => setFiltroAnalista(value || '')}
+            inputValue={inputAnalistaValue}
+            onInputChange={(event, value) => setInputAnalistaValue(value)}
+            renderInput={(params) => <TextField {...params} label="Analista" size="small" />}
+            clearOnBlur
+            noOptionsText="Nenhum analista encontrado"
             size="small"
-            variant="outlined"
-          >
-            <MenuItem value="">Todos</MenuItem>
-            {analistasUnicos.map((analista) => (
-              <MenuItem key={analista} value={analista}>
-                {analista}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Categoria"
+          />
+          <Autocomplete
+            options={categorias}
             value={filtroCategoria}
-            onChange={(e) => setFiltroCategoria(e.target.value)}
-            fullWidth
+            onChange={(event, value) => setFiltroCategoria(value || '')}
+            inputValue={inputCategoriaValue}
+            onInputChange={(event, value) => setInputCategoriaValue(value)}
+            renderInput={(params) => <TextField {...params} label="Categoria" size="small" />}
+            clearOnBlur
+            noOptionsText="Nenhuma categoria encontrada"
             size="small"
-            variant="outlined"
-          >
-            <MenuItem value="">Todos</MenuItem>
-            {categorias.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Status"
+          />
+          <Autocomplete
+            options={statusOptions}
             value={filtroStatus}
-            onChange={(e) => setFiltroStatus(e.target.value)}
-            fullWidth
+            onChange={(event, value) => setFiltroStatus(value || '')}
+            inputValue={inputStatusValue}
+            onInputChange={(event, value) => setInputStatusValue(value)}
+            renderInput={(params) => <TextField {...params} label="Status" size="small" />}
+            clearOnBlur
+            noOptionsText="Nenhum status encontrado"
             size="small"
-            variant="outlined"
-          >
-            <MenuItem value="">Todos</MenuItem>
-            {statusOptions.map((status) => (
-              <MenuItem key={status} value={status}>
-                {status}
-              </MenuItem>
-            ))}
-          </TextField>
+          />
           <TextField
             label="Impacto Mínimo (R$)"
             type="number"

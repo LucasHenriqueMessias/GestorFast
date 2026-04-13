@@ -169,7 +169,7 @@ function AppLayout() {
             <Route path="/Relatorios/Diretoria/AvisoPrevio" element={<PrivateRoute allowedDepartments={["Diretor", "Gestor", "Developer"]}><RelatorioAvisoPrevio/></PrivateRoute>} />
             <Route path="Cadastro/Usuario" element={<PrivateRoute allowedDepartments={["Developer", "Diretor", "Gestor"]}><SignUp /></PrivateRoute>} />
             <Route path="/Parcerias" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><Parceiros /></PrivateRoute>} />
-            <Route path="/Analista/Insights" element={<PrivateRoute allowedDepartments={["Analista", "Developer", "Diretor", "Gestor", "Consultor"]}><Insights /></PrivateRoute>} />  
+            <Route path="/Analista/Insights" element={<PrivateRoute allowedDepartments={["Financeiro", "Analista", "Developer", "Diretor", "Gestor", "Consultor"]}><Insights /></PrivateRoute>} />  
             <Route path="/NPS/" element={<PrivateRoute allowedDepartments={["Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS"]}><Nps/></PrivateRoute >} />
             <Route path="/Relatorios/Comercial" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><RelatorioComercial/></PrivateRoute>} />
             <Route path="/cursos" element={<PrivateRoute allowedDepartments={["Financeiro", "Comercial", "Analista", "Developer", "Diretor", "Gestor", "Consultor", "CS", "HelpDesk"]}><CursosLista /></PrivateRoute>} />
