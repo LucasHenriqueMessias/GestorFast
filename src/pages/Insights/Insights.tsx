@@ -254,7 +254,7 @@ const Insights = () => {
       ) : tabValue === 0 ? (
         <ListaEntregas entregas={entregas} loading={loading} onRefresh={fetchEntregas} />
       ) : (
-        <KPIsAnalista analista={username} />
+        <KPIsAnalista analista={username} entregas={entregas} />
       )}
 
       {/* Dialog Nova Entrega */}
