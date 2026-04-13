@@ -33,8 +33,10 @@ interface KPIsAnalistaProps {
   analista: string;
   entregas: Array<{
     status: string;
+    razao_social?: string;
     categoria?: string;
     complexidade?: string;
+    impacto_anual_r?: number | string;
     horas_gastas?: number | string;
   }>;
 }
@@ -313,6 +315,14 @@ const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
     return { data, maxHoras, totalHoras };
   }, [entregas]);
 
+  const entregasPorClienteLocal = useMemo(() => {
+    return entregas.reduce<Record<string, number>>((acc, entrega) => {
+      const cliente = entrega.razao_social || 'Sem cliente';
+      acc[cliente] = (acc[cliente] || 0) + 1;
+      return acc;
+    }, {});
+  }, [entregas]);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, pl: { xs: 2, sm: 3 } }}>
@@ -340,12 +350,19 @@ const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
     );
   }
 
-  const horasTrabalhadas = parseFloat(kpiAnalista.horas_trabalhadas) || 0;
-  const valorGeradoAnual = parseFloat(kpiAnalista.valor_gerado_anual) || 0;
+  const totalEntregas = entregas.length;
+  const valorGeradoAnual = entregas.reduce((sum, entrega) => sum + (Number(entrega.impacto_anual_r) || 0), 0);
+  const horasTrabalhadas = entregas.reduce((sum, entrega) => sum + (Number(entrega.horas_gastas) || 0), 0);
+  const totalImplementadas = entregas.filter((entrega) => entrega.status === 'Implementado').length;
+  const taxaImplementacao = totalEntregas > 0 ? (totalImplementadas / totalEntregas) * 100 : 0;
+  const produtividadeFinanceira = horasTrabalhadas > 0 ? valorGeradoAnual / horasTrabalhadas : 0;
+  const ticketMedio = totalEntregas > 0 ? valorGeradoAnual / totalEntregas : 0;
+  const clientesAtendidos = Object.keys(entregasPorClienteLocal).length;
+
   const resumoCards = [
     {
       titulo: 'Total de Entregas',
-      valor: `${kpiAnalista.numero_entregas}`,
+      valor: `${totalEntregas}`,
       detalhe: 'Registros cadastrados',
     },
     {
@@ -360,18 +377,18 @@ const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
     },
     {
       titulo: 'Taxa de Implementação',
-      valor: `${(kpiAnalista.taxa_implementacao * 100).toFixed(1)}%`,
+      valor: `${taxaImplementacao.toFixed(1)}%`,
       detalhe: 'Entregas implementadas',
     },
     {
       titulo: 'Produtividade Financeira',
-      valor: `${kpiAnalista.produtividade_financeira.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/h`,
+      valor: `${produtividadeFinanceira.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/h`,
       detalhe: 'Valor gerado por hora',
     },
     {
       titulo: 'Ticket Médio',
-      valor: (valorGeradoAnual / (kpiAnalista.numero_entregas || 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-      detalhe: `${Object.keys(kpiAnalista.entregas_por_cliente).length} clientes atendidos`,
+      valor: ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      detalhe: `${clientesAtendidos} clientes atendidos`,
     },
   ];
 
@@ -714,13 +731,13 @@ const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
       </Box>
 
       {/* Entregas por Cliente */}
-      {Object.keys(kpiAnalista.entregas_por_cliente).length > 0 && (
+      {Object.keys(entregasPorClienteLocal).length > 0 && (
         <Card sx={{ p: 3, mb: 3, border: '1px solid #E2E8F0', borderRadius: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 2 }}>
             📋 Entregas por Cliente
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 1 }}>
-            {Object.entries(kpiAnalista.entregas_por_cliente).map(([cliente, count]) => (
+            {Object.entries(entregasPorClienteLocal).map(([cliente, count]) => (
               <Paper key={cliente} sx={{ p: 2, backgroundColor: '#F8FAFC' }}>
                 <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
                   {cliente}
@@ -781,14 +798,14 @@ const KPIsAnalista: React.FC<KPIsAnalistaProps> = ({ analista, entregas }) => {
           💡 Insights & Recomendações
         </Typography>
         <Typography variant="body2" sx={{ color: '#2C5282', mb: 1 }}>
-          • <strong>Produtividade:</strong> Você gera em média {kpiAnalista.produtividade_financeira.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} de valor por hora trabalhada.
+          • <strong>Produtividade:</strong> Você gera em média {produtividadeFinanceira.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} de valor por hora trabalhada.
         </Typography>
         <Typography variant="body2" sx={{ color: '#2C5282', mb: 1 }}>
-          • <strong>Taxa de Implementação:</strong> {(kpiAnalista.taxa_implementacao * 100).toFixed(1)}% das suas entregas foram implementadas pelos clientes.
+          • <strong>Taxa de Implementação:</strong> {taxaImplementacao.toFixed(1)}% das suas entregas foram implementadas pelos clientes.
         </Typography>
-        {kpiAnalista.numero_entregas > 0 && (
+        {totalEntregas > 0 && (
           <Typography variant="body2" sx={{ color: '#2C5282' }}>
-            • <strong>Média por Entrega:</strong> Cada entrega gera em média {((valorGeradoAnual / kpiAnalista.numero_entregas) * 12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} de valor durante 1 ano.
+            • <strong>Média por Entrega:</strong> Cada entrega gera em média {ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} de impacto anual.
           </Typography>
         )}
       </Card>
