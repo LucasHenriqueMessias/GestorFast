@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DataGrid, GridColDef, GridEventListener,  GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams } from '@mui/x-data-grid';
-import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select, SelectChangeEvent, FormControl, InputLabel, Autocomplete, Box } from '@mui/material';
+import { DataGrid, GridColDef, GridEventListener, GridRowModesModel, GridRowModes, GridRowParams, MuiEvent, GridActionsCellItem, GridRenderEditCellParams, GridRowEditStopReasons, GridRowEditStopParams } from '@mui/x-data-grid';
+import { Container, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Autocomplete, Box } from '@mui/material';
 import axios from 'axios';
 import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 import EditIcon from '@mui/icons-material/Edit';
@@ -59,11 +59,30 @@ const formatDatePtBr = (value: unknown) => {
   return raw;
 };
 
+const toDateInputValue = (value: unknown) => {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value.includes('T') ? value.split('T')[0] : value;
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  return '';
+};
+
 const RegistroDeReunioes = () => {
   const navigate = useNavigate();
   const [reuniaoData, setReuniaoData] = useState<Reuniao[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [open, setOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [editingReuniaoId, setEditingReuniaoId] = useState<number | null>(null);
+  const [clienteInputValue, setClienteInputValue] = useState('');
   const [newRecord, setNewRecord] = useState({
     user: '',
     cliente: '',
@@ -76,9 +95,15 @@ const RegistroDeReunioes = () => {
   });
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
+  const blurActiveElement = () => {
+    const activeElement = document.activeElement as HTMLElement | null;
+    activeElement?.blur();
+  };
+
   const TipoReuniaoEditCell = (props: GridRenderEditCellParams) => {
     return (
-      <Select
+      <TextField
+        select
         value={props.value || ''}
         onChange={(e) => props.api.setEditCellValue({ id: props.id, field: props.field, value: e.target.value }, e)}
         fullWidth
@@ -102,7 +127,7 @@ const RegistroDeReunioes = () => {
             <MenuItem value="RA">RA</MenuItem>
           </>
         )}
-      </Select>
+      </TextField>
     );
   };
 
@@ -197,12 +222,47 @@ const RegistroDeReunioes = () => {
   };
 
   const handleClickOpen = () => {
+    setDialogMode('create');
+    setEditingReuniaoId(null);
+    setClienteInputValue('');
+    setNewRecord({
+      user: '',
+      cliente: '',
+      status: '',
+      tipo_reuniao: '',
+      local_reuniao: '',
+      Ata_reuniao: '',
+      data_realizada: '',
+      nps_reuniao: '',
+    });
     setOpen(true);
     fetchClientes(); // Buscar clientes ao abrir o formulário
   };
 
+  const handleEditOpen = (reuniao: Reuniao) => {
+    setDialogMode('edit');
+    setEditingReuniaoId(reuniao.id);
+    setClienteInputValue(reuniao.cliente || '');
+    setNewRecord({
+      user: reuniao.user || '',
+      cliente: reuniao.cliente || '',
+      status: reuniao.status || '',
+      tipo_reuniao: reuniao.tipo_reuniao || '',
+      local_reuniao: reuniao.local_reuniao || '',
+      Ata_reuniao: reuniao.Ata_reuniao || '',
+      data_realizada: toDateInputValue(reuniao.data_realizada),
+      nps_reuniao: reuniao.nps_reuniao !== null && reuniao.nps_reuniao !== undefined ? String(reuniao.nps_reuniao) : '',
+    });
+    setOpen(true);
+    fetchClientes();
+  };
+
   const handleClose = () => {
+    blurActiveElement();
     setOpen(false);
+    setClienteInputValue('');
+    setDialogMode('create');
+    setEditingReuniaoId(null);
     // Limpar o formulário ao fechar (importante limpar cliente primeiro para desabilitar campos)
     setNewRecord({
       user: '',
@@ -218,32 +278,55 @@ const RegistroDeReunioes = () => {
 
   const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setNewRecord({ ...newRecord, [name]: value });
+    setNewRecord((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
-    const { name, value } = e.target;
-    setNewRecord({ ...newRecord, [name]: value });
+  const handleFieldSelectChange = (field: 'status' | 'tipo_reuniao') => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { value } = e.target;
+    setNewRecord((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleClienteChange = (event: React.SyntheticEvent, newValue: string | null) => {
-    setNewRecord({ ...newRecord, cliente: newValue || '' });
+    const cliente = newValue || '';
+    setClienteInputValue(cliente);
+    setNewRecord((prev) => ({ ...prev, cliente }));
   };
 
   const handleSubmit = async () => {
     try {
       const token = getAccessToken();
+      const normalizedNps = newRecord.nps_reuniao === '' ? 0 : Number(newRecord.nps_reuniao);
+      const payload = {
+        ...newRecord,
+        user: getUsername() ?? '',
+        nps_reuniao: Number.isNaN(normalizedNps) ? 0 : normalizedNps,
+        data_realizada: newRecord.data_realizada ? newRecord.data_realizada : '',
+      };
 
-      newRecord.user = getUsername() ?? '';
-      await axios.post(`${process.env.REACT_APP_API_URL}/tab-reuniao`, newRecord, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      if (dialogMode === 'edit' && editingReuniaoId !== null) {
+        await axios.patch(`${process.env.REACT_APP_API_URL}/tab-reuniao/${editingReuniaoId}`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      } else {
+        await axios.post(`${process.env.REACT_APP_API_URL}/tab-reuniao`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      }
+
       fetchData();
+      blurActiveElement();
       handleClose();
     } catch (error) {
       console.error('Erro ao adicionar registro:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Resposta da API:', error.response?.data);
+      }
     }
   };
 
@@ -259,9 +342,14 @@ const RegistroDeReunioes = () => {
   const handleRowEditStart = (params: GridRowParams, event: MuiEvent) => {
     event.defaultMuiPrevented = true;
   };
-  const handleRowEditStop = (params: GridRowParams, event: MuiEvent) => {
+  const handleRowEditStop = (params: GridRowEditStopParams, event: MuiEvent) => {
+    if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+      event.defaultMuiPrevented = true;
+      return;
+    }
+
     event.defaultMuiPrevented = true;
-    // Salva a linha editada ao sair do modo edição
+    // Salva a linha editada ao sair do modo edição.
     setRowModesModel((prevModel) => ({
       ...prevModel,
       [params.id]: { mode: GridRowModes.View },
@@ -284,7 +372,12 @@ const RegistroDeReunioes = () => {
     }
   };
   const handleEditClick = (id: number) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+    const reuniao = reuniaoData.find((row) => row.id === id);
+    if (!reuniao) {
+      return;
+    }
+
+    handleEditOpen(reuniao);
   };
   const handleRowModesModelChange = (newModel: GridRowModesModel) => {
     setRowModesModel(newModel);
@@ -336,12 +429,14 @@ const RegistroDeReunioes = () => {
         />
       </div>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Adicionar Novo Registro</DialogTitle>
+        <DialogTitle>{dialogMode === 'edit' ? 'Editar Registro' : 'Adicionar Novo Registro'}</DialogTitle>
         <DialogContent>
           <Autocomplete
             options={clientes.map((cliente) => cliente.razao_social)}
             value={newRecord.cliente || null}
+            inputValue={clienteInputValue}
             onChange={handleClienteChange}
+            onInputChange={(_, newInputValue) => setClienteInputValue(newInputValue)}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -359,51 +454,51 @@ const RegistroDeReunioes = () => {
               return filtered;
             }}
           />
-          <FormControl fullWidth margin="dense">
-            <InputLabel id="status-select-label">Status</InputLabel>
-            <Select
-              labelId="status-select-label"
-              name="status"
-              value={newRecord.status}
-              onChange={handleSelectChange}
-              label="Status"
-              disabled={!newRecord.cliente}
-            >
-              <MenuItem value="Pendente">Pendente</MenuItem>
-              <MenuItem value="Realizado">Realizado</MenuItem>
-              <MenuItem value="NA">Não Aplicável</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth margin="dense">
-            <InputLabel id="tipo-reuniao-select-label">Tipo de Reunião</InputLabel>
-            <Select
-              labelId="tipo-reuniao-select-label"
-              name="tipo_reuniao"
-              value={newRecord.tipo_reuniao}
-              onChange={handleSelectChange}
-              label="Tipo de Reunião"
-              disabled={!newRecord.cliente}
-            >
-              {getDepartment() === 'Analista' ? (
-                <>
-                  <MenuItem value="Reunião de Atendimento">Reunião de Atendimento</MenuItem>
-                  <MenuItem value="Treinamento de Fluxo de Caixa">Treinamento de Fluxo de Caixa</MenuItem>
-                  <MenuItem value="Apresentação de análise financeira">Apresentação de análise financeira</MenuItem>
-                  <MenuItem value="Reunião estratégica Analista x Consultor">Reunião estratégica Analista x Consultor</MenuItem>
-                </>
-              ) : (
-                <>
-                  <MenuItem value="RD">RD</MenuItem>
-                  <MenuItem value="RE">RE</MenuItem>
-                  <MenuItem value="RC">RC</MenuItem>
-                  <MenuItem value="RI">RI</MenuItem>
-                  <MenuItem value="RP">RP</MenuItem>
-                  <MenuItem value="RAE">RAE</MenuItem>
-                  <MenuItem value="RA">RA</MenuItem>
-                </>
-              )}
-            </Select>
-          </FormControl>
+          <TextField
+            select
+            fullWidth
+            margin="dense"
+            label="Status"
+            value={newRecord.status}
+            onChange={handleFieldSelectChange('status')}
+            disabled={!newRecord.cliente}
+            SelectProps={{ native: true }}
+          >
+            <option value="" />
+            <option value="Pendente">Pendente</option>
+            <option value="Realizado">Realizado</option>
+            <option value="NA">Não Aplicável</option>
+          </TextField>
+          <TextField
+            select
+            fullWidth
+            margin="dense"
+            label="Tipo de Reunião"
+            value={newRecord.tipo_reuniao}
+            onChange={handleFieldSelectChange('tipo_reuniao')}
+            disabled={!newRecord.cliente}
+            SelectProps={{ native: true }}
+          >
+            <option value="" />
+            {getDepartment() === 'Analista' ? (
+              <>
+                <option value="Reunião de Atendimento">Reunião de Atendimento</option>
+                <option value="Treinamento de Fluxo de Caixa">Treinamento de Fluxo de Caixa</option>
+                <option value="Apresentação de análise financeira">Apresentação de análise financeira</option>
+                <option value="Reunião estratégica Analista x Consultor">Reunião estratégica Analista x Consultor</option>
+              </>
+            ) : (
+              <>
+                <option value="RD">RD</option>
+                <option value="RE">RE</option>
+                <option value="RC">RC</option>
+                <option value="RI">RI</option>
+                <option value="RP">RP</option>
+                <option value="RAE">RAE</option>
+                <option value="RA">RA</option>
+              </>
+            )}
+          </TextField>
           <TextField
             margin="dense"
             name="local_reuniao"
@@ -453,7 +548,7 @@ const RegistroDeReunioes = () => {
             Cancelar
           </Button>
           <Button onClick={handleSubmit} color="primary">
-            Adicionar
+            {dialogMode === 'edit' ? 'Salvar' : 'Adicionar'}
           </Button>
         </DialogActions>
       </Dialog>
