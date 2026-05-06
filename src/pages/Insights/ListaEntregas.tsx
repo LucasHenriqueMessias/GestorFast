@@ -99,7 +99,9 @@ const getStatusColor = (status: string): 'default' | 'primary' | 'secondary' | '
 };
 
 const getTipoImpactoIcon = (tipo: string): string => {
-  switch (tipo) {
+  const normalizedTipo = tipo.replace(/^[💰📈⚠️📊🔎]\s*/, '');
+
+  switch (normalizedTipo) {
     case 'Economia': return '💰';
     case 'Aumento de receita': return '📈';
     case 'Mitigação de risco': return '⚠️';
@@ -108,6 +110,8 @@ const getTipoImpactoIcon = (tipo: string): string => {
     default: return '📌';
   }
 };
+
+const getTipoImpactoLabel = (tipo: string): string => tipo.replace(/^[💰📈⚠️📊🔎]\s*/, '');
 
 const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefresh }) => {
   const [filtroCliente, setFiltroCliente] = useState('');
@@ -433,94 +437,61 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
 
       {/* Dialog Detalhes */}
       {selectedEntrega && (
-        <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="sm" fullWidth>
+        <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
           <DialogTitle sx={{ backgroundColor: '#1E3A8A', color: 'white', fontWeight: 'bold' }}>
             {getTipoImpactoIcon(selectedEntrega.tipo_impacto)} Detalhes da Entrega
           </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
-                <strong>Cliente:</strong> {selectedEntrega.razao_social}
+          <DialogContent sx={{ mt: 2, maxHeight: '72vh', overflowY: 'auto' }}>
+            <Box sx={{ mb: 3, p: 2, backgroundColor: '#F8FAFC', borderRadius: 2, border: '1px solid #E5E7EB' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                <Chip size="small" label={selectedEntrega.status} color={getStatusColor(selectedEntrega.status)} variant="outlined" />
+                <Chip size="small" label={getTipoImpactoLabel(selectedEntrega.tipo_impacto)} color="primary" variant="outlined" />
+                <Chip size="small" label={selectedEntrega.complexidade} color="secondary" variant="outlined" />
+              </Box>
+
+              <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 0.5 }}>
+                {selectedEntrega.razao_social}
               </Typography>
-              <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
-                <strong>Analista:</strong> {selectedEntrega.analista}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
-                <strong>Consultor:</strong> {selectedEntrega.consultor}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
-                <strong>Data:</strong> {new Date(selectedEntrega.data).toLocaleDateString('pt-BR')}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
-                <strong>Origem da Demanda:</strong> {selectedEntrega.origem_demanda}
+              <Typography variant="body2" sx={{ color: '#6B7280' }}>
+                {selectedEntrega.categoria}
               </Typography>
             </Box>
 
-            {selectedEntrega.descricao_tecnica && (
-              <>
-                <Box sx={{ mb: 2, p: 2, backgroundColor: '#F8FAFC', borderRadius: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
-                    📋 Situação Encontrada
-                  </Typography>
-                  <Typography variant="body2">{selectedEntrega.descricao_tecnica.situacao_encontrada}</Typography>
-                </Box>
-
-                <Box sx={{ mb: 2, p: 2, backgroundColor: '#F8FAFC', borderRadius: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
-                    ⚠️ Problema Identificado
-                  </Typography>
-                  <Typography variant="body2">{selectedEntrega.descricao_tecnica.problema_identificado}</Typography>
-                </Box>
-
-                <Box sx={{ mb: 2, p: 2, backgroundColor: '#F8FAFC', borderRadius: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
-                    ✅ Ação Recomendada
-                  </Typography>
-                  <Typography variant="body2">{selectedEntrega.descricao_tecnica.acao_recomendada}</Typography>
-                </Box>
-
-                <Box sx={{ mb: 2, p: 2, backgroundColor: '#EFF6FF', borderRadius: 1, borderLeft: '4px solid #3B82F6' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#3B82F6', mb: 1 }}>
-                    🎯 Resultado Esperado
-                  </Typography>
-                  <Typography variant="body2">{selectedEntrega.descricao_tecnica.resultado_esperado}</Typography>
-                </Box>
-              </>
-            )}
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr' }, gap: 1 }}>
-              <Box>
-                <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                  <strong>Impacto Mensal:</strong>
-                </Typography>
-                <Typography sx={{ fontWeight: 'bold', color: '#3B82F6' }}>
-                  {selectedEntrega.impacto_mensal_r.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
+              <Box sx={{ p: 2, border: '1px solid #E5E7EB', borderRadius: 2 }}>
+                <Typography variant="overline" sx={{ color: '#6B7280' }}>Identificação</Typography>
+                <Typography variant="body2" sx={{ mt: 1, mb: 0.5 }}><strong>Cliente:</strong> {selectedEntrega.razao_social}</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}><strong>Analista:</strong> {selectedEntrega.analista}</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}><strong>Consultor:</strong> {selectedEntrega.consultor}</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}><strong>Data:</strong> {new Date(selectedEntrega.data).toLocaleDateString('pt-BR')}</Typography>
+                <Typography variant="body2"><strong>Origem:</strong> {selectedEntrega.origem_demanda}</Typography>
               </Box>
-              <Box>
-                <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                  <strong>Impacto Anual:</strong>
-                </Typography>
-                <Typography sx={{ fontWeight: 'bold', color: '#3B82F6' }}>
-                  {selectedEntrega.impacto_anual_r.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </Typography>
+
+              <Box sx={{ p: 2, border: '1px solid #E5E7EB', borderRadius: 2 }}>
+                <Typography variant="overline" sx={{ color: '#6B7280' }}>Impacto e Esforço</Typography>
+                <Typography variant="body2" sx={{ mt: 1, mb: 0.5 }}><strong>Impacto Mensal:</strong> {selectedEntrega.impacto_mensal_r.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}><strong>Impacto Anual:</strong> {selectedEntrega.impacto_anual_r.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}><strong>Impacto %:</strong> {selectedEntrega.impacto_percentual}%</Typography>
+                <Typography variant="body2"><strong>Horas Gastas:</strong> {selectedEntrega.horas_gastas}h</Typography>
               </Box>
-              <Box>
-                <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                  <strong>Impacto %:</strong>
-                </Typography>
-                <Typography sx={{ fontWeight: 'bold' }}>
-                  {selectedEntrega.impacto_percentual}%
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                  <strong>Horas Gastas:</strong>
-                </Typography>
-                <Typography sx={{ fontWeight: 'bold' }}>
-                  {selectedEntrega.horas_gastas}h
-                </Typography>
-              </Box>
+            </Box>
+
+            <Box sx={{ mb: 2, p: 2, backgroundColor: '#EFF6FF', borderRadius: 2, borderLeft: '4px solid #3B82F6' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 1 }}>
+                📋 Descrição Técnica
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Situação Encontrada:</strong> {selectedEntrega.descricao_tecnica?.situacao_encontrada || 'Não informada'}
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Problema Identificado:</strong> {selectedEntrega.descricao_tecnica?.problema_identificado || 'Não informado'}
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Ação Recomendada:</strong> {selectedEntrega.descricao_tecnica?.acao_recomendada || 'Não informada'}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Resultado Esperado:</strong> {selectedEntrega.descricao_tecnica?.resultado_esperado || 'Não informado'}
+              </Typography>
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
