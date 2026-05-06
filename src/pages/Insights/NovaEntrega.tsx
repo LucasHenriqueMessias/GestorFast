@@ -17,6 +17,9 @@ interface NovaEntregaProps {
   onClose: () => void;
   onSubmit: (formData: any) => Promise<void>;
   analista: string;
+  initialValues?: Partial<EntregaForm>;
+  title?: string;
+  submitLabel?: string;
 }
 
 interface EntregaForm {
@@ -129,31 +132,44 @@ const parseHorasGastas = (value: string | number): number => {
   return Number(normalizedValue) || 0;
 };
 
-const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }) => {
+const buildInitialFormData = (analista: string, initialValues?: Partial<EntregaForm>): EntregaForm => ({
+  razao_social: initialValues?.razao_social || '',
+  analista: initialValues?.analista || analista,
+  consultor: initialValues?.consultor || '',
+  data: initialValues?.data || new Date().toISOString().split('T')[0],
+  categoria: initialValues?.categoria || '',
+  tipo_impacto: initialValues?.tipo_impacto || '',
+  impacto_mensal_r: initialValues?.impacto_mensal_r ?? '',
+  impacto_anual_r: initialValues?.impacto_anual_r ?? '',
+  impacto_percentual: initialValues?.impacto_percentual ?? '',
+  complexidade: initialValues?.complexidade || '',
+  horas_gastas: initialValues?.horas_gastas ?? '',
+  origem_demanda: initialValues?.origem_demanda || '',
+  descricao_tecnica: {
+    situacao_encontrada: initialValues?.descricao_tecnica?.situacao_encontrada || '',
+    problema_identificado: initialValues?.descricao_tecnica?.problema_identificado || '',
+    acao_recomendada: initialValues?.descricao_tecnica?.acao_recomendada || '',
+    resultado_esperado: initialValues?.descricao_tecnica?.resultado_esperado || ''
+  },
+  status: initialValues?.status || 'Em análise'
+});
+
+const NovaEntrega: React.FC<NovaEntregaProps> = ({
+  onClose,
+  onSubmit,
+  analista,
+  initialValues,
+  title = '➕ Nova Entrega de Análise',
+  submitLabel = 'Salvar Entrega'
+}) => {
   const [clientes, setClientes] = useState<string[]>([]);
   const [consultores, setConsultores] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<EntregaForm>({
-    razao_social: '',
-    analista: analista,
-    consultor: '',
-    data: new Date().toISOString().split('T')[0],
-    categoria: '',
-    tipo_impacto: '',
-    impacto_mensal_r: '',
-    impacto_anual_r: '',
-    impacto_percentual: '',
-    complexidade: '',
-    horas_gastas: '',
-    origem_demanda: '',
-    descricao_tecnica: {
-      situacao_encontrada: '',
-      problema_identificado: '',
-      acao_recomendada: '',
-      resultado_esperado: ''
-    },
-    status: 'Em análise'
-  });
+  const [formData, setFormData] = useState<EntregaForm>(() => buildInitialFormData(analista, initialValues));
+
+  useEffect(() => {
+    setFormData(buildInitialFormData(analista, initialValues));
+  }, [analista, initialValues]);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -262,7 +278,7 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
   return (
     <>
       <DialogTitle sx={{ backgroundColor: '#1E3A8A', color: 'white', fontWeight: 'bold' }}>
-        ➕ Nova Entrega de Análise
+        {title}
       </DialogTitle>
       <DialogContent sx={{ mt: 2, maxHeight: '70vh', overflowY: 'auto' }}>
         {/* Seção 1: Identificação */}
@@ -507,7 +523,7 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
           Cancelar
         </Button>
         <Button onClick={handleSubmit} variant="contained" disabled={loading}>
-          {loading ? 'Salvando...' : 'Salvar Entrega'}
+          {loading ? 'Salvando...' : submitLabel}
         </Button>
       </DialogActions>
     </>

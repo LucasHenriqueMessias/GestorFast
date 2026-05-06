@@ -27,6 +27,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import { getAccessToken, getDepartment } from '../../utils/storage';
+import NovaEntrega from './NovaEntrega';
 
 interface EntregaData {
   id?: number;
@@ -174,14 +175,14 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
     setDetailsOpen(false);
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = async (formData: any) => {
     if (!editingEntrega || !editingEntrega.id) return;
 
     try {
       const token = getAccessToken();
       await axios.patch(
         `${process.env.REACT_APP_API_URL}/insights-analista/${editingEntrega.id}`,
-        editingEntrega,
+        formData,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -551,72 +552,15 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
 
       {/* Dialog Editar Entrega */}
       {editingEntrega && (
-        <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ backgroundColor: '#3B82F6', color: 'white', fontWeight: 'bold' }}>
-            ✏️ Editar Entrega
-          </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-            <TextField
-              select
-              label="Status"
-              value={editingEntrega.status}
-              onChange={(e) => setEditingEntrega({ ...editingEntrega, status: e.target.value })}
-              fullWidth
-              sx={{ mb: 2 }}
-              required
-            >
-              {statusOptions.map((status) => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="Impacto Mensal (R$)"
-              type="number"
-              value={editingEntrega.impacto_mensal_r}
-              onChange={(e) => setEditingEntrega({ ...editingEntrega, impacto_mensal_r: Number(e.target.value) })}
-              fullWidth
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              label="Impacto Anual (R$)"
-              type="number"
-              value={editingEntrega.impacto_anual_r}
-              onChange={(e) => setEditingEntrega({ ...editingEntrega, impacto_anual_r: Number(e.target.value) })}
-              fullWidth
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              label="Impacto Percentual (%)"
-              type="number"
-              value={editingEntrega.impacto_percentual}
-              onChange={(e) => setEditingEntrega({ ...editingEntrega, impacto_percentual: Number(e.target.value) })}
-              fullWidth
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              select
-              label="Origem da Demanda"
-              value={editingEntrega.origem_demanda}
-              onChange={(e) => setEditingEntrega({ ...editingEntrega, origem_demanda: e.target.value })}
-              fullWidth
-              sx={{ mb: 2 }}
-            >
-              <MenuItem value="Rotina">Rotina</MenuItem>
-              <MenuItem value="Consultor">Consultor</MenuItem>
-              <MenuItem value="Cliente">Cliente</MenuItem>
-              <MenuItem value="Analista">Analista</MenuItem>
-            </TextField>
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setEditOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveEdit} variant="contained" sx={{ backgroundColor: '#3B82F6' }}>
-              Salvar
-            </Button>
-          </DialogActions>
+        <Dialog open={editOpen} onClose={() => { setEditOpen(false); setEditingEntrega(null); }} maxWidth="md" fullWidth>
+          <NovaEntrega
+            onClose={() => { setEditOpen(false); setEditingEntrega(null); }}
+            onSubmit={handleSaveEdit}
+            analista={editingEntrega.analista}
+            initialValues={editingEntrega}
+            title="✏️ Editar Entrega"
+            submitLabel="Salvar Alterações"
+          />
         </Dialog>
       )}
 
