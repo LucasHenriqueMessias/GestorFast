@@ -31,6 +31,7 @@ interface EntregaForm {
   impacto_percentual: number | string;
   complexidade: string;
   horas_gastas: number | string;
+  origem_demanda: string;
   descricao_tecnica: {
     situacao_encontrada: string;
     problema_identificado: string;
@@ -51,9 +52,20 @@ const categorias = [
   'Renegociação de contrato',
   'Auditoria interna',
   'Ajuste contábil',
-  'Análise DRE mensal/trimestral/anual',
+  'Analise DRE mensal',
+  'Analise DRE trimestral',
+  'Analise DRE anual',
   'Análise Orçado x Realizado',
-  'Migração de extratos do cliente para Fluxo Fast'
+  'Migração de extratos do cliente para Fluxo Fast',
+  'Treinamento de Fluxo de Caixa',
+  'Apresentação de analise financeira',
+  'Reunião estratégica Analista x Consultor',
+  'Tarefas internas extras',
+  'Treinamento de ferramentas extras',
+  'Treinamento de integração de novos colaboradores',
+  'Reunião Analista x Cliente',
+  'Conferência de conciliação Bancária',
+  'Análise de DRE Competência x Caixa (e outros)'
 ];
 
 const tiposImpacto = [
@@ -72,6 +84,51 @@ const statusOptions = [
   'Rejeitado'
 ];
 
+const parseHorasGastas = (value: string | number): number => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const normalizedValue = value.trim().toLowerCase().replace(/,/g, '.');
+
+  if (!normalizedValue) {
+    return 0;
+  }
+
+  if (/^\d+(?:\.\d+)?$/.test(normalizedValue)) {
+    return Number(normalizedValue);
+  }
+
+  const hoursAndMinutesMatch = normalizedValue.match(/^(\d+(?:\.\d+)?)\s*(?:h|hora|horas)\s*(?:(\d+(?:\.\d+)?)\s*(?:m|min|mins|minuto|minutos))?$/);
+  if (hoursAndMinutesMatch) {
+    const hours = Number(hoursAndMinutesMatch[1]);
+    const minutes = Number(hoursAndMinutesMatch[2] || 0);
+    return Math.round((hours + minutes / 60) * 10) / 10;
+  }
+
+  const minutesOnlyMatch = normalizedValue.match(/^(\d+(?:\.\d+)?)\s*(?:m|min|mins|minuto|minutos)$/);
+  if (minutesOnlyMatch) {
+    const minutes = Number(minutesOnlyMatch[1]);
+    return Math.round((minutes / 60) * 10) / 10;
+  }
+
+  const colonFormatMatch = normalizedValue.match(/^(\d+):(\d{1,2})$/);
+  if (colonFormatMatch) {
+    const hours = Number(colonFormatMatch[1]);
+    const minutes = Number(colonFormatMatch[2]);
+    return Math.round((hours + minutes / 60) * 10) / 10;
+  }
+
+  const compactFormatMatch = normalizedValue.match(/^(\d+(?:\.\d+)?)\s*(?:h|hora|horas)\s*(\d{1,2})$/);
+  if (compactFormatMatch) {
+    const hours = Number(compactFormatMatch[1]);
+    const minutes = Number(compactFormatMatch[2]);
+    return Math.round((hours + minutes / 60) * 10) / 10;
+  }
+
+  return Number(normalizedValue) || 0;
+};
+
 const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }) => {
   const [clientes, setClientes] = useState<string[]>([]);
   const [consultores, setConsultores] = useState<string[]>([]);
@@ -88,6 +145,7 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
     impacto_percentual: '',
     complexidade: '',
     horas_gastas: '',
+    origem_demanda: '',
     descricao_tecnica: {
       situacao_encontrada: '',
       problema_identificado: '',
@@ -155,7 +213,7 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
         impacto_mensal_r: Number(formData.impacto_mensal_r),
         impacto_anual_r: Number(formData.impacto_anual_r),
         impacto_percentual: Number(formData.impacto_percentual),
-        horas_gastas: Number(formData.horas_gastas),
+        horas_gastas: parseHorasGastas(formData.horas_gastas),
         tipo_impacto: formData.tipo_impacto.replace(/^[💰📈⚠️📊🔎]\s/, '')
       };
       await onSubmit(submitData);
@@ -286,7 +344,27 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
           </Box>
         </Box>
 
-        {/* Seção 5: Complexidade e Tempo */}
+        {/* Seção 5: Origem da Demanda */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 2 }}>
+            🔹 Origem da Demanda
+          </Typography>
+          <TextField
+            select
+            label="Origem da Demanda *"
+            value={formData.origem_demanda}
+            onChange={(e) => handleInputChange('origem_demanda', e.target.value)}
+            fullWidth
+            required
+          >
+            <MenuItem value="Rotina">Rotina</MenuItem>
+            <MenuItem value="Consultor">Consultor</MenuItem>
+            <MenuItem value="Cliente">Cliente</MenuItem>
+            <MenuItem value="Analista">Analista</MenuItem>
+          </TextField>
+        </Box>
+
+        {/* Seção 6: Complexidade e Tempo */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 2 }}>
             🔹 Complexidade e Tempo
@@ -306,17 +384,19 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
             </TextField>
             <TextField
               label="Horas Gastas *"
-              type="number"
+              type="text"
               value={formData.horas_gastas}
               onChange={(e) => handleInputChange('horas_gastas', e.target.value)}
               fullWidth
               required
-              inputProps={{ step: '0.5' }}
+              inputProps={{ inputMode: 'text' }}
+              placeholder="Ex.: 2.5, 20min, 2h30 ou 2:30"
+              helperText="Digite horas em decimal ou minutos/horas misturados; o sistema converte automaticamente para horas decimais."
             />
           </Box>
         </Box>
 
-        {/* Seção 6: Descrição Técnica */}
+        {/* Seção 7: Descrição Técnica */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 2 }}>
             📋 Descrição Técnica
@@ -361,7 +441,7 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
           </Box>
         </Box>
 
-        {/* Seção 7: Status */}
+        {/* Seção 8: Status */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 2 }}>
             🔹 Status

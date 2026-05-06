@@ -41,6 +41,7 @@ interface EntregaData {
   impacto_percentual: number;
   complexidade: string;
   horas_gastas: number;
+  origem_demanda: string;
   descricao_tecnica: {
     situacao_encontrada: string;
     problema_identificado: string;
@@ -69,7 +70,13 @@ const categorias = [
   'Ajuste contábil',
   'Análise DRE mensal/trimestral/anual',
   'Análise Orçado x Realizado',
-  'Migração de extratos do cliente para Fluxo Fast'
+  'Migração de extratos do cliente para Fluxo Fast',
+  'Tarefas internas extras',
+  'Treinamento de ferramentas extras',
+  'Treinamento de integração de novos colaboradores',
+  'Reunião Analista x Cliente',
+  'Conferência de conciliação Bancária',
+  'Análise de DRE Competência x Caixa (e outros)'
 ];
 
 const statusOptions = [
@@ -444,6 +451,9 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
               <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
                 <strong>Data:</strong> {new Date(selectedEntrega.data).toLocaleDateString('pt-BR')}
               </Typography>
+              <Typography variant="body2" sx={{ color: '#6B7280', mb: 0.5 }}>
+                <strong>Origem da Demanda:</strong> {selectedEntrega.origem_demanda}
+              </Typography>
             </Box>
 
             {selectedEntrega.descricao_tecnica && (
@@ -587,6 +597,19 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
               fullWidth
               sx={{ mb: 2 }}
             />
+            <TextField
+              select
+              label="Origem da Demanda"
+              value={editingEntrega.origem_demanda}
+              onChange={(e) => setEditingEntrega({ ...editingEntrega, origem_demanda: e.target.value })}
+              fullWidth
+              sx={{ mb: 2 }}
+            >
+              <MenuItem value="Rotina">Rotina</MenuItem>
+              <MenuItem value="Consultor">Consultor</MenuItem>
+              <MenuItem value="Cliente">Cliente</MenuItem>
+              <MenuItem value="Analista">Analista</MenuItem>
+            </TextField>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={() => setEditOpen(false)}>Cancelar</Button>

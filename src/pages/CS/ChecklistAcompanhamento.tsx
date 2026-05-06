@@ -52,9 +52,11 @@ const initialFormState: Omit<Checklist, 'id'> = {
 
 const ChecklistAcompanhamento: React.FC = () => {
   const department = getDepartment();
-  const canEditChecklist = ['Analista', 'Comercial', 'CS', 'Diretor', 'Gestor', 'Developer'].includes(department || '');
-  const canEditAnalista = ['Analista', 'Developer', 'Diretor'].includes(department || '');
-  const canEditCs = ['CS', 'Developer', 'Diretor'].includes(department || '');
+  const normalizedDepartment = (department || '').trim().toLowerCase();
+  const canEditChecklist = ['analista', 'comercial', 'cs', 'diretor', 'gestor', 'developer'].includes(normalizedDepartment);
+  const canEditAnalista = ['analista', 'developer', 'diretor'].includes(normalizedDepartment);
+  const canEditCsDescription = ['cs', 'developer', 'diretor'].includes(normalizedDepartment);
+  const isAnalista = normalizedDepartment === 'analista';
   // Estado para lista de clientes
   const [clientes, setClientes] = useState<{ razao_social: string }[]>([]);
   // Buscar clientes para o select de empresa
@@ -186,6 +188,13 @@ const ChecklistAcompanhamento: React.FC = () => {
         }
       }
     });
+
+    // Analista pode editar os demais campos, mas não deve alterar a descrição de atividades de CS.
+    if (isAnalista) {
+      const currentItem = editId ? data.find(item => item.id === editId) : null;
+      (formToSend as any).descricao_atividades_cs = currentItem?.descricao_atividades_cs ?? form.descricao_atividades_cs;
+    }
+
     try {
       if (editId) {
         // PATCH
@@ -529,8 +538,8 @@ const ChecklistAcompanhamento: React.FC = () => {
             onChange={handleFormChange}
             multiline
             minRows={3}
-            disabled={!canEditCs}
-            helperText={!canEditCs ? 'Edição permitida apenas para CS, Developer e Diretor.' : undefined}
+            disabled={!canEditCsDescription}
+            helperText={!canEditCsDescription ? 'Edição permitida apenas para CS, Developer e Diretor.' : undefined}
           />
           <TextField
             margin="dense"

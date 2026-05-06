@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'; // Import axios
 import SearchIcon from '@mui/icons-material/Search'; // Import the SearchIcon
+import { Autocomplete, TextField } from '@mui/material';
 import './Cadastro.css'; // Import the CSS file for styling
 import { getAccessToken, getDepartment } from '../../utils/storage'; // Import the function to get the access token
 
@@ -26,6 +27,8 @@ const Cadastro = () => {
   // const [showWarningForm, setShowWarningForm] = useState(false);
   const [allData, setAllData] = useState<ClienteData[]>([]); // Use the defined type for allData
   const [searchTerm, setSearchTerm] = useState(''); // State for search input
+  const [consultoresFinanceiros, setConsultoresFinanceiros] = useState<string[]>([]);
+  const [consultoresComerciais, setConsultoresComerciais] = useState<string[]>([]);
   const department = getDepartment();
   const canRegisterClient = ['Developer', 'Gestor', 'Diretor', 'Comercial'].includes(department || '');
 
@@ -136,6 +139,37 @@ const Cadastro = () => {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchConsultores = async () => {
+      try {
+        const token = getAccessToken();
+        const config = {
+          headers: { Authorization: `Bearer ${token}` },
+        };
+
+        const [comercialResponse, consultorResponse] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/login/department/username/Comercial`, config),
+          axios.get(`${process.env.REACT_APP_API_URL}/login/department/username/Consultor`, config),
+        ]);
+
+        const comercialList = (Array.isArray(comercialResponse.data) ? comercialResponse.data : [])
+          .map((item: { user?: string }) => item?.user)
+          .filter((user): user is string => Boolean(user));
+
+        const consultorList = (Array.isArray(consultorResponse.data) ? consultorResponse.data : [])
+          .map((item: { user?: string }) => item?.user)
+          .filter((user): user is string => Boolean(user));
+
+        setConsultoresComerciais(comercialList);
+        setConsultoresFinanceiros(consultorList);
+      } catch (error) {
+        console.error('Erro ao buscar lista de consultores/comerciais:', error);
+      }
+    };
+
+    fetchConsultores();
   }, []);
 
   const handleSearch = async (term: string) => {
@@ -517,59 +551,6 @@ const Cadastro = () => {
         </div>
       )} */}
 
-
-
-      <div className="form-row">
-
-
-{/* <div className="form-group">
-  <label className="checkbox-label">
-    <input
-      type="checkbox"
-      name="indicacao_cliente"
-      checked={formData.indicacao_cliente}
-      onChange={handleChange}
-    />
-    Indicação Cliente
-  </label>
-</div>
-{formData.indicacao_cliente && (
-  <>
-    <div className="form-group">
-      <label>Quem Indicou:</label>
-      <input type="text" name="quem_indicou" value={formData.quem_indicou} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Status Indicação:</label>
-      <input type="text" name="status_indicacao" value={formData.status_indicacao} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Nome Contato Indicação:</label>
-      <input type="text" name="nome_contato_indicacao" value={formData.nome_contato_indicacao} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Observação Indicação:</label>
-      <input type="text" name="observacao_indicacao" value={formData.observacao_indicacao} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>SLA:</label>
-      <input type="text" name="SLA" value={formData.SLA} onChange={handleChange} />
-    </div>
-    <div className="form-group">
-      <label>Data SLA:</label>
-      <input
-        type="date"
-        name="data_sla"
-        value={formData.data_sla || ''} // Converte null para string vazia
-        onChange={handleChange}
-      />
-    </div>
-  </>
-)} */}
-
-
-
-
         <div className="form-group">
           <label>CNPJ:</label>
           <input 
@@ -584,11 +565,47 @@ const Cadastro = () => {
         </div>
         <div className="form-group">
           <label>Consultor Comercial:</label>
-          <input type="text" name="consultor_comercial" value={formData.consultor_comercial} onChange={handleChange} />
+          <Autocomplete
+            freeSolo
+            options={consultoresComerciais}
+            value={formData.consultor_comercial}
+            onChange={(_, newValue) => {
+              setFormData((prev) => ({ ...prev, consultor_comercial: newValue || '' }));
+            }}
+            onInputChange={(_, newInputValue) => {
+              setFormData((prev) => ({ ...prev, consultor_comercial: newInputValue || '' }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Selecione ou digite o consultor comercial"
+                size="small"
+                fullWidth
+              />
+            )}
+          />
         </div>
         <div className="form-group">
           <label>Consultor Financeiro:</label>
-          <input type="text" name="consultor_financeiro" value={formData.consultor_financeiro} onChange={handleChange} />
+          <Autocomplete
+            freeSolo
+            options={consultoresFinanceiros}
+            value={formData.consultor_financeiro}
+            onChange={(_, newValue) => {
+              setFormData((prev) => ({ ...prev, consultor_financeiro: newValue || '' }));
+            }}
+            onInputChange={(_, newInputValue) => {
+              setFormData((prev) => ({ ...prev, consultor_financeiro: newInputValue || '' }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Selecione ou digite o consultor financeiro"
+                size="small"
+                fullWidth
+              />
+            )}
+          />
         </div>
   
         <div className="form-group">
@@ -843,9 +860,12 @@ const Cadastro = () => {
             <option value="prospecção comercial">Prospecção Comercial</option>
             <option value="indicação consultor financeiro">Indicação Consultor Financeiro</option>
             <option value="indicação cliente">Indicação Cliente</option>
+            <option value="indicação cliente - consultor">Indicação cliente - consultor</option>
+            <option value="indicação cliente - comercial">Indicação cliente - comercial</option>
             <option value="network hygor">Network Hygor</option>
             <option value="indicação parceiro">Indicação Parceiro</option>
             <option value="evento">Evento</option>
+            <option value="evento pela fast">Evento pela Fast</option>
           </select>
         </div>
         <div className="form-group">
@@ -918,11 +938,8 @@ const Cadastro = () => {
 
 
 
-      </div>
 
 
-
-      
 
       {/* <div className="form-row">
         <h1 className="form-title">Contratos</h1>

@@ -10,6 +10,8 @@ const Cliente = () => {
   const [editRowId, setEditRowId] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [loading, setLoading] = useState(false);
+  const [consultoresFinanceiros, setConsultoresFinanceiros] = useState<string[]>([]);
+  const [consultoresComerciais, setConsultoresComerciais] = useState<string[]>([]);
   const department = getDepartment();
   const canEditClient = ['Developer', 'Gestor', 'Diretor', 'Comercial'].includes(department || '');
 
@@ -88,6 +90,37 @@ const Cliente = () => {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchConsultores = async () => {
+      const token = getAccessToken();
+      const config = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+
+      try {
+        const [comercialResponse, consultorResponse] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/login/department/username/Comercial`, config),
+          axios.get(`${process.env.REACT_APP_API_URL}/login/department/username/Consultor`, config),
+        ]);
+
+        const comercialList = (Array.isArray(comercialResponse.data) ? comercialResponse.data : [])
+          .map((item: { user?: string }) => item?.user)
+          .filter((user): user is string => Boolean(user));
+
+        const consultorList = (Array.isArray(consultorResponse.data) ? consultorResponse.data : [])
+          .map((item: { user?: string }) => item?.user)
+          .filter((user): user is string => Boolean(user));
+
+        setConsultoresComerciais(comercialList);
+        setConsultoresFinanceiros(consultorList);
+      } catch (error) {
+        console.error('Erro ao buscar lista de consultores/comerciais:', error);
+      }
+    };
+
+    fetchConsultores();
   }, []);
 
   const handleEditClick = React.useCallback((row: any) => {
@@ -410,11 +443,27 @@ const Cliente = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption">Consultor Comercial:</Typography>
-                  <input value={editData.consultor_comercial || ''} onChange={e => handleEditChange('consultor_comercial', e.target.value)} placeholder="Consultor Comercial" style={{width: '100%', padding: '8px'}} />
+                  <select value={editData.consultor_comercial || ''} onChange={e => handleEditChange('consultor_comercial', e.target.value)} style={{width: '100%', padding: '8px'}}>
+                    <option value="">Selecione o consultor comercial</option>
+                    {editData.consultor_comercial && !consultoresComerciais.includes(editData.consultor_comercial) && (
+                      <option value={editData.consultor_comercial}>{editData.consultor_comercial}</option>
+                    )}
+                    {consultoresComerciais.map((comercial) => (
+                      <option key={comercial} value={comercial}>{comercial}</option>
+                    ))}
+                  </select>
                 </Box>
                 <Box>
                   <Typography variant="caption">Consultor Financeiro:</Typography>
-                  <input value={editData.consultor_financeiro || ''} onChange={e => handleEditChange('consultor_financeiro', e.target.value)} placeholder="Consultor Financeiro" style={{width: '100%', padding: '8px'}} />
+                  <select value={editData.consultor_financeiro || ''} onChange={e => handleEditChange('consultor_financeiro', e.target.value)} style={{width: '100%', padding: '8px'}}>
+                    <option value="">Selecione o consultor financeiro</option>
+                    {editData.consultor_financeiro && !consultoresFinanceiros.includes(editData.consultor_financeiro) && (
+                      <option value={editData.consultor_financeiro}>{editData.consultor_financeiro}</option>
+                    )}
+                    {consultoresFinanceiros.map((consultor) => (
+                      <option key={consultor} value={consultor}>{consultor}</option>
+                    ))}
+                  </select>
                 </Box>
                 <Box>
                   <Typography variant="caption">Analista:</Typography>
@@ -613,7 +662,7 @@ const Cliente = () => {
         )}
       </Box>
     );
-  }, [editRowId, editData, loading, handleSaveEdit, handleEditChange, canEditClient, handleEditClick]);
+  }, [editRowId, editData, loading, handleSaveEdit, handleEditChange, canEditClient, handleEditClick, consultoresComerciais, consultoresFinanceiros]);
 
   const getDetailPanelHeight = React.useCallback(() => 600, []);
 

@@ -31,6 +31,7 @@ interface EntregaData {
   impacto_percentual: number;
   complexidade: string;
   horas_gastas: number;
+  origem_demanda: string;
   descricao_tecnica: {
     situacao_encontrada: string;
     problema_identificado: string;

@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { getAccessToken, getUsername } from '../../utils/storage';
+import { getAccessToken, getDepartment, getUsername } from '../../utils/storage';
 
 interface ConsultorData {
   "clientes ativos": number;
@@ -121,6 +121,11 @@ interface AlertaReuniao {
 
 const RelatorioConsultor = () => {
   const navigate = useNavigate();
+  const department = getDepartment();
+  const canSeeAllConsultors = ['Developer', 'Diretor', 'Gestor', 'CEO'].includes(department || '');
+  const isFinanceiro = department === 'Financeiro';
+  const isConsultor = department === 'Consultor';
+  const canAccessConsultorReport = canSeeAllConsultors || isFinanceiro || isConsultor;
   const [data, setData] = useState<ConsultorData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +147,18 @@ const RelatorioConsultor = () => {
           throw new Error('Token ou username não encontrado');
         }
 
+        if (!canAccessConsultorReport) {
+          setConsultors([]);
+          setSelectedUser('');
+          return;
+        }
+
+        if (isFinanceiro || isConsultor) {
+          setConsultors([{ user: currentUsername, nome: currentUsername }]);
+          setSelectedUser(currentUsername);
+          return;
+        }
+
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/login/department/username/Consultor`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -151,14 +168,14 @@ const RelatorioConsultor = () => {
 
         const consultorsList = response.data || [];
         setConsultors(consultorsList);
-        
-        // Don't auto-select user - let user choose
       } catch (err) {
         console.error('Erro ao buscar consultores:', err);
-        // Fallback to current user
         const currentUsername = getUsername();
-        if (currentUsername) {
+        if (currentUsername && canAccessConsultorReport) {
           setConsultors([{ user: currentUsername }]);
+          if (isFinanceiro || isConsultor) {
+            setSelectedUser(currentUsername);
+          }
         }
       } finally {
         setLoadingConsultors(false);
@@ -166,7 +183,7 @@ const RelatorioConsultor = () => {
     };
 
     fetchConsultors();
-  }, []);
+  }, [canAccessConsultorReport, isFinanceiro, isConsultor]);
 
   // Fetch consultant data only when user is selected
   useEffect(() => {
@@ -304,57 +321,12 @@ const RelatorioConsultor = () => {
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <Box 
-            component="button"
-            onClick={() => navigate('/Relatorios')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              px: 2,
-              py: 1,
-              backgroundColor: '#5C59E8',
-              color: 'white',
-              border: 'none',
-              borderRadius: 2,
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-              mr: 3,
-              '&:hover': {
-                backgroundColor: '#4A47D1',
-              }
-            }}
-          >
-            <ArrowBack />
-            Voltar
-          </Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#333' }}>
-            Relatório do Consultor
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <CircularProgress size={60} />
-            <Typography variant="body1" color="text.secondary">
-              Carregando dados do consultor...
-            </Typography>
-          </Box>
-        </Box>
+        <Alert severity="info">Carregando dados do consultor...</Alert>
       </Container>
     );
   }
 
-  // Função para calcular alertas de reuniões faltantes
   const calcularAlertas = (reunioesData: Reuniao[]) => {
-    if (reunioesData.length === 0) {
-      setAlertas([]);
-      return;
-    }
 
     // Ordenar por data_realizada para encontrar a primeira
     const reunioesOrdenadas = [...reunioesData].sort(
@@ -950,6 +922,48 @@ const RelatorioConsultor = () => {
       </Paper>
     );
   };
+
+  if (!canAccessConsultorReport) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <Box 
+            component="button"
+            onClick={() => navigate('/Relatorios')}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              px: 2,
+              py: 1,
+              backgroundColor: '#5C59E8',
+              color: 'white',
+              border: 'none',
+              borderRadius: 2,
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              mr: 3,
+              '&:hover': {
+                backgroundColor: '#4A47D1',
+              }
+            }}
+          >
+            <ArrowBack />
+            Voltar
+          </Box>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#333' }}>
+            Relatório do Consultor
+          </Typography>
+        </Box>
+
+        <Alert severity="info">
+          Este relatório não está disponível para o seu departamento.
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>

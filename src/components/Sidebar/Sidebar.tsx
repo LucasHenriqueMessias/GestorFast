@@ -33,6 +33,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
     // Helper to check if user can see all items
     const canSeeAll = department === 'Developer' || department === 'Diretor' || department === 'Gestor';
     const isConsultor = department === 'Consultor';
+    const canSeeConsultorReport = canSeeAll || department === 'CEO' || department === 'Financeiro' || isConsultor;
     const isAnalista = department === 'Analista';
     const isComercial = department === 'Comercial';
     const isDiretor = department === 'Diretor';
@@ -131,9 +132,11 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                         </div>
                         {!onlyIcons && dashboardOpen && (
                             <ul className="menu-list">
-                                <li className="dropdown-menu-item">
-                                    <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Consultor">Consultores</a>
-                                </li>
+                                {canSeeConsultorReport && (
+                                    <li className="dropdown-menu-item">
+                                        <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Consultor">Consultores</a>
+                                    </li>
+                                )}
                                 <li className="dropdown-menu-item">
                                     <a className="submenu-item submenu-link" style={{ justifyContent: 'flex-start' }} href="/Relatorios/Cliente">Clientes</a>
                                 </li>
@@ -325,7 +328,7 @@ export default function Sidebar({ onlyIcons = false, onExpand, children }: { onl
                                         )}
                                     </li>
                                 )}
-                                {(canSeeAll || isConsultor || isComercial) && (
+                                {(canSeeAll || isConsultor || isComercial || isAnalista) && (
                                     <li className="dropdown-menu-item">
                                         <div
                                             className="submenu-item"
