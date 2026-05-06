@@ -160,19 +160,12 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
       try {
         const token = getAccessToken();
 
-        // Buscar clientes
-        const clientesRes = await axios.get(`${process.env.REACT_APP_API_URL}/loja/razaosocial`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const razoesSociais = clientesRes.data.map((item: { razao_social: string }) => item.razao_social);
-        setClientes(razoesSociais);
-
-        // Buscar consultores (você pode ajustar endpoint)
+        // Buscar consultores do departamento Consultor para seleção no autocomplete
         try {
-          const consultoresRes = await axios.get(`${process.env.REACT_APP_API_URL}/loja/consultores`, {
+          const consultoresRes = await axios.get(`${process.env.REACT_APP_API_URL}/login/department/username/Consultor`, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          const nomes = consultoresRes.data.map((item: any) => item.nome || item.username);
+          const nomes = (consultoresRes.data || []).map((item: { user?: string; nome?: string; username?: string }) => item.user || item.nome || item.username).filter(Boolean);
           setConsultores(nomes);
         } catch (err) {
           // Se endpoint não existir, deixa vazio
@@ -185,6 +178,48 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
 
     fetchOptions();
   }, []);
+
+  useEffect(() => {
+    const fetchClientesByConsultor = async () => {
+      const consultorSelecionado = formData.consultor.trim();
+
+      if (!consultorSelecionado) {
+        setClientes([]);
+        return;
+      }
+
+      try {
+        const token = getAccessToken();
+        const clientesRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/loja/relatorio-clientes-consultor/${encodeURIComponent(consultorSelecionado)}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        const clientesDoConsultor = clientesRes.data?.clientes || [];
+        const razoesSociais = clientesDoConsultor
+          .map((item: { razao_social?: string; RazaoSocial?: string }) => item.razao_social || item.RazaoSocial)
+          .filter(Boolean);
+
+        setClientes(razoesSociais);
+
+        setFormData((prev) => {
+          if (prev.razao_social && !razoesSociais.includes(prev.razao_social)) {
+            return { ...prev, razao_social: '' };
+          }
+
+          return prev;
+        });
+      } catch (error) {
+        console.error('Erro ao buscar clientes do consultor:', error);
+        setClientes([]);
+        setFormData((prev) => ({ ...prev, razao_social: '' }));
+      }
+    };
+
+    fetchClientesByConsultor();
+  }, [formData.consultor]);
 
   const handleInputChange = (field: string, value: any) => {
     if (field.includes('.')) {
@@ -235,29 +270,7 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E3A8A', mb: 2 }}>
             🔹 Identificação
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-            <Box sx={{ gridColumn: { xs: '1 / -1', sm: '1 / -1' } }}>
-              <Autocomplete
-                options={clientes}
-                value={formData.razao_social}
-                onChange={(e, v) => handleInputChange('razao_social', v || '')}
-                renderInput={(params) => <TextField {...params} label="Cliente *" required fullWidth />}
-                freeSolo
-              />
-            </Box>
-            <TextField
-              label="Analista *"
-              value={formData.analista}
-              disabled
-              fullWidth
-            />
-            <Autocomplete
-              options={consultores}
-              value={formData.consultor}
-              onChange={(e, v) => handleInputChange('consultor', v || '')}
-              renderInput={(params) => <TextField {...params} label="Consultor *" required fullWidth />}
-              freeSolo
-            />
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
             <TextField
               label="Data *"
               type="date"
@@ -266,6 +279,35 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({ onClose, onSubmit, analista }
               fullWidth
               InputLabelProps={{ shrink: true }}
               required
+            />
+            <Autocomplete
+              options={consultores}
+              value={formData.consultor}
+              onChange={(e, v) => {
+                setClientes([]);
+                handleInputChange('consultor', v || '');
+                handleInputChange('razao_social', '');
+              }}
+              renderInput={(params) => <TextField {...params} label="Consultor *" required fullWidth helperText="Comece a digitar para ver os consultores cadastrados" />}
+              openOnFocus
+              autoHighlight
+            />
+            <Autocomplete
+              options={clientes}
+              value={formData.razao_social}
+              onChange={(e, v) => handleInputChange('razao_social', v || '')}
+              disabled={!formData.consultor.trim()}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Cliente *"
+                  required
+                  fullWidth
+                  helperText={!formData.consultor.trim() ? 'Selecione um consultor primeiro' : 'Comece a digitar para filtrar os clientes'}
+                />
+              )}
+              openOnFocus
+              autoHighlight
             />
           </Box>
         </Box>
