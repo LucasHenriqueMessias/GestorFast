@@ -35,12 +35,10 @@ interface EntregaForm {
   complexidade: string;
   horas_gastas: number | string;
   origem_demanda: string;
-  descricao_tecnica: {
-    situacao_encontrada: string;
-    problema_identificado: string;
-    acao_recomendada: string;
-    resultado_esperado: string;
-  };
+  situacao_encontrada: string;
+  problema_identificado: string;
+  acao_recomendada: string;
+  resultado_esperado: string;
   status: string;
 }
 
@@ -145,12 +143,10 @@ const buildInitialFormData = (analista: string, initialValues?: Partial<EntregaF
   complexidade: initialValues?.complexidade || '',
   horas_gastas: initialValues?.horas_gastas ?? '',
   origem_demanda: initialValues?.origem_demanda || '',
-  descricao_tecnica: {
-    situacao_encontrada: initialValues?.descricao_tecnica?.situacao_encontrada || '',
-    problema_identificado: initialValues?.descricao_tecnica?.problema_identificado || '',
-    acao_recomendada: initialValues?.descricao_tecnica?.acao_recomendada || '',
-    resultado_esperado: initialValues?.descricao_tecnica?.resultado_esperado || ''
-  },
+  situacao_encontrada: initialValues?.situacao_encontrada || '',
+  problema_identificado: initialValues?.problema_identificado || '',
+  acao_recomendada: initialValues?.acao_recomendada || '',
+  resultado_esperado: initialValues?.resultado_esperado || '',
   status: initialValues?.status || 'Em análise'
 });
 
@@ -238,16 +234,8 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({
   }, [formData.consultor]);
 
   const handleInputChange = (field: string, value: any) => {
-    if (field.includes('.')) {
-      // Para campos aninhados como descricao_tecnica.situacao_encontrada
-      const [section, subfield] = field.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [section]: {
-          ...(prev as any)[section],
-          [subfield]: value
-        }
-      }));
+    if (false) { // Removido aninhamento de descricao_tecnica
+      // Não temos mais campos aninhados neste formulário
     } else {
       setFormData(prev => ({
         ...prev,
@@ -265,8 +253,15 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({
         impacto_anual_r: Number(formData.impacto_anual_r),
         impacto_percentual: Number(formData.impacto_percentual),
         horas_gastas: parseHorasGastas(formData.horas_gastas),
-        tipo_impacto: formData.tipo_impacto.replace(/^[💰📈⚠️📊🔎]\s/, '')
+        tipo_impacto: formData.tipo_impacto.replace(/^[💰📈⚠️📊🔎]\s/, ''),
+        situacao_encontrada: formData.situacao_encontrada || '',
+        problema_identificado: formData.problema_identificado || '',
+        acao_recomendada: formData.acao_recomendada || '',
+        resultado_esperado: formData.resultado_esperado || ''
       };
+      // debug: mostrar payload antes de enviar
+      // eslint-disable-next-line no-console
+      console.debug('NovaEntrega submitData:', submitData);
       await onSubmit(submitData);
     } catch (error) {
       console.error('Erro ao submeter formulário:', error);
@@ -462,8 +457,8 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
             <TextField
               label="Situação Encontrada *"
-              value={formData.descricao_tecnica.situacao_encontrada}
-              onChange={(e) => handleInputChange('descricao_tecnica.situacao_encontrada', e.target.value)}
+              value={formData.situacao_encontrada}
+              onChange={(e) => handleInputChange('situacao_encontrada', e.target.value)}
               fullWidth
               multiline
               rows={2}
@@ -471,8 +466,8 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({
             />
             <TextField
               label="Problema Identificado *"
-              value={formData.descricao_tecnica.problema_identificado}
-              onChange={(e) => handleInputChange('descricao_tecnica.problema_identificado', e.target.value)}
+              value={formData.problema_identificado}
+              onChange={(e) => handleInputChange('problema_identificado', e.target.value)}
               fullWidth
               multiline
               rows={2}
@@ -480,8 +475,8 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({
             />
             <TextField
               label="Ação Recomendada *"
-              value={formData.descricao_tecnica.acao_recomendada}
-              onChange={(e) => handleInputChange('descricao_tecnica.acao_recomendada', e.target.value)}
+              value={formData.acao_recomendada}
+              onChange={(e) => handleInputChange('acao_recomendada', e.target.value)}
               fullWidth
               multiline
               rows={2}
@@ -489,8 +484,8 @@ const NovaEntrega: React.FC<NovaEntregaProps> = ({
             />
             <TextField
               label="Resultado Esperado *"
-              value={formData.descricao_tecnica.resultado_esperado}
-              onChange={(e) => handleInputChange('descricao_tecnica.resultado_esperado', e.target.value)}
+              value={formData.resultado_esperado}
+              onChange={(e) => handleInputChange('resultado_esperado', e.target.value)}
               fullWidth
               multiline
               rows={2}

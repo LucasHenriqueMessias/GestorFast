@@ -42,12 +42,10 @@ interface EntregaData {
   complexidade: string;
   horas_gastas: number;
   origem_demanda: string;
-  descricao_tecnica: {
-    situacao_encontrada: string;
-    problema_identificado: string;
-    acao_recomendada: string;
-    resultado_esperado: string;
-  };
+  situacao_encontrada: string;
+  problema_identificado: string;
+  acao_recomendada: string;
+  resultado_esperado: string;
   status: string;
 }
 
@@ -183,9 +181,16 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
 
     try {
       const token = getAccessToken();
+
+      // Garantir que o payload contenha o id e os campos atualizados
+      const payload = { ...formData, id: editingEntrega.id };
+      // Log temporário para debug (remover se necessário)
+      // eslint-disable-next-line no-console
+      console.debug('PATCH payload for entrega edit:', payload);
+
       await axios.patch(
         `${process.env.REACT_APP_API_URL}/insights-analista/${editingEntrega.id}`,
-        formData,
+        payload,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -481,16 +486,16 @@ const ListaEntregas: React.FC<ListaEntregasProps> = ({ entregas, loading, onRefr
                 📋 Descrição Técnica
               </Typography>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Situação Encontrada:</strong> {selectedEntrega.descricao_tecnica?.situacao_encontrada || 'Não informada'}
+                <strong>Situação Encontrada:</strong> {selectedEntrega.situacao_encontrada || 'Não informada'}
               </Typography>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Problema Identificado:</strong> {selectedEntrega.descricao_tecnica?.problema_identificado || 'Não informado'}
+                <strong>Problema Identificado:</strong> {selectedEntrega.problema_identificado || 'Não informado'}
               </Typography>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Ação Recomendada:</strong> {selectedEntrega.descricao_tecnica?.acao_recomendada || 'Não informada'}
+                <strong>Ação Recomendada:</strong> {selectedEntrega.acao_recomendada || 'Não informada'}
               </Typography>
               <Typography variant="body2">
-                <strong>Resultado Esperado:</strong> {selectedEntrega.descricao_tecnica?.resultado_esperado || 'Não informado'}
+                <strong>Resultado Esperado:</strong> {selectedEntrega.resultado_esperado || 'Não informado'}
               </Typography>
             </Box>
           </DialogContent>

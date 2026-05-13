@@ -32,12 +32,10 @@ interface EntregaData {
   complexidade: string;
   horas_gastas: number;
   origem_demanda: string;
-  descricao_tecnica: {
-    situacao_encontrada: string;
-    problema_identificado: string;
-    acao_recomendada: string;
-    resultado_esperado: string;
-  };
+  situacao_encontrada: string;
+  problema_identificado: string;
+  acao_recomendada: string;
+  resultado_esperado: string;
   status: string;
 }
 
@@ -121,16 +119,20 @@ const Insights = () => {
         throw new Error('Token de acesso não encontrado');
       }
 
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/insights-analista`,
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        // debug: inspecionar payload enviado na criação
+        // eslint-disable-next-line no-console
+        console.debug('POST payload nova entrega:', formData);
+
+        await axios.post(
+          `${process.env.REACT_APP_API_URL}/insights-analista`,
+          formData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      );
+        );
 
       setSuccessMessage('Entrega registrada com sucesso!');
       setOpenDialog(false);
